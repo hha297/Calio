@@ -67,9 +67,9 @@ export default function AccountScreen() {
               ? `${goal.data.goal_type.replaceAll('_', ' ')} · ${goal.data.daily_calorie_target} kcal/day`
               : 'No active goal yet'}
           </Text>
-          <Pressable onPress={() => router.push('/goals/index')}>
-            <Text variant="bodyStrong" tone="primary">
-              Edit goal
+          <Pressable onPress={() => router.push('/goals')}>
+            <Text variant="bodyStrong" tone="brand">
+              Edit goal & macros
             </Text>
           </Pressable>
         </Card>
@@ -79,8 +79,11 @@ export default function AccountScreen() {
           <Text variant="body" tone="secondary">
             Latest weight: {weight.weightKg != null ? `${weight.weightKg} kg` : 'not logged'}
           </Text>
-          <Pressable onPress={() => router.push('/measurements/index')}>
-            <Text variant="bodyStrong" tone="primary">
+          <Text variant="caption" tone="muted">
+            Height and units come from setup. Log weight anytime in Measurements.
+          </Text>
+          <Pressable onPress={() => router.push('/measurements')}>
+            <Text variant="bodyStrong" tone="brand">
               Measurements
             </Text>
           </Pressable>

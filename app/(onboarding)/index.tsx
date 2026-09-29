@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useBootstrap } from '@/features/bootstrap/bootstrap-provider';
 import { reportError } from '@/lib/errors/report-error';
-import { colors } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 
 const steps = [
   {
@@ -31,6 +31,7 @@ const steps = [
 ];
 
 export default function OnboardingScreen() {
+  const colors = useThemeColors();
   const { completeOnboarding } = useBootstrap();
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -51,7 +52,7 @@ export default function OnboardingScreen() {
 
   return (
     <LinearGradient
-      colors={[colors.primaryBright, colors.primary, '#2A043D']}
+      colors={[colors.primaryBright, colors.primary, colors.primaryPressed]}
       start={{ x: 0.1, y: 0 }}
       end={{ x: 0.9, y: 1 }}
       style={{ flex: 1 }}
@@ -109,7 +110,7 @@ export default function OnboardingScreen() {
                       stepIndex === index
                         ? colors.secondary
                         : stepIndex < index
-                          ? 'rgba(196,220,74,0.45)'
+                          ? 'rgba(215,123,82,0.45)'
                           : 'rgba(255,255,255,0.25)',
                   }}
                 />
@@ -120,7 +121,7 @@ export default function OnboardingScreen() {
           <View className="gap-3 pb-2">
             <Button
               label={isLast ? 'Get started' : 'Next'}
-              variant="secondary"
+              variant="primary"
               size="lg"
               loading={busy && isLast}
               disabled={busy}

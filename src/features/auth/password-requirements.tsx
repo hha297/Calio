@@ -1,8 +1,9 @@
 import { Check, Circle, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
-import { colors } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 
 import { evaluatePasswordRules } from './password-rules';
 
@@ -13,12 +14,14 @@ type PasswordRequirementsProps = {
 };
 
 export function PasswordRequirements({ password, interactive }: PasswordRequirementsProps) {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
   const results = evaluatePasswordRules(password);
 
   return (
     <View
       accessibilityRole="summary"
-      accessibilityLabel="Password requirements"
+      accessibilityLabel={t('auth.password')}
       style={{ gap: 6, minHeight: 120 }}
     >
       {results.map((rule) => {
@@ -37,7 +40,7 @@ export function PasswordRequirements({ password, interactive }: PasswordRequirem
               importantForAccessibility="no"
             />
             <Text variant="caption" style={{ color, flex: 1 }}>
-              {rule.label}
+              {t(rule.labelKey)}
             </Text>
           </View>
         );

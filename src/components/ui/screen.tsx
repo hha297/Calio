@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { spacing } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 import { cx } from '@/utils/cx';
 
 type ScreenProps = {
@@ -20,6 +21,8 @@ export function Screen({
   edges = ['top', 'left', 'right'],
   className,
 }: ScreenProps) {
+  const colors = useThemeColors();
+
   const content = scroll ? (
     <ScrollView
       className="flex-1"
@@ -50,7 +53,7 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={edges}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={edges}>
       {body}
     </SafeAreaView>
   );

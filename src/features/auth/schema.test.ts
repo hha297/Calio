@@ -121,3 +121,16 @@ describe('signInSchema', () => {
     expect(result.success).toBe(true);
   });
 });
+
+describe('recoveryOtpSchema', () => {
+  it('requires an 8-digit numeric code and keeps leading zeros as a string', async () => {
+    const { recoveryOtpSchema } = await import('./schema');
+    expect(recoveryOtpSchema.safeParse({ code: '1234567' }).success).toBe(false);
+    expect(recoveryOtpSchema.safeParse({ code: '1234567a' }).success).toBe(false);
+    const withZero = recoveryOtpSchema.safeParse({ code: '01234567' });
+    expect(withZero.success).toBe(true);
+    if (withZero.success) {
+      expect(withZero.data.code).toBe('01234567');
+    }
+  });
+});

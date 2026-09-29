@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
@@ -9,41 +10,49 @@ import { CheckboxRow } from '@/components/ui/checkbox-row';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { reportError } from '@/lib/errors/report-error';
-import { colors } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 
-import { toAuthErrorMessage } from './auth-errors';
+import { isEmailNotConfirmedError, toAuthErrorMessage } from './auth-errors';
 import { useAuth } from './auth-provider';
 import { AuthShell } from './auth-shell';
+import { AuthTextLink } from './auth-text-link';
 import { PasswordMatchStatus } from './password-match-status';
 import { PasswordRequirements } from './password-requirements';
 import { PasswordStrengthMeter } from './password-strength-meter';
 import {
-  signInSchema,
-  signUpSchema,
+  createSignInSchema,
+  createSignUpSchema,
   type SignInValues,
   type SignUpValues,
 } from './schema';
 
 type AuthFormProps = {
   mode: 'sign-in' | 'sign-up';
+  /** Optional banner on sign-in (e.g. after password reset). */
+  notice?: string;
 };
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, notice }: AuthFormProps) {
   if (mode === 'sign-in') {
-    return <SignInForm />;
+    return <SignInForm notice={notice} />;
   }
   return <SignUpForm />;
 }
 
-function SignInForm() {
+function SignInForm({ notice }: { notice?: string }) {
+  const { t, i18n } = useTranslation();
+  const colors = useThemeColors();
   const { signIn } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
-
   const { control, handleSubmit, formState, getValues } = useForm<SignInValues>({
-    resolver: zodResolver(signInSchema),
+    resolver: (values, context, options) =>
+      zodResolver(createSignInSchema(t))(values, context, options),
     defaultValues: { email: '', password: '', rememberMe: true },
     mode: 'onSubmit',
   });
+
+  // Keep language in deps so validation messages refresh with i18n.
+  void i18n.language;
 
   const onSubmit = handleSubmit(async (values) => {
     if (formState.isSubmitting) return;
@@ -53,34 +62,52 @@ function SignInForm() {
       await signIn(values.email, values.password, values.rememberMe);
     } catch (error) {
       reportError(error, { area: 'auth', action: 'sign-in' });
+      if (isEmailNotConfirmedError(error)) {
+        router.replace({
+          pathname: '/(auth)/verify-email',
+          params: { email: values.email },
+        });
+        return;
+      }
       setFormError(toAuthErrorMessage(error));
     }
   });
 
   return (
     <AuthShell
-      title="Sign in"
-      subtitle="Jump back into your meals, workouts, and daily progress. Pick up where you left off and keep your goals in sight."
+      title={t('auth.signInTitle')}
+      subtitle={t('auth.signInSubtitle')}
       footer={
         <View className="flex-row flex-wrap items-center justify-center gap-1.5">
-          <Text variant="bodySmall" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            New to Calio?
+          <Text variant="bodySmall" tone="muted">
+            {t('auth.newToCalio')}
           </Text>
-          <Link href="/(auth)/sign-up">
-            <Text variant="bodyStrong" style={{ color: colors.secondary }}>
-              Create an account
-            </Text>
-          </Link>
+          <AuthTextLink
+            href="/(auth)/sign-up"
+            label={t('auth.createAnAccount')}
+            direction="forward"
+          />
         </View>
       }
     >
       <View className="gap-5">
+        {notice ? (
+          <View
+            className="rounded-2xl px-3 py-2.5"
+            style={{ backgroundColor: colors.secondaryMuted }}
+          >
+            <Text variant="bodySmall" tone="secondary">
+              {notice}
+            </Text>
+          </View>
+        ) : null}
+
         <Controller
           control={control}
           name="email"
           render={({ field, fieldState }) => (
             <Input
-              label="Email"
+              label={t('auth.email')}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -91,7 +118,7 @@ function SignInForm() {
               keyboardType="email-address"
               textContentType="emailAddress"
               returnKeyType="next"
-              placeholder="you@email.com"
+              placeholder={t('auth.emailPlaceholder')}
             />
           )}
         />
@@ -101,7 +128,7 @@ function SignInForm() {
           name="password"
           render={({ field, fieldState }) => (
             <Input
-              label="Password"
+              label={t('auth.password')}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -114,28 +141,27 @@ function SignInForm() {
               textContentType="password"
               returnKeyType="done"
               onSubmitEditing={onSubmit}
-              placeholder="Your password"
+              placeholder={t('auth.passwordPlaceholder')}
             />
           )}
         />
 
-        <View className="flex-row items-center justify-between gap-3 pt-0.5">
-          <View className="flex-1">
-            <Controller
-              control={control}
-              name="rememberMe"
-              render={({ field }) => (
-                <CheckboxRow
-                  label="Keep me signed in"
-                  checked={field.value}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          </View>
+        <View className="flex-row items-center justify-between gap-2">
+          <Controller
+            control={control}
+            name="rememberMe"
+            render={({ field }) => (
+              <CheckboxRow
+                label={t('auth.keepSignedIn')}
+                checked={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
           <Pressable
+            className="shrink-0"
             accessibilityRole="link"
-            accessibilityLabel="Forgot password"
+            accessibilityLabel={t('auth.forgotPassword')}
             onPress={() =>
               router.push({
                 pathname: '/(auth)/forgot-password',
@@ -145,13 +171,16 @@ function SignInForm() {
             hitSlop={8}
           >
             <Text variant="bodySmall" style={{ color: colors.primary }}>
-              Forgot password?
+              {t('auth.forgotPassword')}
             </Text>
           </Pressable>
         </View>
 
         {formError ? (
-          <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: '#FCECEE' }}>
+          <View
+            className="rounded-2xl px-3 py-2.5"
+            style={{ backgroundColor: colors.errorMuted }}
+          >
             <Text variant="bodySmall" tone="error">
               {formError}
             </Text>
@@ -159,7 +188,7 @@ function SignInForm() {
         ) : null}
 
         <Button
-          label="Sign in"
+          label={t('auth.signInCta')}
           variant="primary"
           size="lg"
           onPress={onSubmit}
@@ -182,27 +211,33 @@ function emailUserInputs(email: string) {
 const EMAIL_ERROR_DELAY_MS = 1600;
 
 function useDebouncedReveal(value: string, delayMs = EMAIL_ERROR_DELAY_MS) {
-  const [revealed, setRevealed] = useState(false);
+  const [revealedFor, setRevealedFor] = useState<string | null>(null);
 
   useEffect(() => {
-    setRevealed(false);
-    const timer = setTimeout(() => setRevealed(true), delayMs);
+    const timer = setTimeout(() => setRevealedFor(value), delayMs);
     return () => clearTimeout(timer);
   }, [value, delayMs]);
 
-  return { revealed, revealNow: () => setRevealed(true) };
+  return {
+    revealed: revealedFor === value,
+    revealNow: () => setRevealedFor(value),
+  };
 }
 
 function SignUpForm() {
+  const { t, i18n } = useTranslation();
+  const colors = useThemeColors();
   const { signUp } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
-
   const { control, handleSubmit, formState, trigger } = useForm<SignUpValues>({
-    resolver: zodResolver(signUpSchema),
+    resolver: (values, context, options) =>
+      zodResolver(createSignUpSchema(t))(values, context, options),
     defaultValues: { email: '', password: '', confirmPassword: '' },
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
+
+  void i18n.language;
 
   const password = useWatch({ control, name: 'password' }) ?? '';
   const confirmPassword = useWatch({ control, name: 'confirmPassword' }) ?? '';
@@ -218,7 +253,7 @@ function SignUpForm() {
       const result = await signUp(values.email, values.password);
       if (result.needsEmailConfirmation) {
         router.replace({
-          pathname: '/(auth)/check-email',
+          pathname: '/(auth)/verify-email',
           params: { email: values.email },
         });
       }
@@ -232,18 +267,18 @@ function SignUpForm() {
 
   return (
     <AuthShell
-      title="Create account"
-      subtitle="Get to know your meals, track your workouts, and find what works for you. Your goals, your pace — all in one place."
+      title={t('auth.signUpTitle')}
+      subtitle={t('auth.signUpSubtitle')}
       footer={
         <View className="flex-row flex-wrap items-center justify-center gap-1.5">
-          <Text variant="bodySmall" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            Already have an account?
+          <Text variant="bodySmall" tone="muted">
+            {t('auth.alreadyHaveAccount')}
           </Text>
-          <Link href="/(auth)/sign-in">
-            <Text variant="bodyStrong" style={{ color: colors.secondary }}>
-              Sign in
-            </Text>
-          </Link>
+          <AuthTextLink
+            href="/(auth)/sign-in"
+            label={t('auth.signInCta')}
+            direction="forward"
+          />
         </View>
       }
     >
@@ -256,7 +291,7 @@ function SignUpForm() {
             const showError = interacted && emailErrorReady;
             return (
               <Input
-                label="Email"
+                label={t('auth.email')}
                 value={field.value}
                 onChangeText={field.onChange}
                 onBlur={() => {
@@ -270,7 +305,7 @@ function SignUpForm() {
                 keyboardType="email-address"
                 textContentType="emailAddress"
                 returnKeyType="next"
-                placeholder="you@email.com"
+                placeholder={t('auth.emailPlaceholder')}
               />
             );
           }}
@@ -284,7 +319,7 @@ function SignUpForm() {
             return (
               <View className="gap-2.5">
                 <Input
-                  label="Password"
+                  label={t('auth.password')}
                   value={field.value}
                   onChangeText={(text) => {
                     field.onChange(text);
@@ -300,7 +335,7 @@ function SignUpForm() {
                   secureTextEntry
                   textContentType="newPassword"
                   returnKeyType="next"
-                  placeholder="Create a password"
+                  placeholder={t('auth.createPasswordPlaceholder')}
                 />
                 <PasswordStrengthMeter password={field.value} userInputs={strengthInputs} />
                 <PasswordRequirements password={field.value} interactive={interactive} />
@@ -321,7 +356,7 @@ function SignUpForm() {
             return (
               <View className="gap-1.5">
                 <Input
-                  label="Confirm password"
+                  label={t('auth.confirmPassword')}
                   value={field.value}
                   onChangeText={field.onChange}
                   onBlur={field.onBlur}
@@ -338,7 +373,7 @@ function SignUpForm() {
                       void onSubmit();
                     }
                   }}
-                  placeholder="Confirm password"
+                  placeholder={t('auth.confirmPasswordPlaceholder')}
                 />
                 <PasswordMatchStatus
                   password={password}
@@ -351,7 +386,10 @@ function SignUpForm() {
         />
 
         {formError ? (
-          <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: '#FCECEE' }}>
+          <View
+            className="rounded-2xl px-3 py-2.5"
+            style={{ backgroundColor: colors.errorMuted }}
+          >
             <Text variant="bodySmall" tone="error">
               {formError}
             </Text>
@@ -359,8 +397,8 @@ function SignUpForm() {
         ) : null}
 
         <Button
-          label="Create account"
-          variant="secondary"
+          label={t('auth.signUpCta')}
+          variant="primary"
           size="lg"
           onPress={onSubmit}
           loading={formState.isSubmitting}

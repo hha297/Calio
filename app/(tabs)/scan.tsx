@@ -113,11 +113,11 @@ export default function ScanScreen() {
         onBarcodeScanned={busy ? undefined : ({ data }) => void handleBarcode(data)}
       />
       <View className="absolute bottom-0 left-0 right-0 gap-3 bg-black/70 px-4 pb-10 pt-4">
-        <Text variant="body" tone="onPrimary" className="text-center">
+        <Text variant="body" style={{ color: '#F1F5E9', textAlign: 'center' }}>
           Align the barcode in the frame
         </Text>
         {message ? (
-          <Text variant="bodySmall" tone="onPrimary" className="text-center">
+          <Text variant="bodySmall" style={{ color: '#F1F5E9', textAlign: 'center' }}>
             {message}
           </Text>
         ) : null}
@@ -131,7 +131,7 @@ export default function ScanScreen() {
           />
         ) : null}
         <Pressable onPress={() => router.push('/food/add')}>
-          <Text variant="bodyStrong" tone="onPrimary" className="text-center">
+          <Text variant="bodyStrong" style={{ color: '#F1F5E9', textAlign: 'center' }}>
             Enter manually
           </Text>
         </Pressable>

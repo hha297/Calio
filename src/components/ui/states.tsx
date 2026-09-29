@@ -1,8 +1,9 @@
 import { ActivityIndicator, View } from 'react-native';
 
-import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
-import { colors } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
+
+import { Button } from './button';
+import { Text } from './text';
 
 type Props = {
   title: string;
@@ -25,6 +26,8 @@ export function ErrorState({ title, body, onRetry }: Props) {
 }
 
 export function LoadingState({ label = 'Loading…' }: { label?: string }) {
+  const colors = useThemeColors();
+
   return (
     <View className="items-center justify-center gap-3 py-10">
       <ActivityIndicator color={colors.primary} />

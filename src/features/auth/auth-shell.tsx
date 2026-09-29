@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
@@ -11,7 +10,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandMark } from '@/components/brand-mark';
 import { Text } from '@/components/ui/text';
-import { colors } from '@/theme';
+import { FloatingBackgroundDecor } from '@/components/floating-background-decor';
+import { AuthTopBar } from '@/features/auth/auth-top-bar';
+import { useThemeColors } from '@/theme/theme-provider';
+import { brand } from '@/theme/themes';
 
 type AuthShellProps = {
   title: string;
@@ -19,52 +21,71 @@ type AuthShellProps = {
   subtitle?: string;
   children: ReactNode;
   footer?: ReactNode;
+  showTopBar?: boolean;
 };
 
-/** Purple canvas + lime accents; content sits above décor with solid contrast. */
-export function AuthShell({ title, subtitle, children, footer }: AuthShellProps) {
-  return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={['#6B1A96', colors.primary, '#2A043D']}
-        locations={[0, 0.5, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+/**
+ * Neutral auth canvas — light/dark background tokens only.
+ * Brand green is reserved for accents (logo, CTAs, focus), not the screen fill.
+ */
+export function AuthShell({
+  title,
+  subtitle,
+  children,
+  footer,
+  showTopBar = true,
+}: AuthShellProps) {
+  const colors = useThemeColors();
 
-      <View pointerEvents="none" style={styles.decorLayer}>
-        <View style={styles.blobTop} />
-        <View style={styles.blobSide} />
-        <View style={styles.blobCorner} />
-      </View>
+  return (
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <FloatingBackgroundDecor />
 
       <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.safe}>
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
         >
+          {showTopBar ? (
+            <View style={styles.topBar}>
+              <AuthTopBar />
+            </View>
+          ) : null}
+
           <ScrollView
             style={styles.flex}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
+            automaticallyAdjustKeyboardInsets
           >
             <View style={styles.hero}>
               <BrandMark size="hero" />
-              <Text variant="display" tone="onPrimary" style={styles.title}>
+              <Text variant="display" style={[styles.title, { color: colors.textPrimary }]}>
                 {title}
               </Text>
               {subtitle ? (
-                <Text variant="body" style={styles.subtitle}>
+                <Text
+                  variant="body"
+                  style={[styles.subtitle, { color: colors.textMuted }]}
+                >
                   {subtitle}
                 </Text>
               ) : null}
             </View>
 
-            <View style={styles.card}>
-              <View style={styles.cardHandle} />
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  shadowColor: brand.darkBackground,
+                },
+              ]}
+            >
               {children}
             </View>
 
@@ -79,92 +100,55 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.primary,
   },
   flex: {
     flex: 1,
   },
   safe: {
     flex: 1,
-    zIndex: 2,
+    zIndex: 1,
   },
-  decorLayer: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 0,
-    overflow: 'hidden',
-  },
-  blobTop: {
-    position: 'absolute',
-    top: -48,
-    right: -64,
-    width: 200,
-    height: 200,
-    borderRadius: 64,
-    backgroundColor: colors.secondary,
-    opacity: 0.22,
-    transform: [{ rotate: '22deg' }],
-  },
-  blobSide: {
-    position: 'absolute',
-    top: 210,
-    left: -70,
-    width: 150,
-    height: 150,
-    borderRadius: 999,
-    backgroundColor: colors.secondaryHot,
-    opacity: 0.16,
-  },
-  blobCorner: {
-    position: 'absolute',
-    bottom: 160,
-    right: 18,
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: colors.secondary,
-    opacity: 0.55,
-    transform: [{ rotate: '-14deg' }],
+  topBar: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 4,
+    zIndex: 10,
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 28,
+    paddingBottom: 48,
   },
   hero: {
+    position: 'relative',
     alignItems: 'center',
-    gap: 12,
-    paddingTop: 10,
-    paddingBottom: 6,
+    gap: 10,
+    paddingTop: 4,
+    paddingBottom: 4,
+    width: '100%',
   },
   title: {
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: 4,
   },
   subtitle: {
     textAlign: 'center',
-    color: 'rgba(255,255,255,0.9)',
     maxWidth: 340,
     paddingHorizontal: 8,
     lineHeight: 24,
   },
   card: {
-    marginTop: 24,
-    backgroundColor: colors.surface,
-    borderRadius: 28,
-    borderWidth: 3,
-    borderColor: colors.secondary,
+    marginTop: 18,
+    borderRadius: 24,
+    borderWidth: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 22,
     paddingBottom: 24,
-  },
-  cardHandle: {
-    alignSelf: 'center',
-    width: 48,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: colors.primary,
-    marginBottom: 20,
+    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
   },
   footer: {
     marginTop: 22,

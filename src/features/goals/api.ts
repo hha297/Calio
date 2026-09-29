@@ -2,9 +2,10 @@ import { getSupabase } from '@/lib/supabase/client';
 
 import type { Goal, Profile } from './types';
 
-const PROFILE_COLUMNS = 'id, display_name, height_cm, units, onboarding_completed_at';
+const PROFILE_COLUMNS =
+  'id, display_name, height_cm, sex, birth_date, units, activity_level, onboarding_completed_at';
 const GOAL_COLUMNS =
-  'id, goal_type, target_weight_kg, daily_calorie_target, protein_g, carbs_g, fat_g, is_active';
+  'id, goal_type, target_weight_kg, daily_calorie_target, weekly_change_kg, protein_g, carbs_g, fat_g, is_active';
 
 export async function fetchProfile(userId: string): Promise<Profile | null> {
   const supabase = getSupabase();

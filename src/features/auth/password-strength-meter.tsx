@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -7,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
-import { colors } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 
 import { assessPasswordStrength } from './password-strength';
 
@@ -18,6 +19,8 @@ type PasswordStrengthMeterProps = {
 };
 
 export function PasswordStrengthMeter({ password, userInputs = [] }: PasswordStrengthMeterProps) {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
   const strength = assessPasswordStrength(password, userInputs);
   const [trackWidth, setTrackWidth] = useState(0);
   const progress = useSharedValue(0);
@@ -30,11 +33,18 @@ export function PasswordStrengthMeter({ password, userInputs = [] }: PasswordStr
     width: trackWidth * progress.value,
   }));
 
+  const label =
+    strength.tier === 'empty'
+      ? t('auth.strengthEmpty')
+      : strength.labelKey
+        ? t(strength.labelKey)
+        : '';
+
   return (
     <View style={styles.wrap} accessibilityRole="progressbar">
       <View className="flex-row items-center justify-between" style={styles.labelRow}>
         <Text variant="caption" tone="muted">
-          Password strength
+          {t('auth.passwordStrength')}
         </Text>
         <Text
           variant="caption"
@@ -44,12 +54,12 @@ export function PasswordStrengthMeter({ password, userInputs = [] }: PasswordStr
             textAlign: 'right',
           }}
         >
-          {strength.tier === 'empty' ? '—' : strength.label}
+          {label}
         </Text>
       </View>
 
       <View
-        style={styles.track}
+        style={[styles.track, { backgroundColor: colors.surfaceMuted }]}
         onLayout={(event) => {
           setTrackWidth(event.nativeEvent.layout.width);
         }}
@@ -66,9 +76,9 @@ export function PasswordStrengthMeter({ password, userInputs = [] }: PasswordStr
       </View>
 
       <View style={styles.hintSlot}>
-        {strength.hint ? (
+        {strength.hintKey ? (
           <Text variant="caption" tone="muted">
-            {strength.hint}
+            {t(strength.hintKey)}
           </Text>
         ) : null}
       </View>
@@ -87,7 +97,6 @@ const styles = StyleSheet.create({
   track: {
     height: 8,
     borderRadius: 999,
-    backgroundColor: colors.surfaceMuted,
     overflow: 'hidden',
   },
   fill: {

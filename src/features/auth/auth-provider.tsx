@@ -18,11 +18,12 @@ import { getSupabase } from '@/lib/supabase/client';
 import { isSupabaseConfigured } from '@/lib/supabase/env';
 import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 
-import { getAuthRedirectUri } from './redirect';
+import { isEmailConfirmed } from './email-confirmed';
 import { getRememberMe, setRememberMe } from './remember-me';
 import { createSessionFromUrl } from './session-from-url';
 
 type SignUpResult = {
+  /** True when the user must enter the signup email OTP before continuing. */
   needsEmailConfirmation: boolean;
 };
 
@@ -34,9 +35,19 @@ type AuthContextValue = {
   signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signUp: (email: string, password: string) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
+  /** Resends the signup confirmation email (OTP when Confirm signup template uses {{ .Token }}). */
   resendConfirmationEmail: (email: string) => Promise<void>;
+  /** Verifies the signup email OTP (`type: 'signup'`). */
+  verifySignupOtp: (email: string, token: string) => Promise<void>;
+  /** Sends a recovery email (OTP when the Reset Password template uses {{ .Token }}). */
   resetPasswordForEmail: (email: string) => Promise<void>;
-  updatePassword: (password: string) => Promise<void>;
+  /** Verifies the recovery OTP and marks the session as password-recovery. */
+  verifyRecoveryOtp: (email: string, token: string) => Promise<void>;
+  /**
+   * Sets a new password during recovery, then signs out so the user can
+   * sign in fresh. Keeps passwordRecovery true until sign-out completes.
+   */
+  completePasswordReset: (password: string) => Promise<void>;
   clearPasswordRecovery: () => void;
 };
 
@@ -53,13 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(!configured);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const handledUrls = useRef(new Set<string>());
+  /** True while verifyOtp(recovery) is in flight — blocks dashboard routing on SIGNED_IN. */
+  const recoveryOtpInFlight = useRef(false);
 
   const handleIncomingUrl = useCallback(async (url: string | null) => {
     if (!url || handledUrls.current.has(url)) {
       return;
     }
 
-    // Only consume Calio/auth callback URLs — ignore unrelated deep links.
+    // Email confirm / OAuth callbacks only — password reset uses in-app OTP.
     if (!url.includes('auth/callback') && !url.includes('access_token') && !url.includes('code=')) {
       return;
     }
@@ -67,7 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     handledUrls.current.add(url);
 
     try {
-      await createSessionFromUrl(url);
+      const result = await createSessionFromUrl(url);
+      if (result.isPasswordRecovery) {
+        setPasswordRecovery(true);
+      }
     } catch (error) {
       handledUrls.current.delete(url);
       reportError(error, { area: 'auth', action: 'deep-link' });
@@ -103,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // Ephemeral sign-in: drop persisted session on cold start, unless this
-        // launch is finishing an email/reset deep link.
+        // launch is finishing an email confirm deep link.
         if (!remember && data.session && !fromAuthLink) {
           await supabase.auth.signOut({ scope: 'local' });
           clearUserLocalState();
@@ -128,11 +144,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
 
-      if (event === 'PASSWORD_RECOVERY') {
+      if (
+        event === 'PASSWORD_RECOVERY' ||
+        (event === 'SIGNED_IN' && recoveryOtpInFlight.current)
+      ) {
         setPasswordRecovery(true);
       }
 
-      if (event === 'SIGNED_IN' && next?.user.id) {
+      if (event === 'SIGNED_IN' && next?.user.id && !recoveryOtpInFlight.current) {
         analytics.identify(next.user.id);
       }
 
@@ -178,31 +197,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Supabase is not configured.');
     }
 
+    // No emailRedirectTo — confirmation uses in-app OTP ({{ .Token }} in the email template).
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: getAuthRedirectUri(),
-      },
     });
     if (error) {
       throw error;
     }
 
-    // New accounts stay signed in across launches by default.
     await setRememberMe(true);
-
-    // Autoconfirm projects return a session. No session usually means either
-    // email confirmation is required OR the email is already registered
-    // (Supabase returns an empty identities array for the duplicate case).
-    if (data.session) {
-      analytics.track('auth_sign_up_succeeded');
-      return { needsEmailConfirmation: false };
-    }
 
     const identityCount = data.user?.identities?.length ?? 0;
     if (!data.user || identityCount === 0) {
       throw new Error('An account with that email already exists. Sign in instead.');
+    }
+
+    if (isEmailConfirmed(data.user) && data.session) {
+      analytics.track('auth_sign_up_succeeded');
+      return { needsEmailConfirmation: false };
     }
 
     analytics.track('auth_sign_up_confirmation_required');
@@ -216,7 +229,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { error } = await supabase.auth.signOut();
-    // Always drop local user data so the next account cannot see prior cache.
     clearUserLocalState();
     setPasswordRecovery(false);
 
@@ -233,12 +245,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Supabase is not configured.');
     }
 
+    // No redirectTo — signup confirmation uses in-app OTP.
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
-      options: {
-        emailRedirectTo: getAuthRedirectUri(),
-      },
     });
     if (error) {
       throw error;
@@ -247,15 +257,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     analytics.track('auth_confirmation_resent');
   }, []);
 
+  const verifySignupOtp = useCallback(async (email: string, token: string) => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'signup',
+    });
+    if (error) {
+      throw error;
+    }
+
+    const confirmedUser = data.user ?? data.session?.user ?? null;
+    if (!isEmailConfirmed(confirmedUser)) {
+      const { data: fresh, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        throw userError;
+      }
+      if (!isEmailConfirmed(fresh.user)) {
+        throw new Error('Email verification did not complete.');
+      }
+    }
+
+    await setRememberMe(true);
+    analytics.track('auth_signup_otp_verified');
+  }, []);
+
   const resetPasswordForEmail = useCallback(async (email: string) => {
     const supabase = getSupabase();
     if (!supabase) {
       throw new Error('Supabase is not configured.');
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: getAuthRedirectUri(),
-    });
+    // No redirectTo — recovery uses in-app OTP ({{ .Token }} in the email template).
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
     if (error) {
       throw error;
     }
@@ -263,19 +302,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     analytics.track('auth_password_reset_requested');
   }, []);
 
-  const updatePassword = useCallback(async (password: string) => {
+  const verifyRecoveryOtp = useCallback(async (email: string, token: string) => {
     const supabase = getSupabase();
     if (!supabase) {
       throw new Error('Supabase is not configured.');
     }
 
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) {
-      throw error;
+    recoveryOtpInFlight.current = true;
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'recovery',
+      });
+      if (error) {
+        throw error;
+      }
+      // Keep recovery lock for update-password; do not navigate to Main.
+      setPasswordRecovery(true);
+      analytics.track('auth_recovery_otp_verified');
+    } finally {
+      recoveryOtpInFlight.current = false;
+    }
+  }, []);
+
+  const completePasswordReset = useCallback(async (password: string) => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
     }
 
-    setPasswordRecovery(false);
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+    if (updateError) {
+      throw updateError;
+    }
+
     analytics.track('auth_password_updated');
+
+    // Stay in recovery until sign-out finishes so guards never send the user to Main.
+    const { error: signOutError } = await supabase.auth.signOut();
+    clearUserLocalState();
+    setPasswordRecovery(false);
+
+    if (signOutError) {
+      throw signOutError;
+    }
   }, []);
 
   const clearPasswordRecovery = useCallback(() => {
@@ -292,8 +363,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       resendConfirmationEmail,
+      verifySignupOtp,
       resetPasswordForEmail,
-      updatePassword,
+      verifyRecoveryOtp,
+      completePasswordReset,
       clearPasswordRecovery,
     }),
     [
@@ -305,8 +378,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       resendConfirmationEmail,
+      verifySignupOtp,
       resetPasswordForEmail,
-      updatePassword,
+      verifyRecoveryOtp,
+      completePasswordReset,
       clearPasswordRecovery,
     ],
   );

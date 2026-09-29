@@ -1,13 +1,13 @@
 import { ChevronDown } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 import { cx } from '@/utils/cx';
 
 import { FieldPlaceholder } from './field-placeholder';
-import { fieldShell, fieldTypography } from './field-styles';
+import { fieldShell, getFieldTypography } from './field-styles';
 import { Text } from './text';
 
 export type SelectOption<T extends string = string> = {
@@ -34,6 +34,7 @@ export function Select<T extends string = string>({
   error,
   disabled = false,
 }: SelectProps<T>) {
+  const colors = useThemeColors();
   const [open, setOpen] = useState(false);
 
   const selected = useMemo(
@@ -41,6 +42,7 @@ export function Select<T extends string = string>({
     [options, value],
   );
   const showPlaceholder = !selected;
+  const borderColor = error ? colors.error : open ? colors.primary : colors.border;
 
   return (
     <View className="gap-1.5">
@@ -54,19 +56,21 @@ export function Select<T extends string = string>({
         disabled={disabled}
         onPress={() => setOpen(true)}
         className={cx(
-          'min-h-[52px] flex-row items-center rounded-2xl border bg-surface px-3.5',
-          error ? 'border-error' : open ? 'border-primary' : 'border-border',
+          'min-h-[52px] flex-row items-center rounded-2xl border px-3.5',
           disabled && 'opacity-50',
         )}
+        style={{ backgroundColor: colors.surface, borderColor }}
       >
         <View style={fieldShell.wrap}>
           {showPlaceholder ? <FieldPlaceholder label={placeholder} /> : null}
           {selected ? (
-            <Text variant="body" style={{ ...fieldTypography, paddingVertical: 12 }}>
+            <Text
+              variant="body"
+              style={{ ...getFieldTypography(colors), paddingVertical: 12 }}
+            >
               {selected.label}
             </Text>
           ) : (
-            // Reserve height so the control doesn’t collapse when empty.
             <View style={{ height: 46 }} />
           )}
         </View>
@@ -79,20 +83,22 @@ export function Select<T extends string = string>({
       ) : null}
 
       <Modal visible={open} animationType="slide" transparent onRequestClose={() => setOpen(false)}>
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(33,27,36,0.45)', justifyContent: 'flex-end' }}
-          onPress={() => setOpen(false)}
-        >
-          <Pressable onPress={(event) => event.stopPropagation()}>
-            <SafeAreaView
-              edges={['bottom']}
-              style={{
+        <View style={styles.sheetRoot}>
+          <Pressable
+            style={styles.sheetBackdrop}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss"
+            onPress={() => setOpen(false)}
+          />
+          <SafeAreaView
+            edges={['bottom']}
+            style={[
+              styles.sheetPanel,
+              {
                 backgroundColor: colors.surface,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                maxHeight: '70%',
-              }}
-            >
+              },
+            ]}
+          >
               <View className="items-center px-4 pb-2 pt-3">
                 <View
                   className="mb-3 h-1.5 w-12 rounded-full"
@@ -112,12 +118,19 @@ export function Select<T extends string = string>({
                         onChange(option.value);
                         setOpen(false);
                       }}
-                      className="flex-row items-center justify-between border-b border-border px-4 py-3.5"
-                      style={isActive ? { backgroundColor: colors.primaryMuted } : undefined}
+                      className="flex-row items-center justify-between border-b px-4 py-3.5"
+                      style={{
+                        borderBottomColor: colors.border,
+                        backgroundColor: isActive ? colors.primaryMuted : undefined,
+                      }}
                     >
                       <Text
                         variant={isActive ? 'bodyStrong' : 'body'}
-                        style={{ fontFamily: isActive ? undefined : fieldTypography.fontFamily }}
+                        style={{
+                          fontFamily: isActive
+                            ? undefined
+                            : getFieldTypography(colors).fontFamily,
+                        }}
                       >
                         {option.label}
                       </Text>
@@ -130,10 +143,25 @@ export function Select<T extends string = string>({
                   );
                 })}
               </ScrollView>
-            </SafeAreaView>
-          </Pressable>
-        </Pressable>
+          </SafeAreaView>
+        </View>
       </Modal>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  sheetRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  sheetBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(33,27,36,0.45)',
+  },
+  sheetPanel: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '70%',
+  },
+});

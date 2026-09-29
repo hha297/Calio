@@ -1,9 +1,9 @@
 import { Check } from 'lucide-react-native';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui/text';
-import { colors } from '@/theme';
-import { cx } from '@/utils/cx';
+import { useThemeColors } from '@/theme/theme-provider';
+
+import { Text } from './text';
 
 type CheckboxRowProps = {
   label: string;
@@ -13,25 +13,34 @@ type CheckboxRowProps = {
 };
 
 export function CheckboxRow({ label, checked, onChange, hint }: CheckboxRowProps) {
+  const colors = useThemeColors();
+  const alignStart = Boolean(hint);
+
   return (
     <Pressable
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
       accessibilityLabel={label}
       onPress={() => onChange(!checked)}
-      className="flex-row items-start gap-3"
+      cssInterop={false}
       hitSlop={4}
+      style={[styles.row, alignStart ? styles.rowStart : styles.rowCenter]}
     >
       <View
-        className={cx(
-          'mt-0.5 h-6 w-6 items-center justify-center rounded-md border-2',
-          checked ? 'border-primary bg-primary' : 'border-borderStrong bg-surface',
-        )}
+        style={[
+          styles.box,
+          {
+            borderColor: checked ? colors.primary : colors.borderStrong,
+            backgroundColor: checked ? colors.primary : colors.surface,
+          },
+        ]}
       >
         {checked ? <Check size={14} color={colors.textOnPrimary} strokeWidth={3} /> : null}
       </View>
-      <View className="flex-1 gap-0.5">
-        <Text variant="bodyStrong">{label}</Text>
+      <View style={[styles.labelWrap, alignStart && styles.labelWrapTop]}>
+        <Text variant="bodySmall" tone="primary" numberOfLines={2} style={styles.label}>
+          {label}
+        </Text>
         {hint ? (
           <Text variant="caption" tone="secondary">
             {hint}
@@ -41,3 +50,38 @@ export function CheckboxRow({ label, checked, onChange, hint }: CheckboxRowProps
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    gap: 10,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+  },
+  rowCenter: {
+    alignItems: 'center',
+  },
+  rowStart: {
+    alignItems: 'flex-start',
+  },
+  box: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  labelWrap: {
+    flexShrink: 1,
+    gap: 2,
+    justifyContent: 'center',
+  },
+  labelWrapTop: {
+    justifyContent: 'flex-start',
+    paddingTop: 1,
+  },
+  label: {
+    flexShrink: 1,
+  },
+});
