@@ -23,6 +23,12 @@ const PACES: { value: Pace; label: string; kg: number }[] = [
   { value: 'fast', label: 'Fast', kg: 0.75 },
 ];
 
+function goalDirectionHint(goalType: string | null | undefined): string {
+  if (goalType === 'lose_weight') return 'lower than your current weight';
+  if (goalType === 'gain_weight') return 'higher than your current weight';
+  return 'close to your current weight';
+}
+
 export function TargetStep() {
   const colors = useThemeColors();
   const { answers, progress, goNext, goBack, saving, error } = useSetup();
@@ -30,8 +36,10 @@ export function TargetStep() {
   const currentKg = answers.weightKg ?? 0;
   const suggested = suggestedPaceForGoal(answers.goalType ?? 'lose_weight');
 
+  // Empty by default so the user types their own target (no pre-filled current kg).
   const [targetDisplay, setTargetDisplay] = useState(() => {
-    const kg = answers.targetWeightKg ?? currentKg;
+    if (answers.targetWeightKg == null) return '';
+    const kg = answers.targetWeightKg;
     return units === 'metric'
       ? String(Math.round(kg * 10) / 10)
       : String(Math.round(kgToLb(kg) * 10) / 10);
@@ -40,7 +48,9 @@ export function TargetStep() {
   const [touched, setTouched] = useState(false);
 
   const targetKg = useMemo(() => {
-    const n = Number(targetDisplay);
+    const trimmed = targetDisplay.trim();
+    if (!trimmed) return null;
+    const n = Number(trimmed);
     if (!Number.isFinite(n)) return null;
     return units === 'metric' ? n : lbToKg(n);
   }, [targetDisplay, units]);
@@ -50,16 +60,36 @@ export function TargetStep() {
     targetKg != null && weekly !== 0 ? estimatedWeeksToGoal(currentKg, targetKg, weekly) : null;
 
   const compatible =
-    targetKg != null &&
-    answers.goalType != null &&
+    targetKg == null ||
+    answers.goalType == null ||
     isTargetCompatibleWithGoal(answers.goalType, currentKg, targetKg);
-  const safe = targetKg != null && isTargetWithinSafeRange(currentKg, targetKg);
-  const valid = targetKg != null && pace != null && compatible && safe;
+  const safe = targetKg == null || isTargetWithinSafeRange(currentKg, targetKg);
+
+  // Hard requirements only — direction mismatch is a warning, not a blocker.
+  const canContinue =
+    targetKg != null &&
+    pace != null &&
+    targetKg >= 40 &&
+    targetKg <= 250;
+
+  const directionWarning =
+    targetKg != null && answers.goalType != null && !compatible
+      ? answers.goalType === 'lose_weight'
+        ? `You chose cut, but ${formatWeight(targetKg, units)} is above your current weight (${formatWeight(currentKg, units)}). Double-check that isn’t a typo — you can still continue if it’s intentional.`
+        : answers.goalType === 'gain_weight'
+          ? `You chose bulk, but ${formatWeight(targetKg, units)} is below your current weight (${formatWeight(currentKg, units)}). Double-check that isn’t a typo — you can still continue if it’s intentional.`
+          : `That target isn’t close to your current weight. For maintain, a target ${goalDirectionHint(answers.goalType)} usually fits better.`
+      : null;
+
+  const rangeWarning =
+    targetKg != null && !safe && compatible
+      ? 'That’s a large jump from your current weight. You can still continue — consider a nearer target if this was accidental.'
+      : null;
 
   return (
     <SetupShell
       title="Target weight & pace"
-      subtitle={`Current weight: ${formatWeight(currentKg, units)}. Timelines are estimates.`}
+      subtitle={`Current weight: ${formatWeight(currentKg, units)}. Enter the weight you want to aim for.`}
       stepIndex={progress.index}
       stepTotal={progress.total}
       onBack={() => void goBack()}
@@ -67,7 +97,7 @@ export function TargetStep() {
       continueLoading={saving}
       onContinue={() => {
         setTouched(true);
-        if (!valid || targetKg == null || !pace) return;
+        if (!canContinue || targetKg == null || !pace) return;
         void goNext({ targetWeightKg: targetKg, pace });
       }}
     >
@@ -77,15 +107,37 @@ export function TargetStep() {
           value={targetDisplay}
           onChangeText={setTargetDisplay}
           keyboardType="decimal-pad"
-          placeholder={units === 'metric' ? 'e.g. 65' : 'e.g. 143'}
+          placeholder={units === 'metric' ? 'Enter target in kg' : 'Enter target in lb'}
           error={
-            touched && targetKg != null && !compatible
-              ? 'Target should match your goal (lower to cut, higher to bulk)'
-              : touched && targetKg != null && !safe
-                ? 'That change looks extreme — pick a closer target'
+            touched && targetDisplay.trim() === ''
+              ? 'Enter a target weight'
+              : touched && targetKg != null && (targetKg < 40 || targetKg > 250)
+                ? 'Enter a realistic target weight'
                 : undefined
           }
         />
+
+        {directionWarning ? (
+          <View
+            className="rounded-2xl px-3 py-2.5"
+            style={{ backgroundColor: colors.secondaryMuted }}
+          >
+            <Text variant="bodySmall" style={{ color: colors.secondaryPressed }}>
+              {directionWarning}
+            </Text>
+          </View>
+        ) : null}
+
+        {rangeWarning ? (
+          <View
+            className="rounded-2xl px-3 py-2.5"
+            style={{ backgroundColor: colors.secondaryMuted }}
+          >
+            <Text variant="bodySmall" style={{ color: colors.secondaryPressed }}>
+              {rangeWarning}
+            </Text>
+          </View>
+        ) : null}
 
         <Text variant="label" tone="secondary">
           Pace {suggested ? `(suggested: ${suggested})` : ''}
@@ -100,17 +152,17 @@ export function TargetStep() {
           />
         ))}
 
-        {weeks != null ? (
+        {weeks != null && compatible ? (
           <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: colors.primaryMuted }}>
-            <Text variant="bodySmall" tone="secondary">
+            <Text variant="bodySmall" tone="muted">
               Estimated timeline: about {weeks} week{weeks === 1 ? '' : 's'} (rough guide only).
             </Text>
           </View>
         ) : null}
 
-        {touched && !valid ? (
+        {touched && !canContinue ? (
           <Text variant="caption" tone="error">
-            Fix the target and pace to continue
+            Enter a target weight and choose a pace to continue
           </Text>
         ) : null}
         {error ? (

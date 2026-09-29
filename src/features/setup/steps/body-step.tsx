@@ -246,7 +246,7 @@ export function BodyStep() {
           <View className="gap-1.5">
             <Text variant="bodySmall" tone="secondary">
               Automatic estimates need adult age and female/male sex. Enter a daily calorie target
-              instead — you can fine-tune it on the summary.
+              instead — it will be used as your starting plan.
             </Text>
             <Input
               label="Daily calorie target"

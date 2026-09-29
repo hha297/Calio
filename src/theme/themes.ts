@@ -49,7 +49,8 @@ export const lightColors: ThemeColors = {
   successBright: brand.primary,
   warning: brand.secondary,
   error: '#C44B4B',
-  errorMuted: '#FCECEE',
+  /** Stronger pink-red wash so error banners pop on green-tinted surfaces. */
+  errorMuted: '#F6D0D3',
   info: '#4A7A8C',
   macroCalories: brand.primary,
   macroProtein: '#4A7A8C',
@@ -84,7 +85,8 @@ export const darkColors: ThemeColors = {
   successBright: brand.primary,
   warning: brand.secondary,
   error: '#E07070',
-  errorMuted: '#3A2222',
+  /** Saturated dark red tint — readable against olive/green dark surfaces. */
+  errorMuted: '#5C2A2E',
   info: '#7AA8B8',
   macroCalories: brand.primary,
   macroProtein: '#7AA8B8',

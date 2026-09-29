@@ -10,16 +10,23 @@ import {
 } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
+import { isEmailConfirmed } from '@/features/auth/email-confirmed';
 import type { Profile } from '@/features/goals/types';
 import { getOnboardingCompleted, setOnboardingCompleted } from '@/features/onboarding/storage';
 import { reportError } from '@/lib/errors/report-error';
 import { queryClient } from '@/lib/query/query-client';
 
-import { isAuthFailure, prefetchBootstrapData, toBootstrapErrorMessage } from './prefetch';
+import {
+  extractErrorMessage,
+  isAuthFailure,
+  prefetchBootstrapData,
+  toBootstrapErrorMessage,
+} from './prefetch';
 
 export type AppDestination =
   | 'onboarding'
   | 'auth'
+  | 'verify-email'
   | 'setup'
   | 'main'
   | 'update-password';
@@ -30,6 +37,8 @@ type BootstrapContextValue = {
   destination: AppDestination | null;
   error: string | null;
   retry: () => void;
+  /** Clears the stale session and returns the user to auth. */
+  recoverToAuth: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
 };
 
@@ -38,7 +47,9 @@ const BootstrapContext = createContext<BootstrapContextValue | null>(null);
 export function BootstrapProvider({ children }: { children: ReactNode }) {
   const { isReady, session, passwordRecovery, signOut } = useAuth();
   const [welcomeDone, setWelcomeDone] = useState<boolean | null>(null);
-  const userId = passwordRecovery ? undefined : session?.user.id;
+  const emailVerified = isEmailConfirmed(session?.user);
+  /** Prefetch only for verified users who are not mid password-recovery. */
+  const userId = passwordRecovery || !emailVerified ? undefined : session?.user.id;
   const email = session?.user.email;
 
   useEffect(() => {
@@ -60,6 +71,16 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const recoverToAuth = useCallback(async () => {
+    try {
+      await signOut();
+    } catch (signOutError) {
+      reportError(signOutError, { area: 'bootstrap', action: 'recover-to-auth' });
+    } finally {
+      queryClient.clear();
+    }
+  }, [signOut]);
+
   const bootstrapQuery = useQuery({
     queryKey: ['bootstrap', userId],
     enabled: Boolean(isReady && welcomeDone !== null && userId),
@@ -74,14 +95,14 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
         await prefetchBootstrapData(queryClient, { userId, email });
         return userId;
       } catch (err) {
-        reportError(err, { area: 'bootstrap', action: 'prefetch' });
+        const detail = extractErrorMessage(err) || 'Unknown error';
+        reportError(err instanceof Error ? err : new Error(detail), {
+          area: 'bootstrap',
+          action: 'prefetch',
+        });
 
         if (isAuthFailure(err)) {
-          try {
-            await signOut();
-          } catch (signOutError) {
-            reportError(signOutError, { area: 'bootstrap', action: 'auth-failure-sign-out' });
-          }
+          await recoverToAuth();
           return null;
         }
 
@@ -107,6 +128,10 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
         : 'Could not load your data. Check your connection and try again.'
       : null;
 
+  // After auth-failure recovery, query succeeds with null until session clears.
+  const awaitingSessionClear =
+    Boolean(userId) && bootstrapQuery.isSuccess && bootstrapQuery.data === null;
+
   const profile = userId
     ? queryClient.getQueryData<Profile | null>(['profile', userId])
     : null;
@@ -122,6 +147,12 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
     }
 
     if (session) {
+      if (!emailVerified) {
+        return 'verify-email';
+      }
+      if (awaitingSessionClear) {
+        return null;
+      }
       if (!prefetchReady || prefetchError) {
         return null;
       }
@@ -137,6 +168,8 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
     welcomeDone,
     passwordRecovery,
     session,
+    emailVerified,
+    awaitingSessionClear,
     prefetchReady,
     prefetchError,
     setupComplete,
@@ -145,6 +178,7 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
   const isBootstrapping =
     !isReady ||
     welcomeDone === null ||
+    awaitingSessionClear ||
     (Boolean(userId) && !prefetchReady && !prefetchError);
 
   const value = useMemo(
@@ -153,9 +187,10 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
       destination,
       error: prefetchError,
       retry,
+      recoverToAuth,
       completeOnboarding,
     }),
-    [isBootstrapping, destination, prefetchError, retry, completeOnboarding],
+    [isBootstrapping, destination, prefetchError, retry, recoverToAuth, completeOnboarding],
   );
 
   return <BootstrapContext.Provider value={value}>{children}</BootstrapContext.Provider>;

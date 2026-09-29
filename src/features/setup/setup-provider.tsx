@@ -53,8 +53,13 @@ export function SetupProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
     if (!userId) {
-      setReady(true);
-      return;
+      const timer = setTimeout(() => {
+        if (active) setReady(true);
+      }, 0);
+      return () => {
+        active = false;
+        clearTimeout(timer);
+      };
     }
 
     void (async () => {

@@ -12,7 +12,7 @@ import { Text } from '@/components/ui/text';
 import { reportError } from '@/lib/errors/report-error';
 import { useThemeColors } from '@/theme/theme-provider';
 
-import { toAuthErrorMessage } from './auth-errors';
+import { isEmailNotConfirmedError, toAuthErrorMessage } from './auth-errors';
 import { useAuth } from './auth-provider';
 import { AuthShell } from './auth-shell';
 import { AuthTextLink } from './auth-text-link';
@@ -62,6 +62,13 @@ function SignInForm({ notice }: { notice?: string }) {
       await signIn(values.email, values.password, values.rememberMe);
     } catch (error) {
       reportError(error, { area: 'auth', action: 'sign-in' });
+      if (isEmailNotConfirmedError(error)) {
+        router.replace({
+          pathname: '/(auth)/verify-email',
+          params: { email: values.email },
+        });
+        return;
+      }
       setFormError(toAuthErrorMessage(error));
     }
   });
@@ -246,7 +253,7 @@ function SignUpForm() {
       const result = await signUp(values.email, values.password);
       if (result.needsEmailConfirmation) {
         router.replace({
-          pathname: '/(auth)/check-email',
+          pathname: '/(auth)/verify-email',
           params: { email: values.email },
         });
       }

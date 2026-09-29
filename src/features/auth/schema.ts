@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 import { passwordMeetsRequirements } from './password-rules';
-import { RECOVERY_OTP_LENGTH } from './recovery-constants';
+import { EMAIL_OTP_LENGTH } from './recovery-constants';
 
 export type AuthTranslate = (key: string, options?: Record<string, unknown>) => string;
 
 const enMessages: AuthTranslate = (key, options) => {
-  const count = typeof options?.count === 'number' ? options.count : RECOVERY_OTP_LENGTH;
+  const count = typeof options?.count === 'number' ? options.count : EMAIL_OTP_LENGTH;
   const map: Record<string, string> = {
     'auth.errors.enterEmail': 'Enter your email',
     'auth.errors.validEmail': 'Enter a valid email',
@@ -74,8 +74,8 @@ export function createRecoveryOtpSchema(t: AuthTranslate = enMessages) {
       .min(1, t('auth.errors.enterCode'))
       .regex(/^\d+$/, t('auth.errors.numbersOnly'))
       .length(
-        RECOVERY_OTP_LENGTH,
-        t('auth.errors.codeLength', { count: RECOVERY_OTP_LENGTH }),
+        EMAIL_OTP_LENGTH,
+        t('auth.errors.codeLength', { count: EMAIL_OTP_LENGTH }),
       ),
   });
 }

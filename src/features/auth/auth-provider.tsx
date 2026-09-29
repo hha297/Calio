@@ -18,11 +18,12 @@ import { getSupabase } from '@/lib/supabase/client';
 import { isSupabaseConfigured } from '@/lib/supabase/env';
 import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 
-import { getAuthRedirectUri } from './redirect';
+import { isEmailConfirmed } from './email-confirmed';
 import { getRememberMe, setRememberMe } from './remember-me';
 import { createSessionFromUrl } from './session-from-url';
 
 type SignUpResult = {
+  /** True when the user must enter the signup email OTP before continuing. */
   needsEmailConfirmation: boolean;
 };
 
@@ -34,7 +35,10 @@ type AuthContextValue = {
   signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signUp: (email: string, password: string) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
+  /** Resends the signup confirmation email (OTP when Confirm signup template uses {{ .Token }}). */
   resendConfirmationEmail: (email: string) => Promise<void>;
+  /** Verifies the signup email OTP (`type: 'signup'`). */
+  verifySignupOtp: (email: string, token: string) => Promise<void>;
   /** Sends a recovery email (OTP when the Reset Password template uses {{ .Token }}). */
   resetPasswordForEmail: (email: string) => Promise<void>;
   /** Verifies the recovery OTP and marks the session as password-recovery. */
@@ -193,12 +197,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Supabase is not configured.');
     }
 
+    // No emailRedirectTo — confirmation uses in-app OTP ({{ .Token }} in the email template).
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: getAuthRedirectUri(),
-      },
     });
     if (error) {
       throw error;
@@ -206,14 +208,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     await setRememberMe(true);
 
-    if (data.session) {
-      analytics.track('auth_sign_up_succeeded');
-      return { needsEmailConfirmation: false };
-    }
-
     const identityCount = data.user?.identities?.length ?? 0;
     if (!data.user || identityCount === 0) {
       throw new Error('An account with that email already exists. Sign in instead.');
+    }
+
+    if (isEmailConfirmed(data.user) && data.session) {
+      analytics.track('auth_sign_up_succeeded');
+      return { needsEmailConfirmation: false };
     }
 
     analytics.track('auth_sign_up_confirmation_required');
@@ -243,18 +245,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Supabase is not configured.');
     }
 
+    // No redirectTo — signup confirmation uses in-app OTP.
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
-      options: {
-        emailRedirectTo: getAuthRedirectUri(),
-      },
     });
     if (error) {
       throw error;
     }
 
     analytics.track('auth_confirmation_resent');
+  }, []);
+
+  const verifySignupOtp = useCallback(async (email: string, token: string) => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'signup',
+    });
+    if (error) {
+      throw error;
+    }
+
+    const confirmedUser = data.user ?? data.session?.user ?? null;
+    if (!isEmailConfirmed(confirmedUser)) {
+      const { data: fresh, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        throw userError;
+      }
+      if (!isEmailConfirmed(fresh.user)) {
+        throw new Error('Email verification did not complete.');
+      }
+    }
+
+    await setRememberMe(true);
+    analytics.track('auth_signup_otp_verified');
   }, []);
 
   const resetPasswordForEmail = useCallback(async (email: string) => {
@@ -333,6 +363,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       resendConfirmationEmail,
+      verifySignupOtp,
       resetPasswordForEmail,
       verifyRecoveryOtp,
       completePasswordReset,
@@ -347,6 +378,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       resendConfirmationEmail,
+      verifySignupOtp,
       resetPasswordForEmail,
       verifyRecoveryOtp,
       completePasswordReset,

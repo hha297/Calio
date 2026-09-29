@@ -1,22 +1,25 @@
 <!--
-  Calio — Supabase Auth email template: Reset password
+  Calio — Supabase Auth email template: Confirm signup
 
-  MANUAL SETUP (Dashboard — not applied from this repo):
-  1. Open Supabase → Authentication → Email Templates → Reset password
-  2. Subject: Your Calio password reset code
+  MANUAL SETUP (Dashboard — not applied from this repo on hosted projects):
+  1. Open Supabase → Authentication → Email Templates → Confirm signup
+  2. Subject: Your Calio verification code
   3. Paste this entire HTML into the Body field
-  4. Confirm Auth → Sign In / Providers → Email → Email OTP length is 8 (matches EMAIL_OTP_LENGTH in the app)
+  4. Confirm Auth → Sign In / Providers → Email →
+     - Confirm email: ON (required for signup OTP)
+     - Email OTP length: 8 (matches EMAIL_OTP_LENGTH in the app)
   5. Save
 
   Important: use {{ .Token }} only — do NOT include {{ .ConfirmationURL }}.
   A confirmation link would consume the OTP when mail scanners open it.
+  The user verifies inside the Calio app on the Verify Email screen.
 -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Reset your Calio password</title>
+    <title>Verify your Calio email</title>
   </head>
   <body
     style="
@@ -43,17 +46,18 @@
                   Calio
                 </p>
                 <p style="margin: 8px 0 0; font-size: 14px; color: rgba(20, 26, 18, 0.85)">
-                  Password reset
+                  Email verification
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding: 28px 24px 8px">
                 <p style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #1b2518">
-                  Here’s your reset code
+                  Your Calio verification code is
                 </p>
                 <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: #7a8674">
-                  Enter this code in the Calio app to choose a new password. It expires soon and can only be used once.
+                  Enter this code in the Calio app to verify
+                  <strong style="color: #1b2518">{{ .Email }}</strong>. This code will expire shortly and can only be used once.
                 </p>
                 <p
                   style="
@@ -72,11 +76,10 @@
                   {{ .Token }}
                 </p>
                 <p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #7a8674">
-                  Open Calio → Forgot password → enter the code for
-                  <strong style="color: #1b2518">{{ .Email }}</strong>.
+                  Open Calio → Verify your email → enter the code.
                 </p>
                 <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #7a8674">
-                  If you didn’t ask to reset your password, you can ignore this email. Your password will stay the same.
+                  If you didn’t create a Calio account, you can ignore this email.
                 </p>
               </td>
             </tr>

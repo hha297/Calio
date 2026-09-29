@@ -5,7 +5,7 @@ import { TextInput, View } from 'react-native';
 import { FieldPlaceholder } from '@/components/ui/field-placeholder';
 import { fieldShell, getFieldCursorProps, getFieldTypography } from '@/components/ui/field-styles';
 import { Text } from '@/components/ui/text';
-import { RECOVERY_OTP_LENGTH } from '@/features/auth/recovery-constants';
+import { EMAIL_OTP_LENGTH } from '@/features/auth/recovery-constants';
 import { useThemeColors } from '@/theme/theme-provider';
 
 type OtpInputProps = {
@@ -32,7 +32,7 @@ export function OtpInput({
   error,
   disabled = false,
   autoFocus = true,
-  length = RECOVERY_OTP_LENGTH,
+  length = EMAIL_OTP_LENGTH,
 }: OtpInputProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();

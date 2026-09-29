@@ -44,7 +44,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { isBootstrapping, destination, error, retry } = useBootstrap();
+  const { isBootstrapping, destination, error, retry, recoverToAuth } = useBootstrap();
   const { scheme } = useTheme();
 
   useEffect(() => {
@@ -60,11 +60,19 @@ function RootNavigator() {
     });
   }, []);
 
+  const bootstrapStatus = scheme === 'dark' ? 'light' : 'dark';
+
   if (error) {
     return (
       <>
-        <StatusBar style="light" />
-        <BootstrapScreen error={error} onRetry={retry} />
+        <StatusBar style={bootstrapStatus} />
+        <BootstrapScreen
+          error={error}
+          onRetry={retry}
+          onSignIn={() => {
+            void recoverToAuth();
+          }}
+        />
       </>
     );
   }
@@ -72,7 +80,7 @@ function RootNavigator() {
   if (isBootstrapping || !destination) {
     return (
       <>
-        <StatusBar style="light" />
+        <StatusBar style={bootstrapStatus} />
         <BootstrapScreen />
       </>
     );
@@ -81,7 +89,10 @@ function RootNavigator() {
   const showOnboarding = destination === 'onboarding';
   const showSetup = destination === 'setup';
   const showMain = destination === 'main';
-  const showAuth = destination === 'auth' || destination === 'update-password';
+  const showAuth =
+    destination === 'auth' ||
+    destination === 'update-password' ||
+    destination === 'verify-email';
   const statusStyle =
     showAuth || showMain
       ? scheme === 'dark'

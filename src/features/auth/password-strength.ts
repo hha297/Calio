@@ -40,14 +40,15 @@ function tierFromScore(score: number): Exclude<StrengthTier, 'empty'> {
   return 'veryStrong';
 }
 
+/** Traffic-light meter: red → amber → green → deep green. */
 const TIER_META: Record<
   Exclude<StrengthTier, 'empty'>,
   { labelKey: string; color: string; fill: number }
 > = {
   weak: { labelKey: 'auth.strengthWeak', color: '#C44B4B', fill: 0.25 },
-  medium: { labelKey: 'auth.strengthMedium', color: '#E8913A', fill: 0.5 },
-  strong: { labelKey: 'auth.strengthStrong', color: brand.primaryPressed, fill: 0.75 },
-  veryStrong: { labelKey: 'auth.strengthVeryStrong', color: brand.secondary, fill: 1 },
+  medium: { labelKey: 'auth.strengthMedium', color: '#E5A100', fill: 0.5 },
+  strong: { labelKey: 'auth.strengthStrong', color: brand.primary, fill: 0.75 },
+  veryStrong: { labelKey: 'auth.strengthVeryStrong', color: brand.primaryPressed, fill: 1 },
 };
 
 function hintForResult(result: ZxcvbnResult, tier: Exclude<StrengthTier, 'empty'>) {

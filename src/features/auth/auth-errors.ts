@@ -1,8 +1,17 @@
 import i18n from '@/i18n';
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '';
+}
+
+/** True when Supabase rejects sign-in because the email is unconfirmed. */
+export function isEmailNotConfirmedError(error: unknown): boolean {
+  return errorMessage(error).toLowerCase().includes('email not confirmed');
+}
+
 /** Map Supabase / network errors to localized auth copy. */
 export function toAuthErrorMessage(error: unknown): string {
-  const raw = error instanceof Error ? error.message : '';
+  const raw = errorMessage(error);
   const message = raw.toLowerCase();
   const t = (key: string) => i18n.t(key);
 
@@ -10,7 +19,7 @@ export function toAuthErrorMessage(error: unknown): string {
     return t('auth.errors.invalidCredentials');
   }
 
-  if (message.includes('email not confirmed')) {
+  if (isEmailNotConfirmedError(error)) {
     return t('auth.errors.emailNotConfirmed');
   }
 
@@ -32,6 +41,10 @@ export function toAuthErrorMessage(error: unknown): string {
     message.includes('otp has expired')
   ) {
     return t('auth.errors.otpExpired');
+  }
+
+  if (message.includes('verification did not complete') || message.includes('verification failed')) {
+    return t('auth.errors.verificationFailed');
   }
 
   if (

@@ -33,5 +33,8 @@ create policy "onboarding_progress_delete_own" on public.onboarding_progress
   for delete to authenticated using (auth.uid() = user_id);
 
 -- Idempotent first-weight rows from setup: one weight sample per user per day.
-create unique index if not exists body_measurements_user_day_idx
-  on public.body_measurements (user_id, measured_on);
+-- NOTE: core schema already created a non-unique index with this name.
+-- Use 20260929210000_body_measurements_unique_day.sql to replace it with a unique index.
+-- (Left here for documentation; the later migration is authoritative.)
+-- create unique index if not exists body_measurements_user_day_idx
+--   on public.body_measurements (user_id, measured_on);

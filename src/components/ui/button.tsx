@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -23,6 +24,10 @@ type ButtonProps = Omit<PressableProps, 'children' | 'style' | 'className'> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
+  /** Optional leading icon (same color as the label). */
+  iconStart?: (color: string) => ReactNode;
+  /** Optional trailing icon (same color as the label). */
+  iconEnd?: (color: string) => ReactNode;
   /** NativeWind: use raw Pressable so theme backgroundColor is not stripped. */
   cssInterop?: false;
 };
@@ -44,6 +49,8 @@ export function Button({
   size = 'md',
   loading = false,
   disabled,
+  iconStart,
+  iconEnd,
   ...props
 }: ButtonProps) {
   const colors = useThemeColors();
@@ -121,7 +128,11 @@ export function Button({
               {loading ? (
                 <ActivityIndicator color={p.spinnerColor} />
               ) : (
-                <RNText style={[styles.label, { color: p.labelColor }]}>{label}</RNText>
+                <View style={styles.content}>
+                  {iconStart?.(p.labelColor)}
+                  <RNText style={[styles.label, { color: p.labelColor }]}>{label}</RNText>
+                  {iconEnd?.(p.labelColor)}
+                </View>
               )}
             </>
           );
@@ -142,6 +153,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     position: 'relative',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   md: {
     minHeight: 48,

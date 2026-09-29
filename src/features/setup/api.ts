@@ -121,14 +121,14 @@ export async function completeSetup(userId: string, answers: SetupAnswers): Prom
     manualDailyCalories: answers.manualDailyCalories,
   });
 
-  const dailyCalorieTarget = answers.overrideCalories ?? plan.dailyCalorieTarget;
+  const dailyCalorieTarget = plan.dailyCalorieTarget;
   if (!dailyCalorieTarget || dailyCalorieTarget < 1200) {
     throw new Error('Set a valid daily calorie target before continuing.');
   }
 
-  const protein_g = answers.overrideProteinG ?? plan.macros.protein_g;
-  const carbs_g = answers.overrideCarbsG ?? plan.macros.carbs_g;
-  const fat_g = answers.overrideFatG ?? plan.macros.fat_g;
+  const protein_g = plan.macros.protein_g;
+  const carbs_g = plan.macros.carbs_g;
+  const fat_g = plan.macros.fat_g;
 
   const birthDate = birthDateFromAge(answers.ageYears);
   const today = new Date().toISOString().slice(0, 10);
@@ -139,6 +139,7 @@ export async function completeSetup(userId: string, answers: SetupAnswers): Prom
     average_daily_steps: answers.averageDailySteps,
     sessions_per_week: sessions,
     exercise_type: exerciseType,
+    exercise_type_other: answers.exerciseTypeOther,
     session_minutes: answers.sessionMinutes,
     intensity: answers.intensity,
     is_pregnant_or_breastfeeding: answers.isPregnantOrBreastfeeding,
@@ -202,7 +203,50 @@ export async function completeSetup(userId: string, answers: SetupAnswers): Prom
   );
 
   if (weightError) {
-    throw weightError;
+    // Hosted DBs that never got the unique index still need a safe path.
+    const missingConflictTarget = weightError.message
+      .toLowerCase()
+      .includes('no unique or exclusion constraint');
+
+    if (!missingConflictTarget) {
+      throw weightError;
+    }
+
+    const { data: existing, error: lookupError } = await supabase
+      .from('body_measurements')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('measured_on', today)
+      .maybeSingle();
+
+    if (lookupError) {
+      throw lookupError;
+    }
+
+    if (existing?.id) {
+      const { error: updateError } = await supabase
+        .from('body_measurements')
+        .update({
+          weight_kg: answers.weightKg,
+          body_fat_percent: answers.bodyFatPercent,
+          notes: 'Initial weight from setup',
+        })
+        .eq('id', existing.id);
+      if (updateError) {
+        throw updateError;
+      }
+    } else {
+      const { error: insertError } = await supabase.from('body_measurements').insert({
+        user_id: userId,
+        measured_on: today,
+        weight_kg: answers.weightKg,
+        body_fat_percent: answers.bodyFatPercent,
+        notes: 'Initial weight from setup',
+      });
+      if (insertError) {
+        throw insertError;
+      }
+    }
   }
 
   const { error: completeError } = await supabase

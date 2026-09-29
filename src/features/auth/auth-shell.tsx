@@ -10,7 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandMark } from '@/components/brand-mark';
 import { Text } from '@/components/ui/text';
-import { AuthBackgroundDecor } from '@/features/auth/auth-background-decor';
+import { FloatingBackgroundDecor } from '@/components/floating-background-decor';
 import { AuthTopBar } from '@/features/auth/auth-top-bar';
 import { useThemeColors } from '@/theme/theme-provider';
 import { brand } from '@/theme/themes';
@@ -39,7 +39,7 @@ export function AuthShell({
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <AuthBackgroundDecor />
+      <FloatingBackgroundDecor />
 
       <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.safe}>
         <KeyboardAvoidingView

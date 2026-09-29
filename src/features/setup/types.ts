@@ -35,6 +35,8 @@ export type SetupAnswers = {
   averageDailySteps: number | null;
   sessionsPerWeek: number | null;
   exerciseType: ExerciseType | null;
+  /** Free-text when exerciseType is `other` (optional). */
+  exerciseTypeOther: string | null;
   sessionMinutes: number | null;
   intensity: Intensity | null;
   targetWeightKg: number | null;
@@ -43,8 +45,9 @@ export type SetupAnswers = {
   /** Optional — stored in preferences jsonb; not used by diary yet. */
   dietaryPattern: string | null;
   mealsPerDay: number | null;
-  /** Manual overrides on summary (preserved until user recalculates). */
+  /** @deprecated Summary no longer edits targets; kept for older drafts only. */
   overrideCalories: number | null;
+  /** @deprecated Summary no longer edits macros; kept for older drafts only. */
   overrideProteinG: number | null;
   overrideCarbsG: number | null;
   overrideFatG: number | null;
@@ -63,6 +66,7 @@ export const EMPTY_SETUP_ANSWERS: SetupAnswers = {
   averageDailySteps: null,
   sessionsPerWeek: null,
   exerciseType: null,
+  exerciseTypeOther: null,
   sessionMinutes: null,
   intensity: null,
   targetWeightKg: null,

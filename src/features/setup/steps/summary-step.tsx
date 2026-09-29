@@ -1,19 +1,59 @@
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { estimatePlan } from '@/features/setup/calculations';
 import { useSetup } from '@/features/setup/setup-provider';
 import { SetupShell } from '@/features/setup/setup-shell';
+import { setupCardShadow } from '@/features/setup/setup-shadows';
 import { requiresManualCalories } from '@/features/setup/types';
 import { formatHeight, formatWeight } from '@/features/setup/units';
+import { brand } from '@/theme/themes';
 import { useThemeColors } from '@/theme/theme-provider';
 
+function StatTile({
+  label,
+  value,
+  unit,
+}: {
+  label: string;
+  value: string | number;
+  unit?: string;
+}) {
+  const colors = useThemeColors();
+  return (
+    <View
+      style={[
+        styles.tile,
+        {
+          backgroundColor: colors.surfaceMuted,
+          borderColor: colors.border,
+        },
+      ]}
+    >
+      <Text variant="caption" tone="muted">
+        {label}
+      </Text>
+      <Text variant="headingSmall" style={{ color: colors.textPrimary }}>
+        {value}
+        {unit ? (
+          <Text variant="caption" tone="muted">
+            {' '}
+            {unit}
+          </Text>
+        ) : null}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * Final review — system estimates are read-only.
+ * No recalculate / edit-earlier (use Back). Daily calories & macros locked.
+ */
 export function SummaryStep() {
   const colors = useThemeColors();
-  const { answers, progress, goBack, goToStep, finish, completing, error, patchAnswers } =
-    useSetup();
+  const { answers, progress, goBack, finish, completing, error } = useSetup();
   const [busy, setBusy] = useState(false);
 
   const plan = useMemo(() => {
@@ -51,43 +91,10 @@ export function SummaryStep() {
     });
   }, [answers]);
 
-  const calories = answers.overrideCalories ?? plan?.dailyCalorieTarget ?? 0;
-  const protein = answers.overrideProteinG ?? plan?.macros.protein_g ?? 0;
-  const carbs = answers.overrideCarbsG ?? plan?.macros.carbs_g ?? 0;
-  const fat = answers.overrideFatG ?? plan?.macros.fat_g ?? 0;
-
-  const [calStr, setCalStr] = useState(String(calories || ''));
-  const [pStr, setPStr] = useState(String(protein || ''));
-  const [cStr, setCStr] = useState(String(carbs || ''));
-  const [fStr, setFStr] = useState(String(fat || ''));
-
-  function applyOverridesFromFields() {
-    const c = Number(calStr);
-    const p = Number(pStr);
-    const cb = Number(cStr);
-    const f = Number(fStr);
-    patchAnswers({
-      overrideCalories: Number.isFinite(c) && c >= 1200 ? c : answers.overrideCalories,
-      overrideProteinG: Number.isFinite(p) && p > 0 ? p : answers.overrideProteinG,
-      overrideCarbsG: Number.isFinite(cb) && cb >= 0 ? cb : answers.overrideCarbsG,
-      overrideFatG: Number.isFinite(f) && f > 0 ? f : answers.overrideFatG,
-    });
-  }
-
-  function recalculate() {
-    patchAnswers({
-      overrideCalories: null,
-      overrideProteinG: null,
-      overrideCarbsG: null,
-      overrideFatG: null,
-    });
-    if (plan) {
-      setCalStr(String(plan.dailyCalorieTarget));
-      setPStr(String(plan.macros.protein_g));
-      setCStr(String(plan.macros.carbs_g));
-      setFStr(String(plan.macros.fat_g));
-    }
-  }
+  const calories = plan?.dailyCalorieTarget ?? 0;
+  const protein = plan?.macros.protein_g ?? 0;
+  const carbs = plan?.macros.carbs_g ?? 0;
+  const fat = plan?.macros.fat_g ?? 0;
 
   const goalLabel =
     answers.goalType === 'lose_weight'
@@ -96,10 +103,19 @@ export function SummaryStep() {
         ? 'Gain weight / bulk'
         : 'Maintain weight';
 
+  const exerciseLabel =
+    answers.sessionsPerWeek === 0 || answers.exerciseType === 'none'
+      ? 'No structured sessions'
+      : answers.exerciseType === 'other' && answers.exerciseTypeOther
+        ? answers.exerciseTypeOther
+        : answers.exerciseType
+          ? answers.exerciseType.replace('_', ' ')
+          : '—';
+
   return (
     <SetupShell
       title="Your plan"
-      subtitle="Starting estimates — edit anything before you begin."
+      subtitle="Here’s your starting estimate from the answers you gave. Use Back if something looks off."
       stepIndex={progress.index}
       stepTotal={progress.total}
       onBack={() => void goBack()}
@@ -107,23 +123,31 @@ export function SummaryStep() {
       continueDisabled={completing || busy || !plan || calories < 1200}
       continueLoading={completing || busy}
       onContinue={() => {
-        applyOverridesFromFields();
         setBusy(true);
         void finish()
           .catch(() => undefined)
           .finally(() => setBusy(false));
       }}
     >
-      <View className="gap-4">
-        <View className="gap-1">
-          <Text variant="label" tone="secondary">
+      <View style={styles.stack}>
+        <View
+          style={[
+            styles.section,
+            {
+              backgroundColor: colors.surfaceMuted,
+              borderColor: colors.border,
+            },
+            setupCardShadow(brand.darkBackground),
+          ]}
+        >
+          <Text variant="label" tone="muted">
             Profile & goal
           </Text>
-          <Text variant="body">
+          <Text variant="bodyStrong" style={{ color: colors.textPrimary }}>
             {goalLabel}
             {answers.ageYears != null ? ` · age ${answers.ageYears}` : ''}
           </Text>
-          <Text variant="bodySmall" tone="secondary">
+          <Text variant="bodySmall" tone="muted">
             {answers.heightCm != null ? formatHeight(answers.heightCm, answers.units) : '—'}
             {' · '}
             {answers.weightKg != null ? formatWeight(answers.weightKg, answers.units) : '—'}
@@ -131,77 +155,53 @@ export function SummaryStep() {
               ? ` → ${formatWeight(answers.targetWeightKg, answers.units)}`
               : ''}
           </Text>
-          <Pressable onPress={() => void goToStep('goal')} hitSlop={8}>
-            <Text variant="bodyStrong" style={{ color: colors.primary }}>
-              Edit earlier answers
-            </Text>
-          </Pressable>
+          <Text variant="bodySmall" tone="muted">
+            Exercise: {exerciseLabel}
+            {answers.sessionsPerWeek != null && answers.sessionsPerWeek > 0
+              ? ` · ${answers.sessionsPerWeek}/week`
+              : ''}
+          </Text>
         </View>
 
         {plan?.tdee != null ? (
-          <Text variant="bodySmall" tone="secondary">
+          <Text variant="bodySmall" tone="muted">
             Estimated maintenance: {plan.tdee} kcal/day
             {plan.bmr != null ? ` (BMR ~${plan.bmr})` : ''}
           </Text>
         ) : null}
 
-        <Input
-          label="Daily calorie target"
-          value={calStr}
-          onChangeText={setCalStr}
-          onBlur={applyOverridesFromFields}
-          keyboardType="number-pad"
-        />
-        <View className="flex-row gap-2">
-          <View className="flex-1">
-            <Input
-              label="Protein (g)"
-              value={pStr}
-              onChangeText={setPStr}
-              onBlur={applyOverridesFromFields}
-              keyboardType="number-pad"
-            />
+        <View style={styles.statsGrid}>
+          <View style={styles.statWide}>
+            <StatTile label="Daily calories" value={calories} unit="kcal" />
           </View>
-          <View className="flex-1">
-            <Input
-              label="Carbs (g)"
-              value={cStr}
-              onChangeText={setCStr}
-              onBlur={applyOverridesFromFields}
-              keyboardType="number-pad"
-            />
-          </View>
-          <View className="flex-1">
-            <Input
-              label="Fat (g)"
-              value={fStr}
-              onChangeText={setFStr}
-              onBlur={applyOverridesFromFields}
-              keyboardType="number-pad"
-            />
-          </View>
+          <StatTile label="Protein" value={protein} unit="g" />
+          <StatTile label="Carbs" value={carbs} unit="g" />
+          <StatTile label="Fat" value={fat} unit="g" />
         </View>
 
         {plan && plan.weeklyChangeKg !== 0 ? (
-          <Text variant="bodySmall" tone="secondary">
+          <Text variant="bodySmall" tone="muted">
             Weekly change: {plan.weeklyChangeKg > 0 ? '+' : ''}
             {plan.weeklyChangeKg} kg
             {plan.estimatedWeeks != null ? ` · ~${plan.estimatedWeeks} weeks (estimate)` : ''}
           </Text>
         ) : null}
 
+        {plan?.explanation ? (
+          <Text variant="caption" tone="muted">
+            {plan.explanation}
+          </Text>
+        ) : null}
+
         <Text variant="caption" tone="muted">
-          {plan?.explanation}
+          Targets are locked to Calio’s estimate for a consistent start. You can adjust goals later
+          from Account once you’re in the app.
         </Text>
 
-        <Pressable onPress={recalculate} hitSlop={8}>
-          <Text variant="bodyStrong" style={{ color: colors.primary }}>
-            Recalculate from answers
-          </Text>
-        </Pressable>
-
         {error ? (
-          <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: colors.errorMuted }}>
+          <View
+            style={[styles.errorBox, { backgroundColor: colors.errorMuted }]}
+          >
             <Text variant="bodySmall" tone="error">
               {error}
             </Text>
@@ -211,3 +211,39 @@ export function SummaryStep() {
     </SetupShell>
   );
 }
+
+const styles = StyleSheet.create({
+  stack: {
+    gap: 14,
+  },
+  section: {
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 4,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  statWide: {
+    width: '100%',
+  },
+  tile: {
+    flexGrow: 1,
+    flexBasis: '30%',
+    minWidth: 96,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 4,
+  },
+  errorBox: {
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+});
