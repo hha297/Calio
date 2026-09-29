@@ -1,56 +1,87 @@
-# Welcome to your Expo app 👋
+# Calio
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Calio is a friendly Expo mobile app for food, calories, workouts, goals, and progress.
+Calorie and activity numbers are estimates for everyday tracking — not medical measurements.
 
-## Get started
+## Prerequisites
 
-1. Install dependencies
+- Node.js 22+
+- npm
+- A physical Android or iPhone
+- [Expo Go for SDK 57](https://expo.dev/go)
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Install
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Environment
 
-### Other setup steps
+Create `.env.local`:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```text
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+```
 
-## Learn more
+`EXPO_PUBLIC_SUPABASE_KEY` is also accepted as an alias.
 
-To learn more about developing your project with Expo, look at the following resources:
+Never put the service-role key or database password in the app.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Database
 
-## Join the community
+Schema lives in `supabase/migrations/`.
 
-Join our community of developers creating universal apps.
+Apply the latest migration in the Supabase SQL Editor (Dashboard → SQL), or with the Supabase CLI after linking the project:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npx supabase db push
+```
+
+The core migration creates profiles, goals, foods, food_entries, exercises, workouts, measurements, RLS policies, and a starter exercise catalog.
+
+## Run on a phone
+
+```bash
+npm start
+```
+
+Scan the QR code with Expo Go (SDK 57). Use `--tunnel` only if LAN discovery fails:
+
+```bash
+npx expo start --tunnel
+```
+
+## Scripts
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+```
+
+## Architecture
+
+- `app/` — Expo Router screens (onboarding, auth, tabs, food, workout, goals, measurements)
+- `src/features/` — domain hooks, schemas, adapters
+- `src/theme/` — Calio design tokens (DESIGN.MD)
+- `src/stores/` — Zustand for active workout UI only
+- TanStack Query for server state
+- Supabase Auth + Postgres + RLS
+
+## Brand assets
+
+Official logos:
+
+- `assets/brand/logo-light.png` — lime lockup for light screens
+- `assets/brand/logo-on-primary.png` — lime on purple for splash/icon moments
+
+## Development builds
+
+Expo Go works for current packages. When you need a custom native build:
+
+```bash
+npx expo install expo-dev-client
+npx eas-cli@latest build --profile development --platform android
+```
