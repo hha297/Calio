@@ -10,13 +10,19 @@ import {
 } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
+import type { Profile } from '@/features/goals/types';
 import { getOnboardingCompleted, setOnboardingCompleted } from '@/features/onboarding/storage';
 import { reportError } from '@/lib/errors/report-error';
 import { queryClient } from '@/lib/query/query-client';
 
 import { isAuthFailure, prefetchBootstrapData, toBootstrapErrorMessage } from './prefetch';
 
-export type AppDestination = 'onboarding' | 'auth' | 'main' | 'update-password';
+export type AppDestination =
+  | 'onboarding'
+  | 'auth'
+  | 'setup'
+  | 'main'
+  | 'update-password';
 
 type BootstrapContextValue = {
   /** True while restoring session / reading onboarding / prefetching required Main data. */
@@ -31,7 +37,7 @@ const BootstrapContext = createContext<BootstrapContextValue | null>(null);
 
 export function BootstrapProvider({ children }: { children: ReactNode }) {
   const { isReady, session, passwordRecovery, signOut } = useAuth();
-  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+  const [welcomeDone, setWelcomeDone] = useState<boolean | null>(null);
   const userId = passwordRecovery ? undefined : session?.user.id;
   const email = session?.user.email;
 
@@ -40,13 +46,13 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
     getOnboardingCompleted()
       .then((value) => {
         if (active) {
-          setOnboardingDone(value);
+          setWelcomeDone(value);
         }
       })
       .catch((err: unknown) => {
         reportError(err, { area: 'onboarding', action: 'read-flag' });
         if (active) {
-          setOnboardingDone(false);
+          setWelcomeDone(false);
         }
       });
     return () => {
@@ -56,7 +62,7 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
 
   const bootstrapQuery = useQuery({
     queryKey: ['bootstrap', userId],
-    enabled: Boolean(isReady && onboardingDone !== null && userId),
+    enabled: Boolean(isReady && welcomeDone !== null && userId),
     staleTime: Infinity,
     retry: false,
     queryFn: async () => {
@@ -90,7 +96,7 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
 
   const completeOnboarding = useCallback(async () => {
     await setOnboardingCompleted();
-    setOnboardingDone(true);
+    setWelcomeDone(true);
   }, []);
 
   const prefetchReady = Boolean(userId && bootstrapQuery.isSuccess && bootstrapQuery.data === userId);
@@ -101,8 +107,13 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
         : 'Could not load your data. Check your connection and try again.'
       : null;
 
+  const profile = userId
+    ? queryClient.getQueryData<Profile | null>(['profile', userId])
+    : null;
+  const setupComplete = Boolean(profile?.onboarding_completed_at);
+
   const destination = useMemo((): AppDestination | null => {
-    if (!isReady || onboardingDone === null) {
+    if (!isReady || welcomeDone === null) {
       return null;
     }
 
@@ -114,15 +125,26 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
       if (!prefetchReady || prefetchError) {
         return null;
       }
+      if (!setupComplete) {
+        return 'setup';
+      }
       return 'main';
     }
 
-    return onboardingDone ? 'auth' : 'onboarding';
-  }, [isReady, onboardingDone, passwordRecovery, session, prefetchReady, prefetchError]);
+    return welcomeDone ? 'auth' : 'onboarding';
+  }, [
+    isReady,
+    welcomeDone,
+    passwordRecovery,
+    session,
+    prefetchReady,
+    prefetchError,
+    setupComplete,
+  ]);
 
   const isBootstrapping =
     !isReady ||
-    onboardingDone === null ||
+    welcomeDone === null ||
     (Boolean(userId) && !prefetchReady && !prefetchError);
 
   const value = useMemo(

@@ -8,9 +8,12 @@ import {
 } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 
-import { borders, colors, typography } from '@/theme';
+import { borders, typography } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 
 export default function TabLayout() {
+  const colors = useThemeColors();
+
   return (
     <Tabs
       screenOptions={{
@@ -20,7 +23,7 @@ export default function TabLayout() {
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: colors.surface,
-          borderTopColor: borders.color,
+          borderTopColor: colors.border,
           borderTopWidth: borders.hairline,
           elevation: 0,
           shadowOpacity: 0,
@@ -67,7 +70,9 @@ export default function TabLayout() {
         name="account"
         options={{
           title: 'Account',
-          tabBarIcon: ({ color, size }) => <CircleUser color={color} size={size} strokeWidth={2} />,
+          tabBarIcon: ({ color, size }) => (
+            <CircleUser color={color} size={size} strokeWidth={2} />
+          ),
         }}
       />
     </Tabs>

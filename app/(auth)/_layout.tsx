@@ -6,8 +6,13 @@ export default function AuthLayout() {
   const { passwordRecovery } = useAuth();
   const pathname = usePathname();
 
-  if (passwordRecovery && !pathname.includes('update-password')) {
-    return <Redirect href="/(auth)/update-password" />;
+  // After OTP verification, keep the user on reset-password until they finish.
+  if (
+    passwordRecovery &&
+    !pathname.includes('reset-password') &&
+    !pathname.includes('update-password')
+  ) {
+    return <Redirect href="/(auth)/reset-password" />;
   }
 
   return <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />;

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { TextInput, View, type TextInputProps } from 'react-native';
 
-import { cx } from '@/utils/cx';
+import { useThemeColors } from '@/theme/theme-provider';
 
 import { FieldPlaceholder } from './field-placeholder';
-import { fieldCursorProps, fieldShell, fieldTypography } from './field-styles';
+import { fieldShell, getFieldCursorProps, getFieldTypography } from './field-styles';
 import { Text } from './text';
 
 type TextAreaProps = Omit<TextInputProps, 'multiline'> & {
@@ -26,11 +26,13 @@ export function TextArea({
   defaultValue,
   ...props
 }: TextAreaProps) {
+  const colors = useThemeColors();
   const [focused, setFocused] = useState(false);
   const [innerValue, setInnerValue] = useState(defaultValue ?? '');
 
   const resolvedValue = value !== undefined ? value : innerValue;
   const showPlaceholder = Boolean(placeholder) && String(resolvedValue ?? '').length === 0;
+  const borderColor = error ? colors.error : focused ? colors.primary : colors.border;
 
   return (
     <View className="gap-1.5">
@@ -38,11 +40,8 @@ export function TextArea({
         {label}
       </Text>
       <View
-        className={cx(
-          'rounded-2xl border bg-surface px-3.5 py-2',
-          error ? 'border-error' : focused ? 'border-primary' : 'border-border',
-        )}
-        style={{ minHeight }}
+        className="rounded-2xl border px-3.5 py-2"
+        style={{ minHeight, backgroundColor: colors.surface, borderColor }}
       >
         <View style={[fieldShell.wrap, { minHeight: minHeight - 16, justifyContent: 'flex-start' }]}>
           {showPlaceholder && placeholder ? (
@@ -50,7 +49,7 @@ export function TextArea({
           ) : null}
           <TextInput
             {...props}
-            {...fieldCursorProps}
+            {...getFieldCursorProps(colors)}
             multiline
             textAlignVertical="top"
             value={value}
@@ -59,7 +58,7 @@ export function TextArea({
             placeholder=""
             style={[
               {
-                ...fieldTypography,
+                ...getFieldTypography(colors),
                 minHeight: minHeight - 16,
                 paddingTop: 8,
                 paddingBottom: 8,

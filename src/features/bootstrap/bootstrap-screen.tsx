@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandMark } from '@/components/brand-mark';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { colors } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 
 type BootstrapScreenProps = {
   error?: string | null;
@@ -14,9 +14,11 @@ type BootstrapScreenProps = {
 
 /** In-app branded wait — not the Expo Go splash. */
 export function BootstrapScreen({ error, onRetry }: BootstrapScreenProps) {
+  const colors = useThemeColors();
+
   return (
     <LinearGradient
-      colors={[colors.primaryBright, colors.primary, '#2A043D']}
+      colors={[colors.primaryBright, colors.primary, colors.primaryPressed]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
@@ -41,12 +43,12 @@ export function BootstrapScreen({ error, onRetry }: BootstrapScreenProps) {
 
           {error ? (
             <View className="mt-10 w-full max-w-sm items-center gap-4">
-              <Text variant="headingSmall" tone="onPrimary" style={{ textAlign: 'center' }}>
+              <Text variant="headingSmall" style={{ textAlign: 'center', color: '#F1F5E9' }}>
                 Couldn’t prepare your data
               </Text>
               <Text
                 variant="bodySmall"
-                style={{ textAlign: 'center', color: 'rgba(255,255,255,0.85)' }}
+                style={{ textAlign: 'center', color: '#F1F5E9' }}
               >
                 {error}
               </Text>

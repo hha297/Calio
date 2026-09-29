@@ -6,11 +6,13 @@ import { typography } from './typography';
 
 export { borders, colors, radii, spacing, typography };
 export { fonts, useAppFonts } from './fonts';
+export { brand, lightColors, darkColors, type ThemeColors } from './themes';
+export { ThemeProvider, useTheme, useThemeColors, type ThemePreference } from './theme-provider';
 
 /**
- * Secondary lime stays an accent fill. On the light background its contrast
+ * Secondary terracotta is an accent fill. On the light background its contrast
  * is too low to use as body text, so text on that fill uses textOnSecondary.
- * `success` is a darker brand-aligned lime for readable success copy/icons;
- * `successBright` matches secondary for meter fills at “Very strong”.
+ * `success` is a darker brand-aligned green for readable success copy/icons;
+ * `successBright` matches primary for meter fills at “Very strong”.
  * Display/UI uses IBM Plex Sans; body copy uses DM Sans.
  */

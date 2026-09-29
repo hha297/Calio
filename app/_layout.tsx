@@ -8,13 +8,16 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import '../global.css';
 
+import '@/i18n';
+
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { BootstrapProvider, useBootstrap } from '@/features/bootstrap/bootstrap-provider';
 import { BootstrapScreen } from '@/features/bootstrap/bootstrap-screen';
 import { reportError } from '@/lib/errors/report-error';
 import { queryClient } from '@/lib/query/query-client';
-import { colors } from '@/theme';
+import { brand } from '@/theme';
 import { useAppFonts } from '@/theme/fonts';
+import { ThemeProvider, useTheme } from '@/theme/theme-provider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,25 +30,29 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <BootstrapProvider>
-            <RootNavigator />
-          </BootstrapProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <BootstrapProvider>
+              <RootNavigator />
+            </BootstrapProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }
 
 function RootNavigator() {
   const { isBootstrapping, destination, error, retry } = useBootstrap();
+  const { scheme } = useTheme();
 
   useEffect(() => {
-    SystemUI.setBackgroundColorAsync(colors.primary).catch((err: unknown) => {
+    const bg = scheme === 'dark' ? brand.darkBackground : brand.lightBackground;
+    SystemUI.setBackgroundColorAsync(bg).catch((err: unknown) => {
       reportError(err, { area: 'system-ui' });
     });
-  }, []);
+  }, [scheme]);
 
   useEffect(() => {
     SplashScreen.hideAsync().catch((err: unknown) => {
@@ -72,15 +79,26 @@ function RootNavigator() {
   }
 
   const showOnboarding = destination === 'onboarding';
+  const showSetup = destination === 'setup';
   const showMain = destination === 'main';
   const showAuth = destination === 'auth' || destination === 'update-password';
+  const statusStyle =
+    showAuth || showMain
+      ? scheme === 'dark'
+        ? 'light'
+        : 'dark'
+      : 'light';
 
   return (
     <>
-      <StatusBar style={showAuth || showOnboarding ? 'light' : 'dark'} />
+      <StatusBar style={statusStyle} />
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Protected guard={showOnboarding}>
           <Stack.Screen name="(onboarding)" />
+        </Stack.Protected>
+
+        <Stack.Protected guard={showSetup}>
+          <Stack.Screen name="(setup)" />
         </Stack.Protected>
 
         <Stack.Protected guard={showMain}>

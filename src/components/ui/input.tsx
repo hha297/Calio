@@ -2,11 +2,10 @@ import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 
-import { colors } from '@/theme';
-import { cx } from '@/utils/cx';
+import { useThemeColors } from '@/theme/theme-provider';
 
 import { FieldPlaceholder } from './field-placeholder';
-import { fieldCursorProps, fieldShell, fieldTypography } from './field-styles';
+import { fieldShell, getFieldCursorProps, getFieldTypography } from './field-styles';
 import { Text } from './text';
 
 type InputProps = TextInputProps & {
@@ -29,6 +28,7 @@ export function Input({
   defaultValue,
   ...props
 }: InputProps) {
+  const colors = useThemeColors();
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(true);
   const [innerValue, setInnerValue] = useState(defaultValue ?? '');
@@ -37,6 +37,7 @@ export function Input({
 
   const resolvedValue = value !== undefined ? value : innerValue;
   const showPlaceholder = Boolean(placeholder) && String(resolvedValue ?? '').length === 0;
+  const borderColor = error ? colors.error : focused ? colors.primary : colors.border;
 
   return (
     <View className="gap-1.5">
@@ -44,22 +45,20 @@ export function Input({
         {label}
       </Text>
       <View
-        className={cx(
-          'min-h-[52px] flex-row items-center rounded-2xl border bg-surface px-3.5',
-          error ? 'border-error' : focused ? 'border-primary' : 'border-border',
-        )}
+        className="min-h-[52px] flex-row items-center rounded-2xl border px-3.5"
+        style={{ backgroundColor: colors.surface, borderColor }}
       >
         <View style={fieldShell.wrap}>
           {showPlaceholder && placeholder ? <FieldPlaceholder label={placeholder} /> : null}
           <TextInput
             {...props}
-            {...fieldCursorProps}
+            {...getFieldCursorProps(colors)}
             value={value}
             defaultValue={defaultValue}
             accessibilityLabel={label}
             placeholder=""
             secureTextEntry={obscure}
-            style={[{ ...fieldTypography, paddingVertical: 12 }, style]}
+            style={[{ ...getFieldTypography(colors), paddingVertical: 12 }, style]}
             onChangeText={(text) => {
               if (value === undefined) {
                 setInnerValue(text);

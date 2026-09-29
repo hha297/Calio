@@ -7,7 +7,7 @@ export type PasswordRuleId =
 
 export type PasswordRule = {
   id: PasswordRuleId;
-  label: string;
+  labelKey: string;
   test: (password: string) => boolean;
 };
 
@@ -15,27 +15,27 @@ export type PasswordRule = {
 export const PASSWORD_RULES: readonly PasswordRule[] = [
   {
     id: 'minLength',
-    label: 'At least 8 characters',
+    labelKey: 'auth.ruleMinLength',
     test: (password) => password.length >= 8,
   },
   {
     id: 'uppercase',
-    label: 'Contains an uppercase letter',
+    labelKey: 'auth.ruleUppercase',
     test: (password) => /[A-Z]/.test(password),
   },
   {
     id: 'lowercase',
-    label: 'Contains a lowercase letter',
+    labelKey: 'auth.ruleLowercase',
     test: (password) => /[a-z]/.test(password),
   },
   {
     id: 'number',
-    label: 'Contains a number',
+    labelKey: 'auth.ruleNumber',
     test: (password) => /\d/.test(password),
   },
   {
     id: 'special',
-    label: 'Contains a special character',
+    labelKey: 'auth.ruleSpecial',
     // Align with Supabase Auth allowed symbols for required-character policies.
     test: (password) => /[!@#$%^&*()_+\-=[\]{};'\\:"|<>?,./`~]/.test(password),
   },
@@ -44,7 +44,7 @@ export const PASSWORD_RULES: readonly PasswordRule[] = [
 export function evaluatePasswordRules(password: string) {
   return PASSWORD_RULES.map((rule) => ({
     id: rule.id,
-    label: rule.label,
+    labelKey: rule.labelKey,
     met: rule.test(password),
   }));
 }

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { TextInput, View, type TextInputProps } from 'react-native';
 
-import { cx } from '@/utils/cx';
+import { useThemeColors } from '@/theme/theme-provider';
 
 import { FieldPlaceholder } from './field-placeholder';
-import { fieldCompactTypography, fieldCursorProps, fieldShell } from './field-styles';
+import { fieldShell, getFieldCompactTypography, getFieldCursorProps } from './field-styles';
 
 type CompactInputProps = Omit<TextInputProps, 'placeholder'> & {
   placeholder?: string;
@@ -21,6 +21,7 @@ export function CompactInput({
   onBlur,
   ...props
 }: CompactInputProps) {
+  const colors = useThemeColors();
   const [focused, setFocused] = useState(false);
   const [innerValue, setInnerValue] = useState(defaultValue ?? '');
   const resolvedValue = value !== undefined ? value : innerValue;
@@ -28,10 +29,11 @@ export function CompactInput({
 
   return (
     <View
-      className={cx(
-        'h-11 flex-1 justify-center rounded-md border bg-surface px-3',
-        focused ? 'border-primary' : 'border-border',
-      )}
+      className="h-11 flex-1 justify-center rounded-md border px-3"
+      style={{
+        backgroundColor: colors.surface,
+        borderColor: focused ? colors.primary : colors.border,
+      }}
     >
       <View style={fieldShell.wrap}>
         {showPlaceholder && placeholder ? (
@@ -39,11 +41,11 @@ export function CompactInput({
         ) : null}
         <TextInput
           {...props}
-          {...fieldCursorProps}
+          {...getFieldCursorProps(colors)}
           value={value}
           defaultValue={defaultValue}
           placeholder=""
-          style={[{ ...fieldCompactTypography, paddingVertical: 8 }, style]}
+          style={[{ ...getFieldCompactTypography(colors), paddingVertical: 8 }, style]}
           onChangeText={(text) => {
             if (value === undefined) {
               setInnerValue(text);

@@ -2,7 +2,7 @@ import { ZxcvbnFactory, type ZxcvbnResult } from '@zxcvbn-ts/core';
 import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
 import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
 
-import { colors } from '@/theme/colors';
+import { brand } from '@/theme/themes';
 
 export type StrengthTier = 'empty' | 'weak' | 'medium' | 'strong' | 'veryStrong';
 
@@ -10,14 +10,12 @@ export type PasswordStrength = {
   tier: StrengthTier;
   /** 0–1 fill for the meter track. */
   fill: number;
-  label: string;
+  labelKey: string | null;
   color: string;
-  hint: string | null;
+  hintKey: string | null;
   /** Raw zxcvbn score 0–4 when password is non-empty. */
   score: number | null;
 };
-
-const HINT_DEFAULT = 'Try a longer password and avoid common or predictable patterns';
 
 let factory: ZxcvbnFactory | null = null;
 
@@ -44,12 +42,12 @@ function tierFromScore(score: number): Exclude<StrengthTier, 'empty'> {
 
 const TIER_META: Record<
   Exclude<StrengthTier, 'empty'>,
-  { label: string; color: string; fill: number }
+  { labelKey: string; color: string; fill: number }
 > = {
-  weak: { label: 'Weak', color: colors.error, fill: 0.25 },
-  medium: { label: 'Medium', color: '#E8913A', fill: 0.5 },
-  strong: { label: 'Strong', color: colors.success, fill: 0.75 },
-  veryStrong: { label: 'Very strong', color: colors.secondary, fill: 1 },
+  weak: { labelKey: 'auth.strengthWeak', color: '#C44B4B', fill: 0.25 },
+  medium: { labelKey: 'auth.strengthMedium', color: '#E8913A', fill: 0.5 },
+  strong: { labelKey: 'auth.strengthStrong', color: brand.primaryPressed, fill: 0.75 },
+  veryStrong: { labelKey: 'auth.strengthVeryStrong', color: brand.secondary, fill: 1 },
 };
 
 function hintForResult(result: ZxcvbnResult, tier: Exclude<StrengthTier, 'empty'>) {
@@ -57,12 +55,9 @@ function hintForResult(result: ZxcvbnResult, tier: Exclude<StrengthTier, 'empty'
     return null;
   }
 
-  const suggestion = result.feedback.suggestions[0];
-  if (suggestion) {
-    return HINT_DEFAULT;
-  }
-
-  return HINT_DEFAULT;
+  // Keep a single localized hint; zxcvbn English suggestions are not translated.
+  void result;
+  return 'auth.strengthHint';
 }
 
 /**
@@ -77,9 +72,9 @@ export function assessPasswordStrength(
     return {
       tier: 'empty',
       fill: 0,
-      label: '',
-      color: colors.border,
-      hint: null,
+      labelKey: null,
+      color: brand.lightBorder,
+      hintKey: null,
       score: null,
     };
   }
@@ -91,9 +86,9 @@ export function assessPasswordStrength(
   return {
     tier,
     fill: meta.fill,
-    label: meta.label,
+    labelKey: meta.labelKey,
     color: meta.color,
-    hint: hintForResult(result, tier),
+    hintKey: hintForResult(result, tier),
     score: result.score,
   };
 }

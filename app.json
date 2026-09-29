@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "calio",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.calio.app",
       "supportsTablet": true,
@@ -18,7 +18,7 @@
       "package": "com.calio.app",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "backgroundColor": "#55067A",
+        "backgroundColor": "#69B32B",
         "foregroundImage": "./assets/images/logo.png"
       },
       "permissions": ["CAMERA", "android.permission.CAMERA"],
@@ -34,7 +34,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#55067A",
+          "backgroundColor": "#69B32B",
           "image": "./assets/images/translogo.png",
           "imageWidth": 240
         }
@@ -49,7 +49,8 @@
       "expo-image",
       "expo-image-picker",
       "expo-web-browser",
-      "expo-font"
+      "expo-font",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

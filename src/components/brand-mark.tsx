@@ -13,7 +13,7 @@ const sizes = {
   md: { width: 200, height: 64 },
   lg: { width: 260, height: 84 },
   xl: { width: 300, height: 96 },
-  hero: { width: 340, height: 110 },
+  hero: { width: 360, height: 120 },
 } as const;
 
 /** Calio wordmark — uses assets/images/translogo.png. */

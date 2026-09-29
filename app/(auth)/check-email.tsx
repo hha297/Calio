@@ -1,18 +1,20 @@
-import { Link, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { AuthShell } from '@/features/auth/auth-shell';
 import { toAuthErrorMessage } from '@/features/auth/auth-errors';
 import { useAuth } from '@/features/auth/auth-provider';
+import { AuthShell } from '@/features/auth/auth-shell';
+import { AuthTextLink } from '@/features/auth/auth-text-link';
 import { reportError } from '@/lib/errors/report-error';
-import { colors } from '@/theme';
 
 const RESEND_COOLDOWN_SEC = 60;
 
 export default function CheckEmailScreen() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{ email?: string }>();
   const email = typeof params.email === 'string' ? params.email : '';
   const { resendConfirmationEmail } = useAuth();
@@ -40,7 +42,7 @@ export default function CheckEmailScreen() {
 
     try {
       await resendConfirmationEmail(email);
-      setMessage('Email sent again.');
+      setMessage(t('auth.checkEmailSentAgain'));
       setSecondsLeft(RESEND_COOLDOWN_SEC);
     } catch (err) {
       reportError(err, { area: 'auth', action: 'resend-confirmation' });
@@ -52,23 +54,23 @@ export default function CheckEmailScreen() {
 
   return (
     <AuthShell
-      title="Check your email"
+      title={t('auth.checkEmailTitle')}
       subtitle={
         email
-          ? `We sent a confirmation link to ${email}. Open it, then sign in.`
-          : 'Open the confirmation link we sent, then sign in.'
+          ? t('auth.checkEmailSubtitleWithEmail', { email })
+          : t('auth.checkEmailSubtitle')
       }
       footer={
-        <Link href="/(auth)/sign-in">
-          <Text variant="bodyStrong" style={{ color: colors.secondary }}>
-            Back to sign in
-          </Text>
-        </Link>
+        <AuthTextLink
+          href="/(auth)/sign-in"
+          label={t('auth.backToSignIn')}
+          direction="back"
+        />
       }
     >
       <View className="gap-4">
         {message ? (
-          <Text variant="bodySmall" className="text-success">
+          <Text variant="bodySmall" tone="success">
             {message}
           </Text>
         ) : null}
@@ -79,8 +81,12 @@ export default function CheckEmailScreen() {
         ) : null}
 
         <Button
-          label={secondsLeft > 0 ? `Resend in ${secondsLeft}s` : 'Resend email'}
-          variant="secondary"
+          label={
+            secondsLeft > 0
+              ? t('auth.resendIn', { seconds: secondsLeft })
+              : t('auth.resendEmail')
+          }
+          variant="primary"
           size="lg"
           loading={resending}
           disabled={!email || secondsLeft > 0 || resending}

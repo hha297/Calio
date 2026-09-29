@@ -1,38 +1,47 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
-import { AuthShell } from '@/features/auth/auth-shell';
 import { toAuthErrorMessage } from '@/features/auth/auth-errors';
 import { useAuth } from '@/features/auth/auth-provider';
-import { emailOnlySchema, type EmailOnly } from '@/features/auth/schema';
+import { AuthShell } from '@/features/auth/auth-shell';
+import { AuthTextLink } from '@/features/auth/auth-text-link';
+import { RECOVERY_OTP_LENGTH } from '@/features/auth/recovery-constants';
+import { createEmailOnlySchema, type EmailOnly } from '@/features/auth/schema';
 import { reportError } from '@/lib/errors/report-error';
-import { colors } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 
 export default function ForgotPasswordScreen() {
+  const { t, i18n } = useTranslation();
+  const colors = useThemeColors();
   const params = useLocalSearchParams<{ email?: string }>();
   const prefill = typeof params.email === 'string' ? params.email : '';
   const { resetPasswordForEmail } = useAuth();
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { control, handleSubmit, formState } = useForm<EmailOnly>({
-    resolver: zodResolver(emailOnlySchema),
+    resolver: (values, context, options) =>
+      zodResolver(createEmailOnlySchema(t))(values, context, options),
     defaultValues: { email: prefill },
   });
+
+  void i18n.language;
 
   const onSubmit = handleSubmit(async (values) => {
     if (formState.isSubmitting) return;
     setError(null);
-    setMessage(null);
 
     try {
       await resetPasswordForEmail(values.email);
-      setMessage('If that email is on Calio, a reset link is on the way. Open it on this phone.');
+      router.push({
+        pathname: '/(auth)/reset-password',
+        params: { email: values.email },
+      });
     } catch (err) {
       reportError(err, { area: 'auth', action: 'reset-password' });
       setError(toAuthErrorMessage(err));
@@ -41,23 +50,23 @@ export default function ForgotPasswordScreen() {
 
   return (
     <AuthShell
-      title="Forgot password"
-      subtitle="We’ll send a reset link to your email."
+      title={t('auth.forgotTitle')}
+      subtitle={t('auth.forgotSubtitle', { count: RECOVERY_OTP_LENGTH })}
       footer={
-        <Link href="/(auth)/sign-in">
-          <Text variant="bodyStrong" style={{ color: colors.secondary }}>
-            Back to sign in
-          </Text>
-        </Link>
+        <AuthTextLink
+          href="/(auth)/sign-in"
+          label={t('auth.backToSignIn')}
+          direction="back"
+        />
       }
     >
-      <View className="gap-4">
+      <View className="gap-5">
         <Controller
           control={control}
           name="email"
           render={({ field, fieldState }) => (
             <Input
-              label="Email"
+              label={t('auth.email')}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -69,32 +78,25 @@ export default function ForgotPasswordScreen() {
               textContentType="emailAddress"
               returnKeyType="done"
               onSubmitEditing={onSubmit}
-              placeholder="you@email.com"
+              placeholder={t('auth.emailPlaceholder')}
             />
           )}
         />
 
         {error ? (
-          <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: '#FCECEE' }}>
+          <View
+            className="rounded-2xl px-3 py-2.5"
+            style={{ backgroundColor: colors.errorMuted }}
+          >
             <Text variant="bodySmall" tone="error">
               {error}
             </Text>
           </View>
         ) : null}
-        {message ? (
-          <View
-            className="rounded-2xl px-3 py-2.5"
-            style={{ backgroundColor: colors.secondaryMuted }}
-          >
-            <Text variant="bodySmall" tone="secondary">
-              {message}
-            </Text>
-          </View>
-        ) : null}
 
         <Button
-          label="Send reset link"
-          variant="secondary"
+          label={t('auth.sendCode')}
+          variant="primary"
           size="lg"
           loading={formState.isSubmitting}
           disabled={formState.isSubmitting}

@@ -1,8 +1,9 @@
 import { View } from 'react-native';
 
-import { Text } from '@/components/ui/text';
-import { colors } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 import { cx } from '@/utils/cx';
+
+import { Text } from './text';
 
 type ProgressBarProps = {
   value: number;
@@ -16,10 +17,13 @@ export function ProgressBar({
   value,
   max,
   label,
-  color = colors.primary,
+  color,
   className,
 }: ProgressBarProps) {
+  const colors = useThemeColors();
+  const fillColor = color ?? colors.primary;
   const ratio = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
+
   return (
     <View className={cx('gap-1', className)}>
       <View className="flex-row items-center justify-between">
@@ -30,10 +34,13 @@ export function ProgressBar({
           {Math.round(value)} / {Math.round(max)}
         </Text>
       </View>
-      <View className="h-2 overflow-hidden rounded-full bg-surfaceMuted">
+      <View
+        className="h-2 overflow-hidden rounded-full"
+        style={{ backgroundColor: colors.surfaceMuted }}
+      >
         <View
           className="h-full rounded-full"
-          style={{ width: `${ratio * 100}%`, backgroundColor: color }}
+          style={{ width: `${ratio * 100}%`, backgroundColor: fillColor }}
         />
       </View>
     </View>
