@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
+import { SlideTransition, type SlideSide } from '@/components/ui/slide-transition';
 import { spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 import { cx } from '@/utils/cx';
@@ -12,6 +13,11 @@ type ScreenProps = {
   keyboard?: boolean;
   edges?: Edge[];
   className?: string;
+  /**
+   * Optional enter slide when the screen focuses (handy for tabs).
+   * Pass a side, or `true` for default `right`.
+   */
+  slideFrom?: boolean | SlideSide;
 };
 
 export function Screen({
@@ -20,6 +26,7 @@ export function Screen({
   keyboard = false,
   edges = ['top', 'left', 'right'],
   className,
+  slideFrom,
 }: ScreenProps) {
   const colors = useThemeColors();
 
@@ -52,9 +59,16 @@ export function Screen({
     content
   );
 
+  const framed =
+    slideFrom === undefined || slideFrom === false ? (
+      body
+    ) : (
+      <SlideTransition from={slideFrom === true ? 'right' : slideFrom}>{body}</SlideTransition>
+    );
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={edges}>
-      {body}
+      {framed}
     </SafeAreaView>
   );
 }

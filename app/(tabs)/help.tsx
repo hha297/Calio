@@ -29,7 +29,7 @@ const topics = [
 
 export default function HelpScreen() {
   return (
-    <Screen scroll>
+    <Screen scroll slideFrom="top">
       <View className="gap-4">
         <Text variant="headingLarge">Help</Text>
         {topics.map((topic) => (

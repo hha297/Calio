@@ -81,6 +81,7 @@
       "emailNotConfirmed": "Xác minh email bằng mã chúng tôi đã gửi, rồi tiếp tục.",
       "alreadyRegistered": "Email này đã có tài khoản. Hãy đăng nhập.",
       "rateLimit": "Thử quá nhiều lần. Đợi một phút rồi thử lại.",
+      "emailSendFailed": "Không gửi được email xác minh. Đợi một phút rồi thử lại, hoặc kiểm tra spam.",
       "network": "Lỗi kết nối. Kiểm tra mạng và thử lại.",
       "notConfigured": "Không kết nối được máy chủ. Thử lại sau.",
       "otpExpired": "Mã xác minh đã hết hạn. Yêu cầu mã mới.",

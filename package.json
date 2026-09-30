@@ -61,7 +61,9 @@
     "@rolldown/binding-win32-x64-msvc": "1.2.11"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --tunnel",
+    "start:lan": "expo start --lan",
+    "start:clear": "expo start --tunnel --clear",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",

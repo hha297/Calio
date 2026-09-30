@@ -81,6 +81,7 @@
       "emailNotConfirmed": "Vahvista sähköposti koodilla, jonka lähetimme, ja jatka sitten.",
       "alreadyRegistered": "Tällä sähköpostilla on jo tili. Kokeile kirjautua.",
       "rateLimit": "Liikaa yrityksiä. Odota hetki ja yritä uudelleen.",
+      "emailSendFailed": "Vahvistussähköpostia ei voitu lähettää. Odota hetki ja yritä uudelleen, tai tarkista roskaposti.",
       "network": "Yhteysongelma. Tarkista verkko ja yritä uudelleen.",
       "notConfigured": "Palvelinta ei tavoitettu. Yritä hetken kuluttua.",
       "otpExpired": "Vahvistuskoodi on vanhentunut. Pyydä uusi koodi.",

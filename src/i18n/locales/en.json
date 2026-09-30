@@ -81,6 +81,7 @@
       "emailNotConfirmed": "Verify your email with the code we sent, then continue.",
       "alreadyRegistered": "That email already has an account. Try signing in.",
       "rateLimit": "Too many attempts. Wait a minute and try again.",
+      "emailSendFailed": "Couldn’t send the verification email. Wait a minute and try again, or check spam.",
       "network": "Connection issue. Check your network and try again.",
       "notConfigured": "Couldn’t reach the server. Try again in a moment.",
       "otpExpired": "This verification code has expired. Request a new code.",

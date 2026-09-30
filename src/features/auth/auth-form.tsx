@@ -77,6 +77,7 @@ function SignInForm({ notice }: { notice?: string }) {
     <AuthShell
       title={t('auth.signInTitle')}
       subtitle={t('auth.signInSubtitle')}
+      slideFrom="left"
       footer={
         <View className="flex-row flex-wrap items-center justify-center gap-1.5">
           <Text variant="bodySmall" tone="muted">
@@ -269,6 +270,7 @@ function SignUpForm() {
     <AuthShell
       title={t('auth.signUpTitle')}
       subtitle={t('auth.signUpSubtitle')}
+      slideFrom="right"
       footer={
         <View className="flex-row flex-wrap items-center justify-center gap-1.5">
           <Text variant="bodySmall" tone="muted">

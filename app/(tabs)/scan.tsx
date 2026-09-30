@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
+import { SlideTransition } from '@/components/ui/slide-transition';
 import { Text } from '@/components/ui/text';
 import { useCreateManualFood, useLogFoodEntry } from '@/features/food/hooks';
 import { fetchOpenFoodFactsByBarcode, type CalioFood } from '@/features/food/open-food-facts';
@@ -21,7 +22,7 @@ export default function ScanScreen() {
 
   if (!permission) {
     return (
-      <Screen>
+      <Screen slideFrom="bottom">
         <Text variant="body">Checking camera permission…</Text>
       </Screen>
     );
@@ -29,7 +30,7 @@ export default function ScanScreen() {
 
   if (!permission.granted) {
     return (
-      <Screen>
+      <Screen slideFrom="bottom">
         <View className="flex-1 justify-center gap-4">
           <Text variant="headingLarge">Camera access</Text>
           <Text variant="body" tone="secondary">
@@ -105,37 +106,39 @@ export default function ScanScreen() {
   }
 
   return (
-    <View className="flex-1 bg-black">
-      <CameraView
-        style={{ flex: 1 }}
-        facing="back"
-        barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'] }}
-        onBarcodeScanned={busy ? undefined : ({ data }) => void handleBarcode(data)}
-      />
-      <View className="absolute bottom-0 left-0 right-0 gap-3 bg-black/70 px-4 pb-10 pt-4">
-        <Text variant="body" style={{ color: '#F1F5E9', textAlign: 'center' }}>
-          Align the barcode in the frame
-        </Text>
-        {message ? (
-          <Text variant="bodySmall" style={{ color: '#F1F5E9', textAlign: 'center' }}>
-            {message}
+    <SlideTransition from="bottom">
+      <View className="flex-1 bg-black">
+        <CameraView
+          style={{ flex: 1 }}
+          facing="back"
+          barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'] }}
+          onBarcodeScanned={busy ? undefined : ({ data }) => void handleBarcode(data)}
+        />
+        <View className="absolute bottom-0 left-0 right-0 gap-3 bg-black/70 px-4 pb-10 pt-4">
+          <Text variant="body" style={{ color: '#F1F5E9', textAlign: 'center' }}>
+            Align the barcode in the frame
           </Text>
-        ) : null}
-        {food ? (
-          <Button
-            label={`Log ${food.name}`}
-            loading={busy}
-            onPress={() => {
-              void confirmFood();
-            }}
-          />
-        ) : null}
-        <Pressable onPress={() => router.push('/food/add')}>
-          <Text variant="bodyStrong" style={{ color: '#F1F5E9', textAlign: 'center' }}>
-            Enter manually
-          </Text>
-        </Pressable>
+          {message ? (
+            <Text variant="bodySmall" style={{ color: '#F1F5E9', textAlign: 'center' }}>
+              {message}
+            </Text>
+          ) : null}
+          {food ? (
+            <Button
+              label={`Log ${food.name}`}
+              loading={busy}
+              onPress={() => {
+                void confirmFood();
+              }}
+            />
+          ) : null}
+          <Pressable onPress={() => router.push('/food/add')}>
+            <Text variant="bodyStrong" style={{ color: '#F1F5E9', textAlign: 'center' }}>
+              Enter manually
+            </Text>
+          </Pressable>
+        </View>
       </View>
-    </View>
+    </SlideTransition>
   );
 }

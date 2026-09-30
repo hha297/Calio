@@ -180,6 +180,7 @@ export default function ResetPasswordScreen() {
     <AuthShell
       title={title}
       subtitle={subtitle}
+      slideFrom="right"
       footer={
         step === 'otp' ? (
           <AuthTextLink

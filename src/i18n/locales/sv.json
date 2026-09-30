@@ -81,6 +81,7 @@
       "emailNotConfirmed": "Verifiera e-posten med koden vi skickade och fortsätt sedan.",
       "alreadyRegistered": "Den e-posten har redan ett konto. Försök logga in.",
       "rateLimit": "För många försök. Vänta en minut och försök igen.",
+      "emailSendFailed": "Kunde inte skicka verifieringsmejlet. Vänta en minut och försök igen, eller kolla skräpposten.",
       "network": "Anslutningsproblem. Kontrollera nätverket och försök igen.",
       "notConfigured": "Kunde inte nå servern. Försök igen om en stund.",
       "otpExpired": "Verifieringskoden har gått ut. Begär en ny kod.",

@@ -52,7 +52,7 @@ export default function AnalyticsScreen() {
     .reverse();
 
   return (
-    <Screen scroll>
+    <Screen scroll slideFrom="right">
       <View className="gap-4">
         <Text variant="headingLarge">Analytics</Text>
         <Text variant="bodySmall" tone="secondary">

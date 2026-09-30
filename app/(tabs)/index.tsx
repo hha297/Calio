@@ -43,7 +43,7 @@ export default function DiaryScreen() {
   const error = foodQuery.error ?? goalQuery.error ?? burnQuery.error;
 
   return (
-    <Screen scroll>
+    <Screen scroll slideFrom="left">
       <View className="gap-4">
         <View className="flex-row items-center justify-between">
           <Pressable
