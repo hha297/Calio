@@ -16,6 +16,7 @@ import { isEmailNotConfirmedError, toAuthErrorMessage } from './auth-errors';
 import { useAuth } from './auth-provider';
 import { AuthShell } from './auth-shell';
 import { AuthTextLink } from './auth-text-link';
+import { GoogleOAuthButton } from './google-oauth-button';
 import { PasswordMatchStatus } from './password-match-status';
 import { PasswordRequirements } from './password-requirements';
 import { PasswordStrengthMeter } from './password-strength-meter';
@@ -178,10 +179,7 @@ function SignInForm({ notice }: { notice?: string }) {
         </View>
 
         {formError ? (
-          <View
-            className="rounded-2xl px-3 py-2.5"
-            style={{ backgroundColor: colors.errorMuted }}
-          >
+          <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: colors.errorMuted }}>
             <Text variant="bodySmall" tone="error">
               {formError}
             </Text>
@@ -196,6 +194,7 @@ function SignInForm({ notice }: { notice?: string }) {
           loading={formState.isSubmitting}
           disabled={formState.isSubmitting}
         />
+        <GoogleOAuthButton disabled={formState.isSubmitting} />
       </View>
     </AuthShell>
   );
@@ -276,11 +275,7 @@ function SignUpForm() {
           <Text variant="bodySmall" tone="muted">
             {t('auth.alreadyHaveAccount')}
           </Text>
-          <AuthTextLink
-            href="/(auth)/sign-in"
-            label={t('auth.signInCta')}
-            direction="forward"
-          />
+          <AuthTextLink href="/(auth)/sign-in" label={t('auth.signInCta')} direction="forward" />
         </View>
       }
     >
@@ -388,10 +383,7 @@ function SignUpForm() {
         />
 
         {formError ? (
-          <View
-            className="rounded-2xl px-3 py-2.5"
-            style={{ backgroundColor: colors.errorMuted }}
-          >
+          <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: colors.errorMuted }}>
             <Text variant="bodySmall" tone="error">
               {formError}
             </Text>
@@ -406,6 +398,7 @@ function SignUpForm() {
           loading={formState.isSubmitting}
           disabled={!canSubmit}
         />
+        <GoogleOAuthButton disabled={formState.isSubmitting} />
       </View>
     </AuthShell>
   );

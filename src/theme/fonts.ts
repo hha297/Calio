@@ -9,6 +9,7 @@ import {
   IBMPlexSans_600SemiBold,
   IBMPlexSans_700Bold,
 } from '@expo-google-fonts/ibm-plex-sans';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFonts } from 'expo-font';
 
 export const fonts = {
@@ -29,6 +30,7 @@ const fontMap = {
   DMSans_500Medium,
   DMSans_600SemiBold,
   DMSans_700Bold,
+  ...MaterialCommunityIcons.font,
 };
 
 /** IBM Plex Sans = display/UI. DM Sans = body copy. */

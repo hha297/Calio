@@ -3,6 +3,8 @@ import type { Session } from '@supabase/supabase-js';
 
 import { getSupabase } from '@/lib/supabase/client';
 
+export { isAuthCallbackUrl } from './auth-callback-url';
+
 export type SessionFromUrlResult = {
   session: Session | null;
   isPasswordRecovery: boolean;
@@ -20,7 +22,10 @@ export async function createSessionFromUrl(url: string): Promise<SessionFromUrlR
 
   const { params, errorCode } = QueryParams.getQueryParams(url);
   if (errorCode) {
-    throw new Error(errorCode);
+    throw new Error(params.error_description || params.error || errorCode);
+  }
+  if (params.error) {
+    throw new Error(params.error_description || params.error);
   }
 
   const isPasswordRecovery = params.type === 'recovery';

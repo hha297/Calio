@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",
     "@expo-google-fonts/ibm-plex-sans": "^0.4.1",
+    "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^5.9.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.117.2",
@@ -71,7 +72,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "supabase:start": "npx --yes supabase start",
+    "supabase:status": "npx --yes supabase status",
+    "supabase:stop": "npx --yes supabase stop"
   },
   "private": true
 }

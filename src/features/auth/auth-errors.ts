@@ -43,7 +43,10 @@ export function toAuthErrorMessage(error: unknown): string {
     return t('auth.errors.otpExpired');
   }
 
-  if (message.includes('verification did not complete') || message.includes('verification failed')) {
+  if (
+    message.includes('verification did not complete') ||
+    message.includes('verification failed')
+  ) {
     return t('auth.errors.verificationFailed');
   }
 
@@ -74,12 +77,24 @@ export function toAuthErrorMessage(error: unknown): string {
     return t('auth.errors.emailSendFailed');
   }
 
-  if (message.includes('network') || message.includes('fetch failed') || message.includes('failed to fetch')) {
+  if (
+    message.includes('network') ||
+    message.includes('fetch failed') ||
+    message.includes('failed to fetch')
+  ) {
     return t('auth.errors.network');
   }
 
   if (message.includes('not configured')) {
     return t('auth.errors.notConfigured');
+  }
+
+  if (
+    message.includes('unsupported provider') ||
+    message.includes('provider is not enabled') ||
+    message.includes('google sign-in')
+  ) {
+    return t('auth.errors.googleSignIn');
   }
 
   if (raw) {
