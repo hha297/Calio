@@ -397,7 +397,9 @@ export default function ResetPasswordScreen() {
             size="lg"
             loading={passwordForm.formState.isSubmitting || finishing}
             disabled={!canUpdatePassword || finishing}
-            onPress={onUpdatePassword}
+            onPress={() => {
+              void onUpdatePassword();
+            }}
           />
         </View>
       )}

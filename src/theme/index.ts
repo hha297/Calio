@@ -28,7 +28,7 @@ export { ThemeProvider, useTheme, useThemeColors, type ThemePreference } from '.
  * is too low to use as body text, so text on that fill uses textOnSecondary.
  * `success` is a darker brand-aligned green for readable success copy/icons;
  * `successBright` matches primary for meter fills at “Very strong”.
- * Display/UI uses IBM Plex Sans; body copy uses DM Sans.
+ * Display/UI and body use IBM Plex Sans (Vietnamese-capable; replaces DM Sans body).
  *
  * Runtime paint: prefer `useThemeColors()`. Static `colors` is the light palette
  * (and ColorName source). NativeWind semantic classes (`bg-surface`, `border-border`)

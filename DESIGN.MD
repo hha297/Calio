@@ -2,7 +2,7 @@
 
 > Source: [getdesign.md/spotify/design-md](https://getdesign.md/spotify/design-md) (`spotify/DESIGN.md`).  
 > **Primary override:** Spotify Green `#1ed760` → Calio **`#00D95F`**. All other reference colors keep their values and roles.  
-> **Fonts:** SpotifyMixUI / CircularSp are proprietary — Calio uses **IBM Plex Sans** (UI/titles) + **DM Sans** (body), preserving weight hierarchy (700 / 600 / 400).  
+> **Fonts:** SpotifyMixUI / CircularSp are proprietary — Calio uses **IBM Plex Sans** for UI/titles and body (weights 700 / 600 / 500 / 400). Body temporarily uses IBM Plex instead of DM Sans for reliable Vietnamese diacritics.  
 > **Platform:** Rules below are adapted for React Native / Expo mobile (fitness & nutrition), not desktop music chrome.
 
 ---

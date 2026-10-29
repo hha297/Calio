@@ -23,6 +23,8 @@ type ButtonProps = Omit<PressableProps, 'children' | 'style' | 'className'> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
+  /** When false, button sizes to its label (header actions). Default true. */
+  fullWidth?: boolean;
   iconStart?: (color: string) => ReactNode;
   iconEnd?: (color: string) => ReactNode;
   cssInterop?: false;
@@ -43,6 +45,7 @@ export function Button({
   variant = 'primary',
   size = 'md',
   loading = false,
+  fullWidth = true,
   disabled,
   iconStart,
   iconEnd,
@@ -52,6 +55,7 @@ export function Button({
   const resolved = resolveVariant(variant);
   const isDisabled = Boolean(disabled || loading);
   const radius = radii.pill;
+  const labelSize = size === 'lg' ? styles.labelLg : styles.labelMd;
 
   const palette = (pressed: boolean) => {
     if (isDisabled) {
@@ -104,7 +108,7 @@ export function Button({
   };
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, fullWidth ? styles.wrapFull : styles.wrapInline]}>
       <Pressable
         {...props}
         cssInterop={false}
@@ -112,7 +116,11 @@ export function Button({
         accessibilityLabel={label}
         accessibilityState={{ disabled: isDisabled, busy: loading }}
         disabled={isDisabled}
-        style={[styles.base, size === 'lg' ? styles.lg : styles.md]}
+        style={[
+          styles.base,
+          fullWidth ? styles.baseFull : styles.baseInline,
+          size === 'lg' ? styles.lg : styles.md,
+        ]}
       >
         {({ pressed }) => {
           const p = palette(pressed);
@@ -138,6 +146,7 @@ export function Button({
                   <RNText
                     style={[
                       styles.label,
+                      labelSize,
                       resolved === 'primary' || resolved === 'secondary'
                         ? styles.labelCased
                         : null,
@@ -159,15 +168,27 @@ export function Button({
 
 const styles = StyleSheet.create({
   wrap: {
-    width: '100%',
     alignSelf: 'stretch',
   },
-  base: {
+  wrapFull: {
     width: '100%',
+  },
+  wrapInline: {
+    width: undefined,
+    alignSelf: 'center',
+  },
+  base: {
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     position: 'relative',
+  },
+  baseFull: {
+    width: '100%',
+  },
+  baseInline: {
+    width: undefined,
+    paddingHorizontal: spacing[3],
   },
   content: {
     flexDirection: 'row',
@@ -178,7 +199,7 @@ const styles = StyleSheet.create({
   md: {
     minHeight: layout.controlMinHeight,
     borderRadius: radii.pill,
-    paddingHorizontal: spacing[4],
+    paddingHorizontal: spacing[5],
   },
   lg: {
     minHeight: 52,
@@ -187,12 +208,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.ibmBold,
-    fontSize: 14,
-    lineHeight: 18,
     textAlign: 'center',
+  },
+  labelMd: {
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  labelLg: {
+    fontSize: 16,
+    lineHeight: 22,
   },
   labelCased: {
     textTransform: 'uppercase',
-    letterSpacing: 1.4,
+    letterSpacing: 1.2,
   },
 });

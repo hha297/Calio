@@ -7,6 +7,7 @@ export type Profile = {
   units: 'metric' | 'imperial';
   activity_level: 'sedentary' | 'light' | 'moderate' | 'demanding' | null;
   onboarding_completed_at: string | null;
+  avatar_url?: string | null;
 };
 
 export type Goal = {

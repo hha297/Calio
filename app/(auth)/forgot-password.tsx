@@ -79,7 +79,9 @@ export default function ForgotPasswordScreen() {
               keyboardType="email-address"
               textContentType="emailAddress"
               returnKeyType="done"
-              onSubmitEditing={onSubmit}
+              onSubmitEditing={() => {
+                void onSubmit();
+              }}
               placeholder={t('auth.emailPlaceholder')}
             />
           )}
@@ -106,7 +108,9 @@ export default function ForgotPasswordScreen() {
           size="lg"
           loading={formState.isSubmitting}
           disabled={formState.isSubmitting}
-          onPress={onSubmit}
+          onPress={() => {
+            void onSubmit();
+          }}
         />
       </View>
     </AuthShell>

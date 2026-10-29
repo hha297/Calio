@@ -7,5 +7,5 @@
   "bodySmall": { "size": 13, "lineHeight": 18, "weight": "400" },
   "caption": { "size": 11, "lineHeight": 14, "weight": "400" },
   "label": { "size": 12, "lineHeight": 16, "weight": "500" },
-  "button": { "size": 14, "lineHeight": 18, "weight": "700" }
+  "button": { "size": 15, "lineHeight": 20, "weight": "700" }
 }

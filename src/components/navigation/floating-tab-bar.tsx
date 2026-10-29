@@ -1,36 +1,41 @@
 import { Image } from 'expo-image';
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { elevation, iconSizes, radii, withAlpha } from '@/theme';
 import { fonts } from '@/theme/fonts';
-import { useThemeColors } from '@/theme/theme-provider';
+import { useTheme, useThemeColors } from '@/theme/theme-provider';
 
 import { scanImageSource, useScanImages } from './scan-image';
 
 const DOCK_HEIGHT = 68;
 const DOCK_HEIGHT_COMPACT = 62;
-const SCAN_SIZE = 62;
-const SCAN_SIZE_COMPACT = 58;
+const SCAN_SIZE = 58;
+const SCAN_SIZE_COMPACT = 54;
 
 /** Extra scroll padding so the last diary row clears the floating dock + Scan FAB. */
 export function useFloatingTabBarClearance(): number {
-  const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const compact = width <= 360 || height <= 500;
   const dockHeight = compact ? DOCK_HEIGHT_COMPACT : DOCK_HEIGHT;
-  const bottomGap = Math.max(8, insets.bottom);
-  return dockHeight + bottomGap + 28;
+  // Home-indicator clearance is applied by the dock itself; keep a buffer for the FAB overhang.
+  return dockHeight + 36;
 }
 
 type FloatingTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
-export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBarProps) {
+export function FloatingTabBar({
+  state,
+  descriptors,
+  navigateToTab,
+  emitter,
+  insets,
+}: FloatingTabBarProps) {
   const colors = useThemeColors();
+  const { scheme } = useTheme();
+  const isDark = scheme === 'dark';
   const scanImages = useScanImages();
-  const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const compact = width <= 360 || height <= 500;
   const landscape = width > height;
@@ -41,6 +46,17 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   const bottomGap = Math.max(8, insets.bottom);
   const horizontalGap = landscape ? 24 : compact ? 10 : 16;
   const dockWidth = Math.min(width - horizontalGap * 2, 620);
+  // Dark surfaces swallow black shadows — use a soft primary glow instead.
+  const dockElevation = isDark
+    ? ({
+        shadowColor: colors.primary,
+        shadowOpacity: Platform.OS === 'ios' ? 0.28 : 0.32,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 10,
+      } as const)
+    : elevation.tabBar('#000000');
+  const dockBorder = isDark ? withAlpha(colors.primary, 0.22) : colors.border;
 
   if (scanFocused) return null;
 
@@ -60,13 +76,13 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
       <View
         style={[
           styles.dock,
-          elevation.tabBar('#000000'),
+          dockElevation,
           {
             bottom: bottomGap,
             width: dockWidth,
             height: dockHeight,
             backgroundColor: colors.surface,
-            borderColor: withAlpha(colors.primary, 0.55),
+            borderColor: dockBorder,
             borderRadius: radii.pill,
           },
         ]}
@@ -84,21 +100,18 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
                 : route.name;
 
           const onPress = () => {
-            const event = navigation.emit({
+            const event = emitter.emit({
               type: 'tabPress',
               target: route.key,
               canPreventDefault: true,
             });
             if (!focused && !event.defaultPrevented) {
-              navigation.navigate(
-                route.name,
-                isScan ? { source: 'navbar', nonce: Date.now().toString() } : route.params,
-              );
+              navigateToTab(route.key);
             }
           };
 
           const onLongPress = () => {
-            navigation.emit({ type: 'tabLongPress', target: route.key });
+            emitter.emit({ type: 'tabLongPress', target: route.key });
           };
 
           if (isScan) {
@@ -121,12 +134,13 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
                       height: scanSize,
                       borderRadius: scanSize / 2,
                       backgroundColor: colors.primary,
+                      top: -(scanSize * 0.32),
                     },
                   ]}
                 >
                   <Image
                     source={(focused ? scanImages.active : scanImages.inactive) ?? scanImageSource}
-                    style={{ width: scanSize - 14, height: scanSize - 14 }}
+                    style={{ width: scanSize - 16, height: scanSize - 16 }}
                     contentFit="contain"
                     cachePolicy="memory"
                     autoplay
@@ -204,8 +218,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    paddingHorizontal: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 10,
     overflow: 'visible',
   },
   tab: {
@@ -214,7 +228,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: 3,
     paddingHorizontal: 2,
   },
   iconWrap: {
@@ -246,7 +260,6 @@ const styles = StyleSheet.create({
   },
   scanButton: {
     position: 'absolute',
-    top: -26,
     alignItems: 'center',
     justifyContent: 'center',
   },

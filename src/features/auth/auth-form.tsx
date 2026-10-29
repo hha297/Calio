@@ -147,7 +147,9 @@ function SignInForm({ notice }: { notice?: string }) {
               secureTextEntry
               textContentType="password"
               returnKeyType="done"
-              onSubmitEditing={onSubmit}
+              onSubmitEditing={() => {
+                void onSubmit();
+              }}
               placeholder={t('auth.passwordPlaceholder')}
             />
           )}
@@ -202,7 +204,9 @@ function SignInForm({ notice }: { notice?: string }) {
           label={t('auth.signInCta')}
           variant="primary"
           size="lg"
-          onPress={onSubmit}
+          onPress={() => {
+            void onSubmit();
+          }}
           loading={formState.isSubmitting}
           disabled={formState.isSubmitting}
         />
@@ -413,7 +417,9 @@ function SignUpForm() {
           label={t('auth.signUpCta')}
           variant="primary"
           size="lg"
-          onPress={onSubmit}
+          onPress={() => {
+            void onSubmit();
+          }}
           loading={formState.isSubmitting}
           disabled={!canSubmit}
         />

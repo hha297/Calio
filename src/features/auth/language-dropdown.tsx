@@ -1,11 +1,12 @@
 import { usePathname } from 'expo-router';
 import { Check, ChevronDown } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Dimensions, Modal, Pressable, StyleSheet, View, type ViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
 import {
+  LANGUAGE_FLAGS,
   LANGUAGE_LABELS,
   SUPPORTED_LANGUAGES,
   changeAppLanguage,
@@ -14,13 +15,6 @@ import {
 } from '@/i18n';
 import { elevation, iconSizes, motion, radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
-
-const LANGUAGE_FLAGS: Record<AppLanguage, string> = {
-  en: '\u{1F1EC}\u{1F1E7}',
-  fi: '\u{1F1EB}\u{1F1EE}',
-  sv: '\u{1F1F8}\u{1F1EA}',
-  vi: '\u{1F1FB}\u{1F1F3}',
-};
 
 const MENU_MIN_WIDTH = 220;
 const MENU_MAX_WIDTH = 272;
@@ -38,7 +32,7 @@ export function LanguageDropdown() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<MenuPosition | null>(null);
-  const triggerRef = useRef<View>(null);
+  const triggerRef = useRef<ViewInstance>(null);
   const language = useAppLanguage();
   const openProgress = useSharedValue(0);
 
@@ -64,7 +58,7 @@ export function LanguageDropdown() {
   }
 
   function openMenu() {
-    triggerRef.current?.measureInWindow((x, y, width, height) => {
+    triggerRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
       const screenWidth = Dimensions.get('window').width;
       const minWidth = Math.min(MENU_MAX_WIDTH, Math.max(MENU_MIN_WIDTH, width));
       const left = Math.max(12, Math.min(x, screenWidth - minWidth - 12));

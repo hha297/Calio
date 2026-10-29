@@ -20,6 +20,14 @@ export const LANGUAGE_LABELS: Record<AppLanguage, string> = {
   vi: 'Tiếng Việt',
 };
 
+/** Regional flags for language pickers (GB / FI / SE / VN). */
+export const LANGUAGE_FLAGS: Record<AppLanguage, string> = {
+  en: '\u{1F1EC}\u{1F1E7}',
+  fi: '\u{1F1EB}\u{1F1EE}',
+  sv: '\u{1F1F8}\u{1F1EA}',
+  vi: '\u{1F1FB}\u{1F1F3}',
+};
+
 const LANGUAGE_KEY = 'calio.language';
 
 function deviceLanguage(): AppLanguage {

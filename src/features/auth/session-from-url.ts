@@ -1,4 +1,3 @@
-import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import type { Session } from '@supabase/supabase-js';
 
 import { getSupabase } from '@/lib/supabase/client';
@@ -10,6 +9,23 @@ export type SessionFromUrlResult = {
   isPasswordRecovery: boolean;
 };
 
+/** Parse search + hash params from an auth callback URL (SDK 58 no longer exports QueryParams). */
+function getQueryParams(input: string): {
+  errorCode: string | null;
+  params: Record<string, string>;
+} {
+  const url = new URL(input, 'https://phony.example');
+  const errorCode = url.searchParams.get('errorCode');
+  url.searchParams.delete('errorCode');
+  const params = Object.fromEntries(url.searchParams.entries());
+  if (url.hash) {
+    new URLSearchParams(url.hash.replace(/^#/, '')).forEach((value, key) => {
+      params[key] = value;
+    });
+  }
+  return { errorCode, params };
+}
+
 /**
  * Completes auth when the app opens from an email confirm / reset link.
  * Supports both PKCE `code` and implicit `access_token` + `refresh_token`.
@@ -20,7 +36,7 @@ export async function createSessionFromUrl(url: string): Promise<SessionFromUrlR
     return { session: null, isPasswordRecovery: false };
   }
 
-  const { params, errorCode } = QueryParams.getQueryParams(url);
+  const { params, errorCode } = getQueryParams(url);
   if (errorCode) {
     throw new Error(params.error_description || params.error || errorCode);
   }

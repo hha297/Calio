@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TextInput, View } from 'react-native';
+import { TextInput, View, type TextInputInstance } from 'react-native';
 
 import { FieldPlaceholder } from '@/components/ui/field-placeholder';
 import { fieldShell, getFieldCursorProps, getFieldTypography } from '@/components/ui/field-styles';
@@ -37,7 +37,7 @@ export function OtpInput({
 }: OtpInputProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const [focused, setFocused] = useState(false);
   const showPlaceholder = value.length === 0;
   const placeholder = t('auth.otpPlaceholder', { count: length });

@@ -112,6 +112,7 @@ function RootNavigator() {
           <Stack.Screen name="workout" />
           <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
           <Stack.Screen name="measurements" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="account" options={{ presentation: 'modal' }} />
         </Stack.Protected>
 
         <Stack.Protected guard={showAuth}>

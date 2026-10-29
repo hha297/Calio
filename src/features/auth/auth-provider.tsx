@@ -59,6 +59,10 @@ type AuthContextValue = {
    */
   completePasswordReset: (password: string) => Promise<void>;
   clearPasswordRecovery: () => void;
+  /** Change password while signed in (email/password accounts). */
+  changePassword: (newPassword: string) => Promise<void>;
+  /** Request email change (Supabase sends confirmation to the new address). */
+  updateEmail: (newEmail: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -406,6 +410,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPasswordRecovery(false);
   }, []);
 
+  const changePassword = useCallback(async (newPassword: string) => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    analytics.track('auth_password_changed');
+  }, []);
+
+  const updateEmail = useCallback(async (newEmail: string) => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+    const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+    if (error) throw error;
+    analytics.track('auth_email_change_requested');
+  }, []);
+
   const value = useMemo(
     () => ({
       isConfigured: configured,
@@ -423,6 +447,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       verifyRecoveryOtp,
       completePasswordReset,
       clearPasswordRecovery,
+      changePassword,
+      updateEmail,
     }),
     [
       configured,
@@ -440,6 +466,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       verifyRecoveryOtp,
       completePasswordReset,
       clearPasswordRecovery,
+      changePassword,
+      updateEmail,
     ],
   );
 
