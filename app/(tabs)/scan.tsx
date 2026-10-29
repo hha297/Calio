@@ -1,29 +1,170 @@
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { router } from 'expo-router';
-import { useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Flashlight, FlashlightOff, X } from 'lucide-react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { SlideTransition } from '@/components/ui/slide-transition';
 import { Text } from '@/components/ui/text';
-import { useCreateManualFood, useLogFoodEntry } from '@/features/food/hooks';
-import { fetchOpenFoodFactsByBarcode, type CalioFood } from '@/features/food/open-food-facts';
+import { useCreateManualFood, useLogFoodEntry, type MealType } from '@/features/food/hooks';
+import {
+  fetchOpenFoodFactsByBarcode,
+  FoodLookupError,
+  isSupportedProductBarcode,
+} from '@/features/food/open-food-facts';
+import {
+  type ScanModalResult,
+  ScanResultModal,
+  type ScanSaveInput,
+} from '@/features/food/scan-result-modal';
+import { suggestedMealForDate } from '@/features/food/scan-calculations';
 import { toDiaryDateKey } from '@/utils/date';
 
 export default function ScanScreen() {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{
+    date?: string;
+    meal?: string;
+    source?: string;
+    nonce?: string;
+  }>();
   const [permission, requestPermission] = useCameraPermissions();
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [food, setFood] = useState<CalioFood | null>(null);
-  const lastCode = useRef<string | null>(null);
+  const [torchEnabled, setTorchEnabled] = useState(false);
+  const [result, setResult] = useState<ScanModalResult | null>(null);
+  const [blockedBarcode, setBlockedBarcode] = useState<string | null>(null);
+  const requestSequence = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const blockedCode = useRef<string | null>(null);
+  const savedFood = useRef<{ barcode: string; id: string } | null>(null);
+  const logRequestId = useRef(makeRequestId());
   const createFood = useCreateManualFood();
   const logFood = useLogFoodEntry();
+
+  const today = toDiaryDateKey();
+  const initialDateKey = params.source === 'meal' && params.date ? params.date : today;
+  const initialMealType =
+    params.source === 'meal' && isMealType(params.meal)
+      ? params.meal
+      : suggestedMealForDate(initialDateKey, today, new Date().getHours());
+
+  const resetResult = useCallback((allowSameCode: boolean) => {
+    requestSequence.current += 1;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setResult(null);
+    savedFood.current = null;
+    logRequestId.current = makeRequestId();
+    if (allowSameCode) {
+      blockedCode.current = null;
+      setBlockedBarcode(null);
+    }
+  }, []);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+  useEffect(() => {
+    const timer = setTimeout(() => resetResult(true), 0);
+    return () => clearTimeout(timer);
+  }, [params.nonce, resetResult]);
+
+  const lookup = useCallback(async (barcode: string) => {
+    const sequence = ++requestSequence.current;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setResult({ kind: 'loading', barcode });
+    try {
+      const lookupResult = await fetchOpenFoodFactsByBarcode(barcode, {
+        signal: controller.signal,
+      });
+      if (sequence !== requestSequence.current || controller.signal.aborted) return;
+      setResult(
+        lookupResult.status === 'found'
+          ? { kind: 'found', barcode, food: lookupResult.food }
+          : { kind: 'not_found', barcode },
+      );
+    } catch (error) {
+      if (sequence !== requestSequence.current || controller.signal.aborted) return;
+      const lookupError =
+        error instanceof FoodLookupError
+          ? error
+          : new FoodLookupError('network', 'Could not connect to Open Food Facts.');
+      setResult({ kind: 'error', barcode, error: lookupError });
+    }
+  }, []);
+
+  const handleBarcode = useCallback(
+    ({ data, type }: BarcodeScanningResult) => {
+      if (result || blockedCode.current === data) return;
+      blockedCode.current = data;
+      setBlockedBarcode(data);
+      if (!isSupportedProductBarcode(type, data)) {
+        setResult({ kind: 'unsupported', barcode: data });
+        return;
+      }
+      void lookup(data);
+    },
+    [lookup, result],
+  );
+
+  async function saveScan(input: ScanSaveInput) {
+    let foodId = savedFood.current?.barcode === input.barcode ? savedFood.current.id : null;
+    if (!foodId) {
+      const created = await createFood.mutateAsync({
+        name: input.name,
+        brand: input.brand ?? undefined,
+        barcode: input.barcode,
+        source: input.source,
+        imageUrl: input.imageUrl ?? undefined,
+        servingLabel: input.servingLabel,
+        servingGrams: input.servingGrams ?? undefined,
+        nutritionBasis: input.nutritionBasis,
+        basisUnit: input.basisUnit,
+        basisAmount: input.basisAmount ?? undefined,
+        nutritionUserEdited: input.nutritionUserEdited,
+        calories: input.totals.calories,
+        proteinG: input.totals.proteinG,
+        carbsG: input.totals.carbsG,
+        fatG: input.totals.fatG,
+      });
+      foodId = created.id;
+      savedFood.current = { barcode: input.barcode, id: foodId };
+    }
+
+    await logFood.mutateAsync({
+      clientRequestId: logRequestId.current,
+      dateKey: input.dateKey,
+      mealType: input.mealType,
+      quantity: 1,
+      amount: input.amount,
+      amountUnit: input.amountUnit,
+      nutritionBasis: input.nutritionBasis,
+      basisAmount: input.basisAmount ?? undefined,
+      nutritionUserEdited: input.nutritionUserEdited,
+      food: {
+        id: foodId,
+        name: input.name,
+        brand: input.brand,
+        servingLabel: input.servingLabel,
+        calories: input.totals.calories,
+        proteinG: input.totals.proteinG,
+        carbsG: input.totals.carbsG,
+        fatG: input.totals.fatG,
+      },
+    });
+
+    resetResult(false);
+    router.replace({ pathname: '/', params: { date: input.dateKey } });
+  }
 
   if (!permission) {
     return (
       <Screen slideFrom="bottom">
-        <Text variant="body">Checking camera permission…</Text>
+        <Text variant="body">{t('scan.checkingPermission')}</Text>
       </Screen>
     );
   }
@@ -32,113 +173,197 @@ export default function ScanScreen() {
     return (
       <Screen slideFrom="bottom">
         <View className="flex-1 justify-center gap-4">
-          <Text variant="headingLarge">Camera access</Text>
+          <Text variant="headingLarge">{t('scan.cameraAccess')}</Text>
           <Text variant="body" tone="secondary">
-            Calio needs the camera to read food barcodes. You can still add foods manually.
+            {t('scan.cameraAccessBody')}
           </Text>
-          <Button label="Allow camera" onPress={() => void requestPermission()} />
-          <Button label="Add food manually" variant="ghost" onPress={() => router.push('/food/add')} />
+          <Button label={t('scan.allowCamera')} onPress={() => void requestPermission()} />
+          <Button label={t('scan.close')} variant="text" onPress={() => router.replace('/')} />
         </View>
       </Screen>
     );
-  }
-
-  async function handleBarcode(barcode: string) {
-    if (busy || lastCode.current === barcode) return;
-    lastCode.current = barcode;
-    setBusy(true);
-    setMessage(null);
-    try {
-      const result = await fetchOpenFoodFactsByBarcode(barcode);
-      if (!result) {
-        setMessage('Unknown barcode. Try manual entry.');
-        setFood(null);
-        return;
-      }
-      setFood(result);
-      setMessage(`Found ${result.name}`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Lookup failed.');
-      setFood(null);
-    } finally {
-      setBusy(false);
-      setTimeout(() => {
-        lastCode.current = null;
-      }, 1500);
-    }
-  }
-
-  async function confirmFood() {
-    if (!food) return;
-    setBusy(true);
-    try {
-      const saved = await createFood.mutateAsync({
-        name: food.name,
-        brand: food.brand ?? undefined,
-        barcode: food.barcode ?? undefined,
-        servingLabel: food.servingLabel,
-        calories: food.calories,
-        proteinG: food.proteinG,
-        carbsG: food.carbsG,
-        fatG: food.fatG,
-      });
-      await logFood.mutateAsync({
-        dateKey: toDiaryDateKey(),
-        mealType: 'snacks',
-        quantity: 1,
-        food: {
-          id: saved.id,
-          name: saved.name,
-          brand: saved.brand,
-          servingLabel: saved.serving_label,
-          calories: saved.calories,
-          proteinG: saved.protein_g,
-          carbsG: saved.carbs_g,
-          fatG: saved.fat_g,
-        },
-      });
-      router.replace('/(tabs)/index');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Could not save scanned food.');
-    } finally {
-      setBusy(false);
-    }
   }
 
   return (
     <SlideTransition from="bottom">
       <View className="flex-1 bg-black">
         <CameraView
-          style={{ flex: 1 }}
+          style={styles.flex}
           facing="back"
-          barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'] }}
-          onBarcodeScanned={busy ? undefined : ({ data }) => void handleBarcode(data)}
+          enableTorch={torchEnabled}
+          barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'itf14'] }}
+          onBarcodeScanned={result ? undefined : handleBarcode}
         />
-        <View className="absolute bottom-0 left-0 right-0 gap-3 bg-black/70 px-4 pb-10 pt-4">
-          <Text variant="body" style={{ color: '#F1F5E9', textAlign: 'center' }}>
-            Align the barcode in the frame
-          </Text>
-          {message ? (
-            <Text variant="bodySmall" style={{ color: '#F1F5E9', textAlign: 'center' }}>
-              {message}
-            </Text>
-          ) : null}
-          {food ? (
-            <Button
-              label={`Log ${food.name}`}
-              loading={busy}
-              onPress={() => {
-                void confirmFood();
-              }}
-            />
-          ) : null}
-          <Pressable onPress={() => router.push('/food/add')}>
-            <Text variant="bodyStrong" style={{ color: '#F1F5E9', textAlign: 'center' }}>
-              Enter manually
-            </Text>
-          </Pressable>
+        <View style={[styles.topControls, { top: insets.top + 12 }]}>
+          <CameraControl label={t('scan.close')} onPress={() => router.replace('/')}>
+            <X color="#FFFFFF" size={24} strokeWidth={2.4} />
+          </CameraControl>
+          <CameraControl
+            label={torchEnabled ? t('scan.flashOff') : t('scan.flashOn')}
+            active={torchEnabled}
+            onPress={() => setTorchEnabled((enabled) => !enabled)}
+          >
+            {torchEnabled ? (
+              <FlashlightOff color="#FFFFFF" size={22} strokeWidth={2.2} />
+            ) : (
+              <Flashlight color="#FFFFFF" size={22} strokeWidth={2.2} />
+            )}
+          </CameraControl>
         </View>
+        <ScanFrame />
+        <View style={[styles.instructions, { paddingBottom: insets.bottom + 24 }]}>
+          <Text variant="body" style={styles.lightText}>
+            {t('scan.align')}
+          </Text>
+          <View style={styles.manualAction}>
+            <Button
+              label={t('scan.enterManually')}
+              variant="secondary"
+              onPress={() =>
+                router.push({
+                  pathname: '/food/add',
+                  params: {
+                    mode: 'manual',
+                    date: initialDateKey,
+                    meal: initialMealType ?? undefined,
+                  },
+                })
+              }
+            />
+          </View>
+          {!result && blockedBarcode ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => resetResult(true)}
+              style={styles.rescanPill}
+            >
+              <Text variant="bodyStrong" style={styles.lightText}>
+                {t('scan.rescan')}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+
+        {result ? (
+          <ScanResultModal
+            key={`${result.kind}:${result.barcode}`}
+            result={result}
+            initialDateKey={initialDateKey}
+            initialMealType={initialMealType}
+            onClose={() => resetResult(true)}
+            onRescan={() => resetResult(true)}
+            onRetry={() => void lookup(result.barcode)}
+            onSave={saveScan}
+          />
+        ) : null}
       </View>
     </SlideTransition>
   );
 }
+
+function CameraControl({
+  label,
+  active,
+  onPress,
+  children,
+}: {
+  label: string;
+  active?: boolean;
+  onPress: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
+      hitSlop={8}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.cameraControl,
+        active && styles.cameraControlActive,
+        pressed && styles.pressed,
+      ]}
+    >
+      {children}
+    </Pressable>
+  );
+}
+function ScanFrame() {
+  return (
+    <View pointerEvents="none" style={styles.scanFrame}>
+      <View style={[styles.corner, styles.topLeft]} />
+      <View style={[styles.corner, styles.topRight]} />
+      <View style={[styles.corner, styles.bottomLeft]} />
+      <View style={[styles.corner, styles.bottomRight]} />
+    </View>
+  );
+}
+function isMealType(value?: string): value is MealType {
+  return value === 'breakfast' || value === 'lunch' || value === 'dinner' || value === 'snacks';
+}
+function makeRequestId() {
+  return `scan-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  topControls: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cameraControl: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 24,
+    backgroundColor: 'rgba(20,26,18,0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.72)',
+  },
+  cameraControlActive: { backgroundColor: 'rgba(255,255,255,0.2)', borderColor: '#FFFFFF' },
+  pressed: { opacity: 0.78, transform: [{ scale: 0.94 }] },
+  scanFrame: { position: 'absolute', top: '31%', left: 32, right: 32, height: 154 },
+  corner: { position: 'absolute', width: 34, height: 34, borderColor: '#00D95F' },
+  topLeft: { left: 0, top: 0, borderLeftWidth: 4, borderTopWidth: 4, borderTopLeftRadius: 18 },
+  topRight: { right: 0, top: 0, borderRightWidth: 4, borderTopWidth: 4, borderTopRightRadius: 18 },
+  bottomLeft: {
+    left: 0,
+    bottom: 0,
+    borderLeftWidth: 4,
+    borderBottomWidth: 4,
+    borderBottomLeftRadius: 18,
+  },
+  bottomRight: {
+    right: 0,
+    bottom: 0,
+    borderRightWidth: 4,
+    borderBottomWidth: 4,
+    borderBottomRightRadius: 18,
+  },
+  instructions: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 0,
+    gap: 6,
+    alignItems: 'center',
+  },
+  lightText: { color: '#F1F5E9', textAlign: 'center' },
+  manualAction: { width: '100%' },
+  rescanPill: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    borderRadius: 22,
+    backgroundColor: 'rgba(20,26,18,0.72)',
+  },
+});

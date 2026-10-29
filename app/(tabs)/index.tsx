@@ -1,5 +1,5 @@
 import { addDays } from 'date-fns';
-import { router } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
@@ -10,12 +10,18 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ErrorState, LoadingState } from '@/components/ui/states';
 import { calculateDailyBalance } from '@/features/diary/balance';
-import { useDayFoodTotals, useDeleteFoodEntry, useFoodEntries, type MealType } from '@/features/food/hooks';
+import {
+  useDayFoodTotals,
+  useDeleteFoodEntry,
+  useFoodEntries,
+  type MealType,
+} from '@/features/food/hooks';
 import { useActiveGoal } from '@/features/goals/hooks';
 import { useDayWorkoutCalories } from '@/features/workout/hooks';
+import { useAppLanguage } from '@/i18n';
 import { colors } from '@/theme';
 import { formatDiaryHeading, parseDiaryDateKey, toDiaryDateKey } from '@/utils/date';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 const meals: { key: MealType; label: string }[] = [
   { key: 'breakfast', label: 'Breakfast' },
@@ -25,7 +31,16 @@ const meals: { key: MealType; label: string }[] = [
 ];
 
 export default function DiaryScreen() {
-  const [dateKey, setDateKey] = useState(toDiaryDateKey());
+  const language = useAppLanguage();
+  const params = useLocalSearchParams<{ date?: string }>();
+  const [dateKey, setDateKey] = useState(
+    params.date && /^\d{4}-\d{2}-\d{2}$/.test(params.date) ? params.date : toDiaryDateKey(),
+  );
+  useFocusEffect(
+    useCallback(() => {
+      if (params.date && /^\d{4}-\d{2}-\d{2}$/.test(params.date)) setDateKey(params.date);
+    }, [params.date]),
+  );
   const goalQuery = useActiveGoal();
   const foodQuery = useFoodEntries(dateKey);
   const totalsQuery = useDayFoodTotals(dateKey);
@@ -56,7 +71,7 @@ export default function DiaryScreen() {
           <View className="items-center">
             <Text variant="headingLarge">Diary</Text>
             <Text variant="caption" tone="secondary">
-              {formatDiaryHeading(dateKey)}
+              {formatDiaryHeading(dateKey, language === 'vi' ? 'vi' : 'en')}
             </Text>
           </View>
           <Pressable
@@ -121,7 +136,11 @@ export default function DiaryScreen() {
             />
           </View>
           <View className="flex-1">
-            <Button label="Workout" variant="secondary" onPress={() => router.push('/workout/index')} />
+            <Button
+              label="Workout"
+              variant="secondary"
+              onPress={() => router.push('/workout/index')}
+            />
           </View>
         </View>
 
@@ -140,7 +159,9 @@ export default function DiaryScreen() {
 
         {!isLoading && !error
           ? meals.map((meal) => {
-              const entries = (foodQuery.data ?? []).filter((entry) => entry.meal_type === meal.key);
+              const entries = (foodQuery.data ?? []).filter(
+                (entry) => entry.meal_type === meal.key,
+              );
               const mealCalories = entries.reduce((sum, entry) => sum + entry.calories, 0);
               return (
                 <View key={meal.key} className="gap-2">

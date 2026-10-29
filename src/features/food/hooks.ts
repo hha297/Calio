@@ -82,6 +82,12 @@ export function useRecentFoods() {
 }
 
 type LogFoodInput = {
+  clientRequestId?: string;
+  amount?: number;
+  amountUnit?: 'g' | 'ml' | 'serving';
+  nutritionBasis?: 'per100' | 'serving';
+  basisAmount?: number;
+  nutritionUserEdited?: boolean;
   dateKey: string;
   mealType: MealType;
   quantity: number;
@@ -117,7 +123,7 @@ export function useLogFoodEntry() {
         input.quantity,
       );
 
-      const { error } = await supabase.from('food_entries').insert({
+      const row = {
         user_id: userId,
         food_id: input.food.id ?? null,
         logged_on: input.dateKey,
@@ -130,7 +136,18 @@ export function useLogFoodEntry() {
         protein_g: scaled.proteinG,
         carbs_g: scaled.carbsG,
         fat_g: scaled.fatG,
-      });
+        client_request_id: input.clientRequestId ?? null,
+        amount: input.amount ?? null,
+        amount_unit: input.amountUnit ?? null,
+        nutrition_basis: input.nutritionBasis ?? null,
+        basis_amount: input.basisAmount ?? null,
+        nutrition_user_edited: input.nutritionUserEdited ?? false,
+      };
+      const { error } = input.clientRequestId
+        ? await supabase
+            .from('food_entries')
+            .upsert(row, { onConflict: 'user_id,client_request_id', ignoreDuplicates: true })
+        : await supabase.from('food_entries').insert(row);
       if (error) throw error;
     },
     onSuccess: async (_data, variables) => {
@@ -175,10 +192,31 @@ export function useCreateManualFood() {
       carbsG: number;
       fatG: number;
       barcode?: string;
+      source?: 'manual' | 'open_food_facts';
+      imageUrl?: string;
+      servingGrams?: number;
+      nutritionBasis?: 'per100' | 'serving';
+      basisUnit?: 'g' | 'ml' | 'serving';
+      basisAmount?: number;
+      nutritionUserEdited?: boolean;
     }) => {
       const supabase = getSupabase();
       const userId = session?.user.id;
       if (!supabase || !userId) throw new Error('Sign in required.');
+      if (input.barcode) {
+        const { data: existing, error: existingError } = await supabase
+          .from('foods')
+          .select(
+            'id, name, brand, barcode, serving_label, serving_grams, calories, protein_g, carbs_g, fat_g, source',
+          )
+          .eq('user_id', userId)
+          .eq('barcode', input.barcode)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (existingError) throw existingError;
+        if (existing) return existing as Food;
+      }
       const { data, error } = await supabase
         .from('foods')
         .insert({
@@ -187,11 +225,17 @@ export function useCreateManualFood() {
           brand: input.brand ?? null,
           barcode: input.barcode ?? null,
           serving_label: input.servingLabel,
+          serving_grams: input.servingGrams ?? null,
           calories: input.calories,
           protein_g: input.proteinG,
           carbs_g: input.carbsG,
           fat_g: input.fatG,
-          source: input.barcode ? 'open_food_facts' : 'manual',
+          source: input.source ?? 'manual',
+          image_url: input.imageUrl ?? null,
+          nutrition_basis: input.nutritionBasis ?? null,
+          basis_unit: input.basisUnit ?? null,
+          basis_amount: input.basisAmount ?? null,
+          nutrition_user_edited: input.nutritionUserEdited ?? false,
         })
         .select(
           'id, name, brand, barcode, serving_label, serving_grams, calories, protein_g, carbs_g, fat_g, source',
