@@ -1,4 +1,4 @@
-/** 4px half-steps; Spotify reference prefers 8px rhythm. */
+/** 4px half-steps; Replicate-inspired 4 / 8 / 12 / 16 rhythm. */
 export const spacing = {
   0: 0,
   1: 4,

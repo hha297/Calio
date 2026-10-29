@@ -1,182 +1,133 @@
-﻿# Design System Inspired by Spotify — Calio Adaptation
+﻿# Design System Inspired by Replicate — Calio Adaptation
 
-> Source: [getdesign.md/spotify/design-md](https://getdesign.md/spotify/design-md) (`spotify/DESIGN.md`).  
-> **Primary override:** Spotify Green `#1ed760` → Calio **`#00D95F`**. All other reference colors keep their values and roles.  
-> **Fonts:** SpotifyMixUI / CircularSp are proprietary — Calio uses **IBM Plex Sans** for UI/titles and body (weights 700 / 600 / 500 / 400). Body temporarily uses IBM Plex instead of DM Sans for reliable Vietnamese diacritics.  
-> **Platform:** Rules below are adapted for React Native / Expo mobile (fitness & nutrition), not desktop music chrome.
+> Source: [getdesign.md/replicate/design-md](https://getdesign.md/replicate/design-md).  
+> **Primary (locked):** Calio Green **`#00D95F`** — never Replicate orange `#ea2804`.  
+> **Rejected:** Sentry cool slate and PostHog cream/olive directions.  
+> **Platform:** Expo / React Native fitness & nutrition — typography-led, mobile-first.
 
 ---
 
 ## 1. Visual Theme & Atmosphere
 
-Dark-first, content-first immersion. Near-black surfaces (`#121212`, `#181818`, `#1f1f1f`) so nutritional content and CTAs read clearly. The only saturated brand color is Calio Green (`#00D95F`) — functional only (primary actions, focus, selected states).
-
-Pill geometry for primary/secondary buttons; cards use small radii (6–8px). Depth comes from shade steps and purposeful shadows, not decorative borders.
+Warm bone/cream developer-notebook surfaces with dark ink type and a single scarce brand accent — Calio Green (`#00D95F`) on consequential CTAs only. Personality comes from **aggressive display type** (tight tracking, bold grotesque), pill CTAs, hairline borders, and near-zero decorative shadow.
 
 **Key Characteristics:**
-- Near-black immersive dark theme (`#121212`–`#1f1f1f`)
-- Calio Green (`#00D95F`) as singular brand accent — never decorative backgrounds
-- Compact type (≈10–24px), bold/regular contrast
-- Pill buttons (`radii.pill`) for primary actions
-- Semantic: error `#f3727f`, warning `#ffa42b`, info `#539df5`
-- Dense spacing — app density over marketing whitespace
+- Canvas `#f9f7f3` / bone `#f3f0e8` / white cards
+- Ink `#202020` with muted charcoal secondary
+- Primary `#00D95F` + ink on-primary
+- Pill buttons; mid-radius cards (≈10–16)
+- Minimal shadows; high typographic contrast
+- No Replicate orange/magenta brand accents
 
 ---
 
-## 2. Color Palette & Roles
+## 2. Typography (highest priority)
 
-### Primary Brand
-| Role | Hex | Notes |
-|------|-----|-------|
-| **Calio Green** (primary) | `#00D95F` | CTAs, focus, selected (replaces `#1ed760`) |
-| **Green pressed** | `#00B84F` | Pressed primary |
-| **Green deep** | `#13873C` | Strong pressed / deep accent |
-| **Green border (legacy ref)** | `#1db954` | Optional outline accent — prefer `#00D95F` for brand borders |
-| **Near Black** | `#121212` | Deepest background |
-| **Dark Surface** | `#181818` | Cards, containers |
-| **Mid Dark** | `#1f1f1f` | Inputs, interactive wells |
+| Role | Reference | Calio substitute | Notes |
+|------|-----------|------------------|-------|
+| Display | `rb-freigeist-neue` (proprietary) | **Bricolage Grotesque** | OFL via Google Fonts / Expo |
+| Body / UI | `basier-square` (proprietary) | **Geist** | OFL via Google Fonts / Expo |
+| Mono | JetBrains Mono | **JetBrains Mono** | Metrics / small data labels |
 
-### Text
+### Mobile scale
+| Token | Size | Family | Tracking |
+|-------|------|--------|----------|
+| `display` | 36–40 | Bricolage 800 | ≈ −1.2 |
+| `headingLarge` | 28 | Bricolage 700 | ≈ −0.8 |
+| `headingMedium` | 22 | Bricolage 600 | ≈ −0.4 |
+| `headingSmall` | 18 | Geist 600 | ≈ −0.2 |
+| `body` / strong | 16 | Geist 400 / 600 | 0 |
+| `caption` / `label` | 13–14 | Geist 500–600 | 0 |
+| `button` | 16 | Geist 600 | 0 |
+| `metric` (mono) | 14–18 | JetBrains 600–700 | 0 |
+
+Use display type for screen titles, calorie totals, and key nutrition stats. Use mono sparingly for numeric metadata.
+
+---
+
+## 3. Color Palette
+
+### Brand
 | Role | Hex |
 |------|-----|
-| Primary | `#ffffff` |
-| Secondary (silver) | `#b3b3b3` |
-| Near white emphasis | `#cbcbcb` |
-| Light max emphasis | `#fdfdfd` |
-| On primary (green fill) | `#000000` |
+| **Primary** | `#00D95F` |
+| Pressed | `#00B84F` |
+| Deep | `#13873C` |
+| Bright | `#18D968` |
+| On primary | `#ffffff` |
+
+### Light
+| Role | Hex |
+|------|-----|
+| Canvas | `#f9f7f3` |
+| Bone / muted | `#f3f0e8` |
+| Card | `#ffffff` |
+| Ink | `#202020` |
+| Body | `#3a3a3a` |
+| Mute | `#646464` |
+| Ash | `#8d8d8d` |
+| Hairline | `#e4e0d8` |
+
+### Dark
+| Role | Hex |
+|------|-----|
+| Canvas | `#202020` |
+| Surface | `#2a2a2a` |
+| Muted | `#333333` |
+| Border | `#3f3f3f` |
+| Text | `#fcfcfc` / muted white |
+| Primary | `#00D95F` |
 
 ### Semantic
-| Role | Hex |
-|------|-----|
-| Error / negative | `#f3727f` |
-| Warning | `#ffa42b` |
-| Info / announcement | `#539df5` |
+Success `#2b9a66` · Warning `#c47f1a` · Error `#d64545` · Info `#3b82f6`
 
-### Surface & Border
-| Role | Hex |
-|------|-----|
-| Dark card elevated | `#252525` |
-| Mid card | `#272727` |
-| Border gray | `#4d4d4d` |
-| Light border (outline) | `#7c7c7c` |
-| Separator | `#b3b3b3` |
-| Light surface (rare / light theme) | `#eeeeee` |
-
-### Overlays & shadows
-- Overlay strong: `rgba(0,0,0,0.7)`
-- Heavy elevation: `rgba(0,0,0,0.5) 0px 8px 24px`
-- Medium elevation: `rgba(0,0,0,0.3) 0px 8px 8px`
-- Input inset feel (RN approximation): 1px border `#7c7c7c` on `#1f1f1f` fill; focus border `#00D95F`
-
-### Light theme (Calio preserves switching)
-Map semantic roles coherently — not a raw invert:
-- Background `#f5f5f5`, surface `#ffffff`, muted `#eeeeee`
-- Text primary `#121212`, secondary `#6a6a6a`
-- Borders `#d0d0d0`
-- Primary remains `#00D95F`; on-primary `#000000`
-
-**Do not** keep legacy Calio `#69b32b` or PostHog cream yellow as brand primary.
+### Macros
+Calories primary · Protein info · Carbs warning · Fat error · Activity pressed green
 
 ---
 
-## 3. Typography
+## 4. Spacing & Radius
 
-| Role | Size | Weight | Use |
-|------|------|--------|-----|
-| Screen / section title | 24 / 18 | 700 / 600 | `headingLarge` / `headingSmall` |
-| Body / body strong | 16 | 400 / 700 | `body` / `bodyStrong` |
-| Button | 14 | 700 | Uppercase + letterSpacing ≈ 1.4 where primary/secondary pills |
-| Caption / label | 14–12 | 400–600 | Metadata, field labels |
-| Micro | 10–12 | 400 | Fine print |
+Spacing: 4 / 8 / 12 / 16 / 24 / 32.
 
-Principles: bold/regular binary; compact sizes; avoid loose line-heights.
-
----
-
-## 4. Spacing, Radius, Control Sizes (RN)
-
-**Spacing base:** 8px (also allow 4px half-steps). Prefer `spacing` / `layout` in `src/theme/spacing.ts`.
-
-| Alias | Value | Use |
-|-------|-------|-----|
-| Screen padding X | 16 | Screen inset |
-| Section gap | 16 | Major blocks |
-| Field gap | 12 | Form fields |
-| Card padding | 16 | Sections |
-| Label → control | 6 | Forms |
-| Control min height | 48 | Buttons, switches |
-| Input min height | 48 | Text fields |
-| Macro cell min | 56 | Nutrition grid |
-
-**Radius** (`radii`): `sm` 4 · `md` 8 · `lg` 12 · `xl` 16 · `pill` 999  
-- Cards/sections: `md` (8)  
-- Inputs: `pill` or large pill (≥ 24 / `xl`) for search-like fields; form fields may use `md`–`xl` for density  
-- Primary/secondary buttons: `pill`
-
-**Icons:** 16 / 20 / 24 (`iconSizes`)
+**Radius:** `sm` 6 · `md` 10 · `lg` 16 · `xl` 20 · `pill` 999  
+- Buttons / chips / Scan: `pill`  
+- Cards / inputs: `md` (10)  
+- Large panels: `lg` (16)
 
 ---
 
 ## 5. Components
 
 ### Buttons
-- **Primary:** fill `#00D95F`, label `#000000`, pill, min height 48, optional uppercase + tracking  
-- **Secondary (dark pill):** fill `#1f1f1f`, text `#ffffff`, border `#4d4d4d`, pill  
-- **Outline:** transparent, border `#7c7c7c`, text white  
-- **Destructive:** outline/text `#f3727f`  
-- Disabled: muted gray fill/text — never washed primary green as fill for disabled
+Primary: `#00D95F`, ink label, **pill**, min height 48. Secondary: white/bone + ink hairline, pill. Text: ink or primary. Destructive: error outline.
 
-### Inputs
-- Fill: `#1f1f1f` (dark) / white (light)  
-- Text: primary text token  
-- Border: `#4d4d4d` or inset gray; focus `#00D95F`  
-- Error: border `#f3727f`  
-- Height 48, horizontal padding 12–16
+### Cards / inputs
+White card on cream canvas; hairline; radius 10. Focus border primary.
 
-### Cards / sections
-- Fill `#181818` or `#1f1f1f`, radius 8, **no** thick decorative border by default  
-- Prefer one section surface — avoid card-in-card  
-- Elevation only for menus/modals (medium/heavy shadow)
-
-### Manual Add Food (layout spec)
-1. Header + mode switch (compact pills)  
-2. Intro: one title + one helper line  
-3. Details section: name, brand, unit + amount — shared input height  
-4. Nutrition: 2×2 macro cells, equal size  
-5. Compact serving summary  
-6. Meal/date context (existing)  
-7. Full-width primary pill **Save**
+### Navigation
+Minimal floating dock on surface; soft hairline; pill Scan in primary; active labels/icons in primary — no heavy green outline around the dock.
 
 ---
 
-## 6. Depth
+## 6. Do / Don't
 
-| Level | Treatment |
-|-------|-----------|
-| 0 Base | `#121212` |
-| 1 Surface | `#181818` / `#1f1f1f` |
-| 2 Elevated | medium shadow |
-| 3 Dialog | heavy shadow + overlay |
+**Do:** typography-first hierarchy; Bricolage display; Geist UI; scarce green CTAs; pill actions; warm bone canvas.  
+**Don't:** Freigeist/Basier without license; Replicate orange brand; Sentry/PostHog palettes; mono everywhere; change `#00D95F`.
 
 ---
 
-## 7. Do / Don't
+## 7. Implementation map
 
-**Do:** dark immersion; green only for functional accents; pill CTAs; compact type; heavy shadows when elevating.  
-**Don't:** green backgrounds; square primary buttons; thin invisible shadows on dark; invent extra brand accents; keep `#69b32b`.
+| Role | Token / code |
+|------|----------------|
+| Canvas | `background` |
+| Bone | `surfaceMuted` |
+| Card | `surface` |
+| Ink | `textPrimary` |
+| Green | `primary` |
+| Display type | `fonts.display*` + Text `display` / headings |
+| Body type | `fonts.body*` |
+| Mono | `fonts.mono*` / Text `metric` |
 
----
-
-## 8. Implementation map
-
-| DESIGN role | Theme token |
-|-------------|-------------|
-| Near black | `background` (dark) |
-| Dark surface | `surface` |
-| Mid dark | `surfaceMuted` |
-| Calio green | `primary` |
-| White / silver | `textPrimary` / `textMuted` |
-| Error / warning / info | `error` / `warning` / `info` |
-| Border gray | `border` |
-
-Code: `src/theme/*`, `src/components/ui/*`. Prefer `useThemeColors()`.
+`src/theme/*`, `src/components/ui/*`. Prefer `useThemeColors()`.

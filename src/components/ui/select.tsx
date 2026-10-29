@@ -58,10 +58,10 @@ export function Select<T extends string = string>({
         onPress={() => setOpen(true)}
         className={cx('flex-row items-center border px-3.5', disabled && 'opacity-50')}
         style={{
-          backgroundColor: colors.surfaceMuted,
+          backgroundColor: colors.surface,
           borderColor,
           minHeight: layout.inputMinHeight,
-          borderRadius: radii.pill,
+          borderRadius: radii.md,
         }}
       >
         <View style={fieldShell.wrap}>

@@ -23,7 +23,6 @@ type ButtonProps = Omit<PressableProps, 'children' | 'style' | 'className'> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
-  /** When false, button sizes to its label (header actions). Default true. */
   fullWidth?: boolean;
   iconStart?: (color: string) => ReactNode;
   iconEnd?: (color: string) => ReactNode;
@@ -38,7 +37,7 @@ function resolveVariant(variant: ButtonVariant): ResolvedVariant {
 }
 
 /**
- * Spotify-style pill buttons (DESIGN.MD). Primary = Calio green `#00D95F` on black label.
+ * Replicate-style pill buttons (DESIGN.MD). Primary = `#00D95F` on ink.
  */
 export function Button({
   label,
@@ -80,8 +79,8 @@ export function Button({
 
     if (resolved === 'secondary') {
       return {
-        backgroundColor: pressed ? colors.border : colors.surfaceMuted,
-        borderColor: colors.border,
+        backgroundColor: pressed ? colors.surfaceMuted : colors.surface,
+        borderColor: colors.borderStrong,
         borderWidth: 1,
         labelColor: colors.textPrimary,
         spinnerColor: colors.textPrimary,
@@ -90,7 +89,7 @@ export function Button({
 
     if (resolved === 'destructive') {
       return {
-        backgroundColor: 'transparent',
+        backgroundColor: pressed ? colors.errorMuted : 'transparent',
         borderColor: colors.error,
         borderWidth: 1,
         labelColor: colors.error,
@@ -143,16 +142,7 @@ export function Button({
               ) : (
                 <View style={styles.content}>
                   {iconStart?.(p.labelColor)}
-                  <RNText
-                    style={[
-                      styles.label,
-                      labelSize,
-                      resolved === 'primary' || resolved === 'secondary'
-                        ? styles.labelCased
-                        : null,
-                      { color: p.labelColor },
-                    ]}
-                  >
+                  <RNText style={[styles.label, labelSize, { color: p.labelColor }]}>
                     {label}
                   </RNText>
                   {iconEnd?.(p.labelColor)}
@@ -199,7 +189,7 @@ const styles = StyleSheet.create({
   md: {
     minHeight: layout.controlMinHeight,
     borderRadius: radii.pill,
-    paddingHorizontal: spacing[5],
+    paddingHorizontal: spacing[6],
   },
   lg: {
     minHeight: 52,
@@ -207,19 +197,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[6],
   },
   label: {
-    fontFamily: fonts.ibmBold,
+    fontFamily: fonts.bodySemiBold,
     textAlign: 'center',
   },
   labelMd: {
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 20,
   },
   labelLg: {
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 22,
-  },
-  labelCased: {
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
   },
 });

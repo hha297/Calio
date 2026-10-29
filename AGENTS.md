@@ -16,7 +16,7 @@ Start every task with the actual checkout
 - Design implementation: src/theme/, src/components/ui/, and the relevant feature components.
 - Database history: supabase/migrations/. Local service settings: supabase/config.toml. Auth email templates: supabase/templates/.
 - Setup and operational guidance: README.md and supabase/README.md, checked against the actual code and configuration.
-- DESIGN.MD documents the current Calio visual system: Spotify-inspired dark-first surfaces with Calio primary `#00D95F` (not Spotify `#1ed760`, not legacy `#69b32b`). Follow DESIGN.MD together with `src/theme/` and `src/components/ui/`. Do not reintroduce PostHog cream/yellow branding or hedgehog marketing layouts.
+- DESIGN.MD documents the current Calio visual system: Replicate-inspired typography-led UI with locked Calio primary `#00D95F` (not Replicate orange `#ea2804`, not legacy `#69b32b`). Display = Bricolage Grotesque; body = Geist; mono = JetBrains Mono. Follow DESIGN.MD together with `src/theme/` and `src/components/ui/`. Do not reintroduce Sentry slate, PostHog yellow branding, or proprietary Freigeist/Basier fonts without a license.
 - When documentation and implementation disagree, identify the discrepancy and update affected documentation within the task; do not silently change product behavior to match stale prose.
   Architecture and code placement
 - Use Expo, React Native, TypeScript, and Expo Router within the existing architecture. Preserve supported platform behavior when changing shared code.

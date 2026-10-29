@@ -7,8 +7,8 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Screen } from '@/components/ui/screen';
-import { Text } from '@/components/ui/text';
 import { ErrorState, LoadingState } from '@/components/ui/states';
+import { Text } from '@/components/ui/text';
 import { calculateDailyBalance } from '@/features/diary/balance';
 import {
   useDayFoodTotals,
@@ -89,7 +89,9 @@ export default function DiaryScreen() {
           <Text variant="label" tone="secondary">
             Daily balance
           </Text>
-          <Text variant="display">{balance.remaining}</Text>
+          <Text variant="display" tone="brand">
+            {balance.remaining}
+          </Text>
           <Text variant="bodySmall" tone="secondary">
             {balance.status === 'over'
               ? 'Over target for the day'
@@ -161,63 +163,63 @@ export default function DiaryScreen() {
 
         {!isLoading && !error
           ? meals.map((meal) => {
-              const entries = (foodQuery.data ?? []).filter(
-                (entry) => entry.meal_type === meal.key,
-              );
-              const mealCalories = entries.reduce((sum, entry) => sum + entry.calories, 0);
-              return (
-                <Card key={meal.key} className="gap-2">
-                  <View className="flex-row items-center justify-between">
-                    <Text variant="headingSmall">{meal.label}</Text>
-                    <View className="flex-row items-center gap-3">
-                      <Text variant="caption" tone="secondary">
-                        {Math.round(mealCalories)} kcal
-                      </Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        onPress={() =>
-                          router.push({
-                            pathname: '/food/add',
-                            params: { date: dateKey, meal: meal.key },
-                          })
-                        }
-                      >
-                        <Text variant="label" tone="primary">
-                          Add
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                  {entries.length === 0 ? (
-                    <Text variant="bodySmall" tone="muted">
-                      Nothing logged yet
+            const entries = (foodQuery.data ?? []).filter(
+              (entry) => entry.meal_type === meal.key,
+            );
+            const mealCalories = entries.reduce((sum, entry) => sum + entry.calories, 0);
+            return (
+              <Card key={meal.key} className="gap-2">
+                <View className="flex-row items-center justify-between">
+                  <Text variant="headingSmall">{meal.label}</Text>
+                  <View className="flex-row items-center gap-3">
+                    <Text variant="caption" tone="secondary">
+                      {Math.round(mealCalories)} kcal
                     </Text>
-                  ) : (
-                    entries.map((entry) => (
-                      <Pressable
-                        key={entry.id}
-                        className="flex-row items-center justify-between px-3 py-3"
-                        style={{ backgroundColor: colors.surfaceMuted, borderRadius: radii.md }}
-                        onLongPress={() => {
-                          void deleteEntry.mutateAsync({ id: entry.id, dateKey });
-                        }}
-                      >
-                        <View className="flex-1 pr-3">
-                          <Text variant="bodyStrong">{entry.food_name}</Text>
-                          <Text variant="caption" tone="secondary">
-                            {entry.quantity} × {entry.serving_label}
-                            {entry.brand ? ` · ${entry.brand}` : ''}
-                          </Text>
-                        </View>
-                        <Text variant="bodyStrong" tone="brand">
-                          {Math.round(entry.calories)}
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/food/add',
+                          params: { date: dateKey, meal: meal.key },
+                        })
+                      }
+                    >
+                      <Text variant="label" tone="primary">
+                        Add
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+                {entries.length === 0 ? (
+                  <Text variant="bodySmall" tone="muted">
+                    Nothing logged yet
+                  </Text>
+                ) : (
+                  entries.map((entry) => (
+                    <Pressable
+                      key={entry.id}
+                      className="flex-row items-center justify-between px-3 py-3"
+                      style={{ backgroundColor: colors.surfaceMuted, borderRadius: radii.md }}
+                      onLongPress={() => {
+                        void deleteEntry.mutateAsync({ id: entry.id, dateKey });
+                      }}
+                    >
+                      <View className="flex-1 pr-3">
+                        <Text variant="bodyStrong">{entry.food_name}</Text>
+                        <Text variant="caption" tone="secondary">
+                          {entry.quantity} × {entry.serving_label}
+                          {entry.brand ? ` · ${entry.brand}` : ''}
                         </Text>
-                      </Pressable>
-                    ))
-                  )}
-                </Card>
-              );
-            })
+                      </View>
+                      <Text variant="bodyStrong" tone="brand">
+                        {Math.round(entry.calories)}
+                      </Text>
+                    </Pressable>
+                  ))
+                )}
+              </Card>
+            );
+          })
           : null}
 
         {!isLoading && (foodQuery.data?.length ?? 0) === 0 ? (
@@ -234,7 +236,7 @@ export default function DiaryScreen() {
 function Metric({ label, value }: { label: string; value: number }) {
   return (
     <View className="items-center">
-      <Text variant="headingMedium">{value}</Text>
+      <Text variant="metric">{value}</Text>
       <Text variant="caption" tone="secondary">
         {label}
       </Text>

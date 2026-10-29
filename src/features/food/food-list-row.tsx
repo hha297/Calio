@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
-import { fonts } from '@/theme/fonts';
 import { radii, spacing } from '@/theme';
+import { fonts } from '@/theme/fonts';
 import { useThemeColors } from '@/theme/theme-provider';
 
 const AVATAR = 48;

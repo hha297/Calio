@@ -45,8 +45,8 @@ const TIER_META: Record<
   Exclude<StrengthTier, 'empty'>,
   { labelKey: string; color: string; fill: number }
 > = {
-  weak: { labelKey: 'auth.strengthWeak', color: '#F3727F', fill: 0.25 },
-  medium: { labelKey: 'auth.strengthMedium', color: brand.warningStrong, fill: 0.5 },
+  weak: { labelKey: 'auth.strengthWeak', color: brand.error, fill: 0.25 },
+  medium: { labelKey: 'auth.strengthMedium', color: brand.warning, fill: 0.5 },
   strong: { labelKey: 'auth.strengthStrong', color: brand.primary, fill: 0.75 },
   veryStrong: { labelKey: 'auth.strengthVeryStrong', color: brand.primaryPressed, fill: 1 },
 };
@@ -74,7 +74,7 @@ export function assessPasswordStrength(
       tier: 'empty',
       fill: 0,
       labelKey: null,
-      color: brand.darkMutedText,
+      color: brand.mute,
       hintKey: null,
       score: null,
     };

@@ -51,10 +51,10 @@ export function Input({
           alignItems: 'center',
           borderWidth: 1,
           paddingHorizontal: spacing[3],
-          backgroundColor: colors.surfaceMuted,
+          backgroundColor: colors.surface,
           borderColor,
           minHeight: layout.inputMinHeight,
-          borderRadius: radii.pill,
+          borderRadius: radii.md,
         }}
       >
         <View style={fieldShell.wrap}>

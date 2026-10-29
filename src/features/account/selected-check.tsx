@@ -36,7 +36,7 @@ export function SelectedCheck({ visible }: { visible: boolean }) {
       accessibilityRole="image"
       accessibilityLabel={visible ? 'Selected' : undefined}
     >
-      <Check size={ICON} color="#FFFFFF" strokeWidth={3} />
+      <Check size={ICON} color={colors.textOnPrimary} strokeWidth={3.2} />
     </Animated.View>
   );
 }

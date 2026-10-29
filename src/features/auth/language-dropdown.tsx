@@ -10,8 +10,7 @@ import {
   LANGUAGE_LABELS,
   SUPPORTED_LANGUAGES,
   changeAppLanguage,
-  useAppLanguage,
-  type AppLanguage,
+  useAppLanguage
 } from '@/i18n';
 import { elevation, iconSizes, motion, radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';

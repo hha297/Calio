@@ -1,69 +1,62 @@
 import { Platform, type ViewStyle } from 'react-native';
 
-/**
- * Spotify-inspired elevation (DESIGN.MD): heavier shadows on dark.
- * Pass shadowColor — typically `#000000`.
- */
+/** Replicate-inspired: minimal shadow; prefer hairline contrast. */
 export const elevation = {
   none: {} satisfies ViewStyle,
 
-  /** Subtle card lift — medium Spotify shadow. */
-  card: (shadowColor: string = '#000000'): ViewStyle => ({
+  card: (shadowColor: string = '#202020'): ViewStyle => ({
     shadowColor,
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
-  }),
-
-  raised: (shadowColor: string = '#000000'): ViewStyle => ({
-    shadowColor,
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
-  }),
-
-  /** Floating tab dock / FABs */
-  floating: (shadowColor: string = '#000000'): ViewStyle => ({
-    shadowColor,
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12,
-  }),
-
-  /** Bottom nav dock — restrained lift (avoids a heavy black haze). */
-  tabBar: (shadowColor: string = '#000000'): ViewStyle => ({
-    shadowColor,
-    shadowOpacity: Platform.OS === 'ios' ? 0.22 : 0.28,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-  }),
-
-  floatingControl: (shadowColor: string = '#000000'): ViewStyle => ({
-    shadowColor,
-    shadowOpacity: Platform.OS === 'ios' ? 0.28 : 0.32,
+    shadowOpacity: 0.04,
     shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  }),
+
+  raised: (shadowColor: string = '#202020'): ViewStyle => ({
+    shadowColor,
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
-    elevation: 6,
+    elevation: 2,
   }),
 
-  /** Dialogs / menus — heavy Spotify shadow */
-  dropdown: (shadowColor: string = '#000000'): ViewStyle => ({
+  floating: (shadowColor: string = '#202020'): ViewStyle => ({
     shadowColor,
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 16,
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   }),
 
-  thumb: (shadowColor: string = '#000000'): ViewStyle => ({
+  tabBar: (shadowColor: string = '#202020'): ViewStyle => ({
     shadowColor,
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
+    shadowOpacity: Platform.OS === 'ios' ? 0.08 : 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  }),
+
+  floatingControl: (shadowColor: string = '#202020'): ViewStyle => ({
+    shadowColor,
+    shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0.14,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+  }),
+
+  dropdown: (shadowColor: string = '#202020'): ViewStyle => ({
+    shadowColor,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  }),
+
+  thumb: (shadowColor: string = '#202020'): ViewStyle => ({
+    shadowColor,
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   }),
 } as const;

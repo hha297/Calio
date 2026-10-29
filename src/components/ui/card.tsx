@@ -1,4 +1,4 @@
-import { View, type ViewProps } from 'react-native';
+import { StyleSheet, View, type ViewProps } from 'react-native';
 
 import { elevation } from '@/theme/elevation';
 import { radii } from '@/theme/radii';
@@ -13,10 +13,10 @@ type CardProps = ViewProps & {
   variant?: CardVariant;
 };
 
-/** Spotify-style surface card: `#181818` via theme surface, radius 8, no thick border. */
+/** Replicate-style card: white on bone canvas, mid radius, hairline. */
 export function Card({ className, style, variant = 'default', ...props }: CardProps) {
   const colors = useThemeColors();
-  const raised = variant === 'elevated' ? elevation.card('#000000') : null;
+  const raised = variant === 'elevated' ? elevation.card('#202020') : null;
 
   return (
     <View
@@ -26,7 +26,8 @@ export function Card({ className, style, variant = 'default', ...props }: CardPr
           backgroundColor: colors.surface,
           borderRadius: radii.md,
           padding: spacing[4],
-          borderWidth: 0,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
         },
         raised,
         style,

@@ -1,37 +1,69 @@
 import {
-  IBMPlexSans_400Regular,
-  IBMPlexSans_500Medium,
-  IBMPlexSans_600SemiBold,
-  IBMPlexSans_700Bold,
-} from '@expo-google-fonts/ibm-plex-sans';
+  BricolageGrotesque_500Medium,
+  BricolageGrotesque_600SemiBold,
+  BricolageGrotesque_700Bold,
+  BricolageGrotesque_800ExtraBold,
+} from '@expo-google-fonts/bricolage-grotesque';
+import {
+  Geist_400Regular,
+  Geist_500Medium,
+  Geist_600SemiBold,
+  Geist_700Bold,
+} from '@expo-google-fonts/geist';
+import {
+  JetBrainsMono_500Medium,
+  JetBrainsMono_600SemiBold,
+  JetBrainsMono_700Bold,
+} from '@expo-google-fonts/jetbrains-mono';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFonts } from 'expo-font';
 
 /**
- * IBM Plex Sans for UI + body (temporary).
- * DM Sans lacked reliable Vietnamese diacritics; keep `dm*` token names so
- * existing call sites keep working while pointing at IBM Plex.
+ * Replicate-inspired type stack (DESIGN.MD):
+ * - Display: Bricolage Grotesque (open substitute for proprietary rb-freigeist-neue)
+ * - Body/UI: Geist (open substitute for proprietary basier-square)
+ * - Mono: JetBrains Mono (matches Replicate reference)
+ *
+ * `dm*` / `ibm*` aliases kept so existing call sites keep resolving.
  */
 export const fonts = {
-  ibmRegular: 'IBMPlexSans_400Regular',
-  ibmMedium: 'IBMPlexSans_500Medium',
-  ibmSemiBold: 'IBMPlexSans_600SemiBold',
-  ibmBold: 'IBMPlexSans_700Bold',
-  dmRegular: 'IBMPlexSans_400Regular',
-  dmMedium: 'IBMPlexSans_500Medium',
-  dmSemiBold: 'IBMPlexSans_600SemiBold',
-  dmBold: 'IBMPlexSans_700Bold',
+  displayMedium: 'BricolageGrotesque_500Medium',
+  displaySemiBold: 'BricolageGrotesque_600SemiBold',
+  displayBold: 'BricolageGrotesque_700Bold',
+  displayExtraBold: 'BricolageGrotesque_800ExtraBold',
+  bodyRegular: 'Geist_400Regular',
+  bodyMedium: 'Geist_500Medium',
+  bodySemiBold: 'Geist_600SemiBold',
+  bodyBold: 'Geist_700Bold',
+  monoMedium: 'JetBrainsMono_500Medium',
+  monoSemiBold: 'JetBrainsMono_600SemiBold',
+  monoBold: 'JetBrainsMono_700Bold',
+  /** @deprecated Prefer display* / body* — aliases for older call sites. */
+  ibmRegular: 'Geist_400Regular',
+  ibmMedium: 'Geist_500Medium',
+  ibmSemiBold: 'BricolageGrotesque_600SemiBold',
+  ibmBold: 'BricolageGrotesque_700Bold',
+  dmRegular: 'Geist_400Regular',
+  dmMedium: 'Geist_500Medium',
+  dmSemiBold: 'Geist_600SemiBold',
+  dmBold: 'Geist_700Bold',
 } as const;
 
 const fontMap = {
-  IBMPlexSans_400Regular,
-  IBMPlexSans_500Medium,
-  IBMPlexSans_600SemiBold,
-  IBMPlexSans_700Bold,
+  BricolageGrotesque_500Medium,
+  BricolageGrotesque_600SemiBold,
+  BricolageGrotesque_700Bold,
+  BricolageGrotesque_800ExtraBold,
+  Geist_400Regular,
+  Geist_500Medium,
+  Geist_600SemiBold,
+  Geist_700Bold,
+  JetBrainsMono_500Medium,
+  JetBrainsMono_600SemiBold,
+  JetBrainsMono_700Bold,
   ...MaterialCommunityIcons.font,
 };
 
-/** IBM Plex Sans = display + body (Vietnamese-capable). */
 export function useAppFonts(): boolean {
   const [loaded] = useFonts(fontMap);
   return loaded;

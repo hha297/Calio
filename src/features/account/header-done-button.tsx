@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontFamily: fonts.ibmSemiBold,
+    fontFamily: fonts.bodySemiBold,
     fontSize: 17,
     lineHeight: 22,
   },

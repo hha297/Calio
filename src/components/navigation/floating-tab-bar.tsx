@@ -9,18 +9,16 @@ import { useTheme, useThemeColors } from '@/theme/theme-provider';
 
 import { scanImageSource, useScanImages } from './scan-image';
 
-const DOCK_HEIGHT = 68;
-const DOCK_HEIGHT_COMPACT = 62;
+const DOCK_HEIGHT = 64;
+const DOCK_HEIGHT_COMPACT = 58;
 const SCAN_SIZE = 58;
 const SCAN_SIZE_COMPACT = 54;
 
-/** Extra scroll padding so the last diary row clears the floating dock + Scan FAB. */
 export function useFloatingTabBarClearance(): number {
   const { width, height } = useWindowDimensions();
   const compact = width <= 360 || height <= 500;
   const dockHeight = compact ? DOCK_HEIGHT_COMPACT : DOCK_HEIGHT;
-  // Home-indicator clearance is applied by the dock itself; keep a buffer for the FAB overhang.
-  return dockHeight + 36;
+  return dockHeight + 40;
 }
 
 type FloatingTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -41,28 +39,26 @@ export function FloatingTabBar({
   const landscape = width > height;
   const dockHeight = compact ? DOCK_HEIGHT_COMPACT : DOCK_HEIGHT;
   const scanSize = compact ? SCAN_SIZE_COMPACT : SCAN_SIZE;
+  const scanIconSize = scanSize - 6;
   const scanFocused = state.routes[state.index]?.name === 'scan';
-  /** Dock sits just above the home indicator — no empty white strip under it. */
   const bottomGap = Math.max(8, insets.bottom);
-  const horizontalGap = landscape ? 24 : compact ? 10 : 16;
+  const horizontalGap = landscape ? 24 : compact ? 12 : 16;
   const dockWidth = Math.min(width - horizontalGap * 2, 620);
-  // Dark surfaces swallow black shadows — use a soft primary glow instead.
   const dockElevation = isDark
     ? ({
         shadowColor: colors.primary,
-        shadowOpacity: Platform.OS === 'ios' ? 0.28 : 0.32,
-        shadowRadius: 14,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 10,
+        shadowOpacity: Platform.OS === 'ios' ? 0.18 : 0.22,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 6,
       } as const)
-    : elevation.tabBar('#000000');
-  const dockBorder = isDark ? withAlpha(colors.primary, 0.22) : colors.border;
+    : elevation.tabBar('#202020');
+  const dockBorder = isDark ? withAlpha(colors.primary, 0.16) : colors.border;
 
   if (scanFocused) return null;
 
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
-      {/* System home-indicator only — matches screen bg, no tall black slab. */}
       {insets.bottom > 0 ? (
         <View
           pointerEvents="none"
@@ -128,19 +124,20 @@ export function FloatingTabBar({
                 <View
                   style={[
                     styles.scanButton,
-                    elevation.floatingControl('#000000'),
+                    elevation.floatingControl('#202020'),
                     {
                       width: scanSize,
                       height: scanSize,
-                      borderRadius: scanSize / 2,
+                      borderRadius: radii.pill,
                       backgroundColor: colors.primary,
-                      top: -(scanSize * 0.32),
+                      // Lift Scan so its label sits on the same baseline as Diary/etc.
+                      top: -(scanSize * 0.42),
                     },
                   ]}
                 >
                   <Image
                     source={(focused ? scanImages.active : scanImages.inactive) ?? scanImageSource}
-                    style={{ width: scanSize - 16, height: scanSize - 16 }}
+                    style={{ width: scanIconSize, height: scanIconSize }}
                     contentFit="contain"
                     cachePolicy="memory"
                     autoplay
@@ -155,7 +152,7 @@ export function FloatingTabBar({
                 <Text
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.25}
-                  style={[styles.scanLabel, { color: focused ? colors.primary : colors.textMuted }]}
+                  style={[styles.label, { color: focused ? colors.primary : colors.textMuted }]}
                 >
                   {label}
                 </Text>
@@ -219,40 +216,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     overflow: 'visible',
   },
   tab: {
     flex: 1,
     minWidth: 48,
     minHeight: 48,
+    height: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     gap: 3,
+    paddingBottom: 10,
     paddingHorizontal: 2,
   },
   iconWrap: {
-    minWidth: 40,
-    height: 30,
-    paddingHorizontal: 9,
-    borderRadius: radii.md,
+    minWidth: 28,
+    height: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
-    fontFamily: fonts.dmMedium,
-    fontSize: 12,
+    fontFamily: fonts.bodyMedium,
+    fontSize: 13,
     lineHeight: 16,
     textAlign: 'center',
     width: '100%',
   },
   scanSlot: {
     flex: 1,
-    minWidth: 58,
+    minWidth: 56,
     minHeight: 48,
     height: '100%',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    gap: 3,
     paddingBottom: 10,
     paddingHorizontal: 2,
     overflow: 'visible',
@@ -262,11 +260,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  scanLabel: {
-    fontFamily: fonts.dmSemiBold,
-    fontSize: 12,
-    lineHeight: 16,
-    textAlign: 'center',
   },
 });
