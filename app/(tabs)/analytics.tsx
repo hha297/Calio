@@ -11,11 +11,13 @@ import { useActiveGoal } from '@/features/goals/hooks';
 import { useBodyMeasurements } from '@/features/measurements/hooks';
 import { useWorkouts } from '@/features/workout/hooks';
 import { getSupabase } from '@/lib/supabase/client';
-import { colors } from '@/theme';
+import { radii } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 import { toDiaryDateKey } from '@/utils/date';
 import { useQuery } from '@tanstack/react-query';
 
 export default function AnalyticsScreen() {
+  const colors = useThemeColors();
   const { session } = useAuth();
   const userId = session?.user.id;
   const goal = useActiveGoal();
@@ -52,7 +54,7 @@ export default function AnalyticsScreen() {
     .reverse();
 
   return (
-    <Screen scroll slideFrom="right">
+    <Screen scroll slideFrom="right" padForTabBar>
       <View className="gap-4">
         <Text variant="headingLarge">Analytics</Text>
         <Text variant="bodySmall" tone="secondary">
@@ -76,10 +78,11 @@ export default function AnalyticsScreen() {
               {(intake.data ?? []).map((row) => (
                 <View key={row.logged_on} className="flex-1 items-center gap-1">
                   <View
-                    className="w-full rounded-sm"
+                    className="w-full"
                     style={{
                       height: `${Math.max(8, (row.calories / maxIntake) * 100)}%`,
                       backgroundColor: colors.primary,
+                      borderRadius: radii.sm,
                     }}
                   />
                   <Text variant="caption" tone="muted">
@@ -112,9 +115,15 @@ export default function AnalyticsScreen() {
             <EmptyState title="No weight history" body="Add a measurement from Account." />
           ) : (
             weights.map((row) => (
-              <View key={row.id} className="flex-row justify-between border-b border-border py-2">
+              <View
+                key={row.id}
+                className="flex-row justify-between rounded-lg px-3 py-2.5"
+                style={{ backgroundColor: colors.surfaceMuted }}
+              >
                 <Text variant="body">{row.measured_on}</Text>
-                <Text variant="bodyStrong">{row.weight_kg} kg</Text>
+                <Text variant="bodyStrong" tone="brand">
+                  {row.weight_kg} kg
+                </Text>
               </View>
             ))
           )}

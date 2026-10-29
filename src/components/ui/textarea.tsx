@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TextInput, View, type TextInputProps } from 'react-native';
 
+import { radii } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 import { FieldPlaceholder } from './field-placeholder';
@@ -32,7 +33,7 @@ export function TextArea({
 
   const resolvedValue = value !== undefined ? value : innerValue;
   const showPlaceholder = Boolean(placeholder) && String(resolvedValue ?? '').length === 0;
-  const borderColor = error ? colors.error : focused ? colors.primary : colors.border;
+  const borderColor = error ? colors.error : focused ? colors.borderFocus : colors.border;
 
   return (
     <View className="gap-1.5">
@@ -40,8 +41,13 @@ export function TextArea({
         {label}
       </Text>
       <View
-        className="rounded-2xl border px-3.5 py-2"
-        style={{ minHeight, backgroundColor: colors.surface, borderColor }}
+        className="border px-3.5 py-2"
+        style={{
+          minHeight,
+          backgroundColor: colors.surfaceMuted,
+          borderColor,
+          borderRadius: radii.md,
+        }}
       >
         <View style={[fieldShell.wrap, { minHeight: minHeight - 16, justifyContent: 'flex-start' }]}>
           {showPlaceholder && placeholder ? (

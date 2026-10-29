@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -41,7 +42,6 @@ export default function ExercisePickerScreen() {
         {(exercises.data ?? []).map((exercise) => (
           <Pressable
             key={exercise.id}
-            className="border-b border-border py-3"
             onPress={() => {
               addExercise({
                 exerciseId: exercise.id,
@@ -52,11 +52,13 @@ export default function ExercisePickerScreen() {
               router.back();
             }}
           >
-            <Text variant="bodyStrong">{exercise.name}</Text>
-            <Text variant="caption" tone="secondary">
-              {exercise.category}
-              {exercise.equipment ? ` · ${exercise.equipment}` : ''} · {exercise.exercise_type}
-            </Text>
+            <Card className="gap-1">
+              <Text variant="bodyStrong">{exercise.name}</Text>
+              <Text variant="caption" tone="secondary">
+                {exercise.category}
+                {exercise.equipment ? ` · ${exercise.equipment}` : ''} · {exercise.exercise_type}
+              </Text>
+            </Card>
           </Pressable>
         ))}
       </View>

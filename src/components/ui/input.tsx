@@ -2,6 +2,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 
+import { iconSizes, layout, radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 import { FieldPlaceholder } from './field-placeholder';
@@ -37,16 +38,24 @@ export function Input({
 
   const resolvedValue = value !== undefined ? value : innerValue;
   const showPlaceholder = Boolean(placeholder) && String(resolvedValue ?? '').length === 0;
-  const borderColor = error ? colors.error : focused ? colors.primary : colors.border;
+  const borderColor = error ? colors.error : focused ? colors.borderFocus : colors.border;
 
   return (
-    <View className="gap-1.5">
+    <View style={{ gap: layout.labelGap }}>
       <Text variant="label" tone="secondary">
         {label}
       </Text>
       <View
-        className="min-h-[52px] flex-row items-center rounded-2xl border px-3.5"
-        style={{ backgroundColor: colors.surface, borderColor }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          borderWidth: 1,
+          paddingHorizontal: spacing[3],
+          backgroundColor: colors.surfaceMuted,
+          borderColor,
+          minHeight: layout.inputMinHeight,
+          borderRadius: radii.pill,
+        }}
       >
         <View style={fieldShell.wrap}>
           {showPlaceholder && placeholder ? <FieldPlaceholder label={placeholder} /> : null}
@@ -58,7 +67,7 @@ export function Input({
             accessibilityLabel={label}
             placeholder=""
             secureTextEntry={obscure}
-            style={[{ ...getFieldTypography(colors), paddingVertical: 12 }, style]}
+            style={[{ ...getFieldTypography(colors), paddingVertical: spacing[2] }, style]}
             onChangeText={(text) => {
               if (value === undefined) {
                 setInnerValue(text);
@@ -81,12 +90,12 @@ export function Input({
             accessibilityLabel={hidden ? 'Show password' : 'Hide password'}
             hitSlop={8}
             onPress={() => setHidden((next) => !next)}
-            className="pl-2"
+            style={{ paddingLeft: spacing[2] }}
           >
             {hidden ? (
-              <Eye size={20} color={colors.textMuted} />
+              <Eye size={iconSizes.md} color={colors.textMuted} />
             ) : (
-              <EyeOff size={20} color={colors.textMuted} />
+              <EyeOff size={iconSizes.md} color={colors.textMuted} />
             )}
           </Pressable>
         ) : null}

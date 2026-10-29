@@ -2,8 +2,9 @@ import { type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
+import { useFloatingTabBarClearance } from '@/components/navigation/floating-tab-bar';
 import { SlideTransition, type SlideSide } from '@/components/ui/slide-transition';
-import { spacing } from '@/theme';
+import { layout } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 import { cx } from '@/utils/cx';
 
@@ -18,6 +19,8 @@ type ScreenProps = {
    * Pass a side, or `true` for default `right`.
    */
   slideFrom?: boolean | SlideSide;
+  /** Extra bottom padding so content clears the floating tab dock. */
+  padForTabBar?: boolean;
 };
 
 export function Screen({
@@ -27,17 +30,20 @@ export function Screen({
   edges = ['top', 'left', 'right'],
   className,
   slideFrom,
+  padForTabBar = false,
 }: ScreenProps) {
   const colors = useThemeColors();
+  const tabClearance = useFloatingTabBarClearance();
+  const bottomPad = layout.screenPaddingBottom + (padForTabBar ? tabClearance : 0);
 
   const content = scroll ? (
     <ScrollView
       className="flex-1"
       contentContainerStyle={{
         flexGrow: 1,
-        paddingHorizontal: spacing[4],
-        paddingTop: spacing[2],
-        paddingBottom: spacing[6],
+        paddingHorizontal: layout.screenPaddingX,
+        paddingTop: layout.screenPaddingTop,
+        paddingBottom: bottomPad,
       }}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
@@ -45,7 +51,12 @@ export function Screen({
       {children}
     </ScrollView>
   ) : (
-    <View className={cx('flex-1 px-4 pb-4 pt-2', className)}>{children}</View>
+    <View
+      className={cx('flex-1 px-4 pt-2', className)}
+      style={{ paddingBottom: padForTabBar ? bottomPad : layout.screenPaddingBottom }}
+    >
+      {children}
+    </View>
   );
 
   const body = keyboard ? (

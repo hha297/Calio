@@ -47,7 +47,7 @@ export function useSearchFoods(term: string) {
       const { data, error } = await supabase
         .from('foods')
         .select(
-          'id, name, brand, barcode, serving_label, serving_grams, calories, protein_g, carbs_g, fat_g, source',
+          'id, name, brand, barcode, serving_label, serving_grams, calories, protein_g, carbs_g, fat_g, source, image_url',
         )
         .or(`name.ilike.%${trimmed}%,brand.ilike.%${trimmed}%`)
         .limit(30);
@@ -207,7 +207,7 @@ export function useCreateManualFood() {
         const { data: existing, error: existingError } = await supabase
           .from('foods')
           .select(
-            'id, name, brand, barcode, serving_label, serving_grams, calories, protein_g, carbs_g, fat_g, source',
+            'id, name, brand, barcode, serving_label, serving_grams, calories, protein_g, carbs_g, fat_g, source, image_url',
           )
           .eq('user_id', userId)
           .eq('barcode', input.barcode)
@@ -238,7 +238,7 @@ export function useCreateManualFood() {
           nutrition_user_edited: input.nutritionUserEdited ?? false,
         })
         .select(
-          'id, name, brand, barcode, serving_label, serving_grams, calories, protein_g, carbs_g, fat_g, source',
+          'id, name, brand, barcode, serving_label, serving_grams, calories, protein_g, carbs_g, fat_g, source, image_url',
         )
         .single();
       if (error) throw error;

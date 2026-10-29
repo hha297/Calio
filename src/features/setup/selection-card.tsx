@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { setupCardShadow } from '@/features/setup/setup-shadows';
-import { brand } from '@/theme/themes';
+import { radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 type SelectionCardProps = {
@@ -33,10 +33,11 @@ export function SelectionCard({
       style={[
         styles.card,
         {
-          borderColor: selected ? colors.primary : colors.border,
+          borderColor: selected ? colors.primary : 'transparent',
+          borderWidth: selected ? 1 : 0,
           backgroundColor: selected ? colors.primaryMuted : colors.surface,
         },
-        selected ? setupCardShadow(brand.darkBackground) : null,
+        selected ? setupCardShadow('#000000') : null,
       ]}
     >
       <View style={styles.row}>
@@ -68,21 +69,20 @@ export function SelectionCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    borderWidth: 1.5,
-    paddingHorizontal: 16,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing[4],
     paddingVertical: 14,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: spacing[3],
   },
   check: {
     marginTop: 2,
-    width: 20,
-    height: 20,
-    borderRadius: 999,
+    width: spacing[5],
+    height: spacing[5],
+    borderRadius: radii.pill,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',

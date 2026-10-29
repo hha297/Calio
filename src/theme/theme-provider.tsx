@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { vars } from 'nativewind';
 import {
   createContext,
   useCallback,
@@ -8,8 +9,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Appearance, useColorScheme as useSystemColorScheme } from 'react-native';
+import { Appearance, View, useColorScheme as useSystemColorScheme } from 'react-native';
 
+import { themeToCssVars } from './color-utils';
 import { lightColors, darkColors, type ThemeColors } from './themes';
 
 const THEME_KEY = 'calio.theme.preference';
@@ -84,7 +86,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [preference, scheme, colors, setPreference, toggleLightDark],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  const cssVars = useMemo(() => vars(themeToCssVars(colors)), [colors]);
+
+  return (
+    <ThemeContext.Provider value={value}>
+      <View style={[{ flex: 1 }, cssVars]}>{children}</View>
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme(): ThemeContextValue {

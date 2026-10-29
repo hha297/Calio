@@ -14,6 +14,8 @@ module.exports = () => {
         process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
         process.env.EXPO_PUBLIC_SUPABASE_KEY ||
         '',
+      cloudinaryCloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME ?? '',
+      cloudinaryUploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? '',
     },
   };
 };

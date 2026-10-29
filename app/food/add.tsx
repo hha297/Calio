@@ -7,6 +7,7 @@ import {
   ScanLine,
   Search,
   Sparkles,
+  Utensils,
   Wheat,
 } from 'lucide-react-native';
 import type { ReactNode } from 'react';
@@ -19,6 +20,12 @@ import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { ErrorState, LoadingState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
+import { FoodImageField } from '@/features/food/food-image-field';
+import type { SelectedFoodImage } from '@/features/food/food-image';
+import {
+  FoodListRow,
+  formatFoodNutritionDetail,
+} from '@/features/food/food-list-row';
 import {
   useCreateManualFood,
   useLogFoodEntry,
@@ -27,6 +34,8 @@ import {
   type MealType,
 } from '@/features/food/hooks';
 import { FoodLogContextPicker } from '@/features/food/scan-result-modal';
+import { uploadFoodImageToCloudinary } from '@/lib/cloudinary/upload';
+import { iconSizes, radii, spacing, withAlpha } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 import { toDiaryDateKey } from '@/utils/date';
 
@@ -61,12 +70,17 @@ export default function AddFoodScreen() {
   const [fat, setFat] = useState('');
   const [serving, setServing] = useState('100');
   const [manualUnit, setManualUnit] = useState<'g' | 'ml'>('g');
+  const [foodImage, setFoodImage] = useState<SelectedFoodImage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [addingKey, setAddingKey] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const search = useSearchFoods(term);
   const recent = useRecentFoods();
   const logFood = useLogFoodEntry();
   const createFood = useCreateManualFood();
+  const loggingBusy = logFood.isPending;
+  const savingManual = uploadingImage || createFood.isPending || logFood.isPending;
   const results = useMemo(() => search.data ?? [], [search.data]);
   const summary = useMemo(() => {
     if (![serving, calories, protein, carbs, fat].every((value) => value.trim())) return null;
@@ -90,17 +104,22 @@ export default function AddFoodScreen() {
     };
   }, [calories, carbs, fat, manualUnit, protein, serving]);
 
-  async function logExisting(food: {
-    id?: string;
-    name: string;
-    brand?: string | null;
-    serving_label: string;
-    calories: number;
-    protein_g: number;
-    carbs_g: number;
-    fat_g: number;
-  }) {
+  async function logExisting(
+    food: {
+      id?: string;
+      name: string;
+      brand?: string | null;
+      serving_label: string;
+      calories: number;
+      protein_g: number;
+      carbs_g: number;
+      fat_g: number;
+    },
+    rowKey: string,
+  ) {
+    if (loggingBusy) return;
     setError(null);
+    setAddingKey(rowKey);
     try {
       await logFood.mutateAsync({
         dateKey,
@@ -120,6 +139,8 @@ export default function AddFoodScreen() {
       router.back();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not log food.');
+    } finally {
+      setAddingKey(null);
     }
   }
 
@@ -131,12 +152,25 @@ export default function AddFoodScreen() {
   }
 
   async function saveManual() {
+    if (savingManual) return;
     setError(null);
     try {
       if (!name.trim()) throw new Error('Add a food name to continue.');
       const servingGrams = parseNutrition(serving, 'Serving');
       if (servingGrams <= 0) throw new Error('Serving must be greater than zero.');
       const factor = servingGrams / 100;
+
+      let imageUrl: string | undefined;
+      if (foodImage) {
+        setUploadingImage(true);
+        try {
+          const uploaded = await uploadFoodImageToCloudinary(foodImage);
+          imageUrl = uploaded.secureUrl;
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+
       const food = await createFood.mutateAsync({
         name: name.trim(),
         brand: brand.trim() || undefined,
@@ -147,6 +181,7 @@ export default function AddFoodScreen() {
         basisUnit: manualUnit,
         basisAmount: 100,
         nutritionUserEdited: true,
+        imageUrl,
         calories: parseNutrition(calories, 'Calories') * factor,
         proteinG: parseNutrition(protein, 'Protein') * factor,
         carbsG: parseNutrition(carbs, 'Carbs') * factor,
@@ -174,6 +209,7 @@ export default function AddFoodScreen() {
       });
       router.dismissTo({ pathname: '/', params: { date: dateKey } });
     } catch (err) {
+      setUploadingImage(false);
       setError(err instanceof Error ? err.message : 'Could not save food.');
     }
   }
@@ -258,6 +294,11 @@ export default function AddFoodScreen() {
                   Give this food a name you will recognize later.
                 </Text>
               </View>
+              <FoodImageField
+                value={foodImage}
+                onChange={setFoodImage}
+                disabled={savingManual}
+              />
               <Input
                 label="Food name *"
                 value={name}
@@ -325,10 +366,10 @@ export default function AddFoodScreen() {
             />
 
             <Button
-              label="Save & add to meal"
+              label={uploadingImage ? 'Uploading image…' : 'Save & add to meal'}
               size="lg"
-              disabled={!name.trim()}
-              loading={createFood.isPending || logFood.isPending}
+              disabled={!name.trim() || savingManual}
+              loading={savingManual}
               onPress={() => void saveManual()}
             />
           </View>
@@ -381,37 +422,50 @@ export default function AddFoodScreen() {
                   />
                 </Card>
               ) : (
-                results.map((food) => (
-                  <FoodRow
-                    key={food.id}
-                    name={food.name}
-                    detail={`${food.brand ? `${food.brand} · ` : ''}${Math.round(food.calories)} kcal / ${food.serving_label}`}
-                    onPress={() => void logExisting(food)}
-                  />
-                ))
+                <View>
+                  {results.map((food, index) => {
+                    const key = food.id;
+                    return (
+                      <FoodListRow
+                        key={key}
+                        name={food.name}
+                        brand={food.brand}
+                        imageUrl={food.image_url}
+                        detail={formatFoodNutritionDetail({
+                          calories: food.calories,
+                          servingLabel: food.serving_label,
+                        })}
+                        showDivider={index < results.length - 1}
+                        disabled={loggingBusy && addingKey !== key}
+                        loading={addingKey === key}
+                        onPress={() => void logExisting(food, key)}
+                      />
+                    );
+                  })}
+                </View>
               )
+            ) : recent.isLoading ? (
+              <LoadingState label="Loading recent…" />
             ) : (
-              <View className="gap-2">
-                <Text variant="headingSmall">Recently added</Text>
-                {(recent.data ?? []).map((entry) => (
-                  <FoodRow
-                    key={entry.id}
-                    name={entry.food_name}
-                    detail={`${Math.round(entry.calories)} kcal · ${entry.serving_label}`}
-                    onPress={() =>
-                      void logExisting({
-                        name: entry.food_name,
-                        brand: entry.brand,
-                        serving_label: entry.serving_label,
-                        calories: entry.calories / Math.max(entry.quantity, 1),
-                        protein_g: entry.protein_g / Math.max(entry.quantity, 1),
-                        carbs_g: entry.carbs_g / Math.max(entry.quantity, 1),
-                        fat_g: entry.fat_g / Math.max(entry.quantity, 1),
-                      })
-                    }
-                  />
-                ))}
-              </View>
+              <RecentFoodsList
+                entries={recent.data ?? []}
+                addingKey={addingKey}
+                loggingBusy={loggingBusy}
+                onAdd={(entry) =>
+                  void logExisting(
+                    {
+                      name: entry.food_name,
+                      brand: entry.brand,
+                      serving_label: entry.serving_label,
+                      calories: entry.calories / Math.max(entry.quantity, 1),
+                      protein_g: entry.protein_g / Math.max(entry.quantity, 1),
+                      carbs_g: entry.carbs_g / Math.max(entry.quantity, 1),
+                      fat_g: entry.fat_g / Math.max(entry.quantity, 1),
+                    },
+                    entry.id,
+                  )
+                }
+              />
             )}
           </View>
         )}
@@ -538,7 +592,7 @@ function MacroField({
   return (
     <View style={[styles.macroField, { borderBottomColor: colors.border }]}>
       <View className="flex-row items-center gap-3">
-        <View style={[styles.macroIcon, { backgroundColor: `${color}18` }]}>{icon}</View>
+        <View style={[styles.macroIcon, { backgroundColor: withAlpha(color, 0.09) }]}>{icon}</View>
         <Text variant="bodyStrong">{label}</Text>
       </View>
       <View style={styles.macroValue}>
@@ -652,30 +706,73 @@ function SummaryMacro({ label, value }: { label: string; value: string }) {
   );
 }
 
-function FoodRow({ name, detail, onPress }: { name: string; detail: string; onPress: () => void }) {
+type RecentEntry = {
+  id: string;
+  food_name: string;
+  brand?: string | null;
+  serving_label: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  quantity: number;
+};
+
+function RecentFoodsList({
+  entries,
+  onAdd,
+  addingKey,
+  loggingBusy,
+}: {
+  entries: RecentEntry[];
+  onAdd: (entry: RecentEntry) => void;
+  addingKey: string | null;
+  loggingBusy: boolean;
+}) {
   const colors = useThemeColors();
+
+  if (entries.length === 0) {
+    return (
+      <View style={styles.foodListEmpty}>
+        <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceMuted }]}>
+          <Utensils size={iconSizes.md} color={colors.textMuted} strokeWidth={2} />
+        </View>
+        <Text variant="bodyStrong">No recent foods yet</Text>
+        <Text variant="bodySmall" tone="secondary" style={styles.foodListEmptyCopy}>
+          Search or create a food — it will show up here next time.
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.foodRow,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-        pressed && styles.pressed,
-      ]}
-    >
-      <View className="flex-1">
-        <Text variant="bodyStrong">{name}</Text>
-        <Text variant="caption" tone="secondary">
-          {detail}
+    <View style={styles.recentSection}>
+      <View style={styles.recentHeader}>
+        <Text variant="label" tone="secondary">
+          Recently added
+        </Text>
+        <Text variant="caption" tone="muted">
+          {entries.length}
         </Text>
       </View>
-      <View style={[styles.addBadge, { backgroundColor: colors.primaryMuted }]}>
-        <Text variant="headingSmall" tone="primary">
-          +
-        </Text>
+      <View>
+        {entries.map((entry, index) => (
+          <FoodListRow
+            key={entry.id}
+            name={entry.food_name}
+            brand={entry.brand}
+            detail={formatFoodNutritionDetail({
+              calories: entry.calories,
+              servingLabel: entry.serving_label,
+            })}
+            showDivider={index < entries.length - 1}
+            disabled={loggingBusy && addingKey !== entry.id}
+            loading={addingKey === entry.id}
+            onPress={() => onAdd(entry)}
+          />
+        ))}
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -685,66 +782,66 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   pressed: { opacity: 0.72, transform: [{ scale: 0.98 }] },
-  modeSwitch: { flexDirection: 'row', gap: 4, borderRadius: 14, padding: 4 },
+  modeSwitch: { flexDirection: 'row', gap: 4, borderRadius: radii.pill, padding: 4 },
   modeButton: {
-    minHeight: 44,
+    minHeight: 40,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderRadius: 11,
+    borderRadius: radii.pill,
     paddingHorizontal: 12,
   },
-  errorBanner: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12 },
-  unitSwitch: { minHeight: 48, flexDirection: 'row', gap: 4, borderRadius: 14, padding: 4 },
+  errorBanner: { borderRadius: radii.md, paddingHorizontal: 14, paddingVertical: 12 },
+  unitSwitch: { minHeight: 48, flexDirection: 'row', gap: 4, borderRadius: radii.pill, padding: 4 },
   unitOption: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'transparent',
-    borderRadius: 10,
+    borderRadius: radii.pill,
   },
   servingField: {
-    minHeight: 52,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: radii.pill,
     paddingHorizontal: 12,
   },
-  servingInput: { minHeight: 48, flex: 1, fontSize: 18, lineHeight: 24, textAlign: 'left' },
+  servingInput: { minHeight: 48, flex: 1, fontSize: 16, lineHeight: 22, textAlign: 'left' },
   macroField: {
-    minHeight: 76,
+    minHeight: 64,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 14,
+    paddingVertical: 10,
   },
   macroIcon: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: radii.md,
   },
   macroInput: {
-    minHeight: 44,
+    minHeight: 40,
     width: '100%',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
     textAlign: 'right',
   },
-  macroInputWrap: { width: 104, borderRadius: 12, overflow: 'hidden' },
+  macroInputWrap: { width: 104, borderRadius: radii.md, overflow: 'hidden' },
   macroValue: {
     width: 148,
     flexDirection: 'row',
@@ -753,41 +850,52 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   macroUnit: { width: 34, textAlign: 'right' },
-  summaryCard: { gap: 14, borderWidth: 1, borderRadius: 20, padding: 16 },
+  summaryCard: { gap: 12, borderWidth: 0, borderRadius: radii.md, padding: 16 },
   summaryServingBadge: {
-    borderWidth: 1,
-    borderRadius: 999,
+    borderWidth: 0,
+    borderRadius: radii.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   summaryCaloriesRow: {
-    minHeight: 92,
+    minHeight: 80,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: 0,
+    borderRadius: radii.md,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  summaryCalories: { fontSize: 34, lineHeight: 40, fontWeight: '700' },
+  summaryCalories: { fontSize: 32, lineHeight: 38, fontWeight: '700' },
   summaryCaloriesUnit: { paddingBottom: 5 },
-  summaryMacro: { flex: 1, gap: 5, borderWidth: 1, borderRadius: 12, padding: 10 },
-  summaryDot: { width: 7, height: 7, borderRadius: 4 },
-  foodRow: {
-    minHeight: 70,
+  summaryMacro: { flex: 1, gap: 4, borderWidth: 0, borderRadius: radii.md, padding: 10 },
+  summaryDot: { width: 7, height: 7, borderRadius: radii.sm },
+  recentSection: {
+    gap: spacing[1],
+  },
+  recentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 14,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing[1],
+    marginBottom: spacing[1],
   },
-  addBadge: {
-    width: 34,
-    height: 34,
+  foodListEmpty: {
+    alignItems: 'center',
+    gap: spacing[2],
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[8],
+  },
+  foodListEmptyCopy: {
+    textAlign: 'center',
+    maxWidth: 260,
+  },
+  emptyIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 17,
   },
 });

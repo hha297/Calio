@@ -19,7 +19,8 @@ import {
 import { useActiveGoal } from '@/features/goals/hooks';
 import { useDayWorkoutCalories } from '@/features/workout/hooks';
 import { useAppLanguage } from '@/i18n';
-import { colors } from '@/theme';
+import { radii } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 import { formatDiaryHeading, parseDiaryDateKey, toDiaryDateKey } from '@/utils/date';
 import { useCallback, useState } from 'react';
 
@@ -31,6 +32,7 @@ const meals: { key: MealType; label: string }[] = [
 ];
 
 export default function DiaryScreen() {
+  const colors = useThemeColors();
   const language = useAppLanguage();
   const params = useLocalSearchParams<{ date?: string }>();
   const [dateKey, setDateKey] = useState(
@@ -58,7 +60,7 @@ export default function DiaryScreen() {
   const error = foodQuery.error ?? goalQuery.error ?? burnQuery.error;
 
   return (
-    <Screen scroll slideFrom="left">
+    <Screen scroll slideFrom="left" padForTabBar>
       <View className="gap-4">
         <View className="flex-row items-center justify-between">
           <Pressable
@@ -139,7 +141,7 @@ export default function DiaryScreen() {
             <Button
               label="Workout"
               variant="secondary"
-              onPress={() => router.push('/workout/index')}
+              onPress={() => router.push('/workout')}
             />
           </View>
         </View>
@@ -164,7 +166,7 @@ export default function DiaryScreen() {
               );
               const mealCalories = entries.reduce((sum, entry) => sum + entry.calories, 0);
               return (
-                <View key={meal.key} className="gap-2">
+                <Card key={meal.key} className="gap-2">
                   <View className="flex-row items-center justify-between">
                     <Text variant="headingSmall">{meal.label}</Text>
                     <View className="flex-row items-center gap-3">
@@ -194,7 +196,8 @@ export default function DiaryScreen() {
                     entries.map((entry) => (
                       <Pressable
                         key={entry.id}
-                        className="flex-row items-center justify-between border-b border-border py-3"
+                        className="flex-row items-center justify-between px-3 py-3"
+                        style={{ backgroundColor: colors.surfaceMuted, borderRadius: radii.md }}
                         onLongPress={() => {
                           void deleteEntry.mutateAsync({ id: entry.id, dateKey });
                         }}
@@ -206,11 +209,13 @@ export default function DiaryScreen() {
                             {entry.brand ? ` · ${entry.brand}` : ''}
                           </Text>
                         </View>
-                        <Text variant="body">{Math.round(entry.calories)}</Text>
+                        <Text variant="bodyStrong" tone="brand">
+                          {Math.round(entry.calories)}
+                        </Text>
                       </Pressable>
                     ))
                   )}
-                </View>
+                </Card>
               );
             })
           : null}

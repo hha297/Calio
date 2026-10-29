@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, View } from 'react-native';
 
@@ -6,6 +6,7 @@ import { FieldPlaceholder } from '@/components/ui/field-placeholder';
 import { fieldShell, getFieldCursorProps, getFieldTypography } from '@/components/ui/field-styles';
 import { Text } from '@/components/ui/text';
 import { EMAIL_OTP_LENGTH } from '@/features/auth/recovery-constants';
+import { layout, radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 type OtpInputProps = {
@@ -37,8 +38,10 @@ export function OtpInput({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const inputRef = useRef<TextInput>(null);
+  const [focused, setFocused] = useState(false);
   const showPlaceholder = value.length === 0;
   const placeholder = t('auth.otpPlaceholder', { count: length });
+  const borderColor = error ? colors.error : focused ? colors.borderFocus : colors.border;
 
   useEffect(() => {
     if (autoFocus && !disabled) {
@@ -50,10 +53,15 @@ export function OtpInput({
   return (
     <View className="gap-1.5">
       <View
-        className="min-h-[52px] flex-row items-center rounded-2xl border px-3.5"
         style={{
-          backgroundColor: colors.surface,
-          borderColor: error ? colors.error : colors.border,
+          minHeight: layout.inputMinHeight,
+          flexDirection: 'row',
+          alignItems: 'center',
+          borderRadius: radii.pill,
+          borderWidth: 1,
+          paddingHorizontal: spacing[3],
+          backgroundColor: colors.surfaceMuted,
+          borderColor,
         }}
       >
         <View style={fieldShell.wrap}>
@@ -65,6 +73,8 @@ export function OtpInput({
             onChangeText={(text) => {
               onChange(onlyDigits(text).slice(0, length));
             }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             editable={!disabled}
             keyboardType="number-pad"
             textContentType="oneTimeCode"
@@ -75,7 +85,7 @@ export function OtpInput({
             accessibilityLabel={t('auth.verificationCode')}
             style={{
               ...getFieldTypography(colors),
-              paddingVertical: 12,
+              paddingVertical: spacing[2],
               letterSpacing: value.length > 0 ? 4 : 0,
               textAlign: 'center',
             }}

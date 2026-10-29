@@ -34,7 +34,7 @@ export default function AccountScreen() {
   }
 
   return (
-    <Screen scroll slideFrom="bottom">
+    <Screen scroll slideFrom="bottom" padForTabBar>
       <View className="gap-4">
         <BrandMark />
         <Text variant="headingLarge">Account</Text>

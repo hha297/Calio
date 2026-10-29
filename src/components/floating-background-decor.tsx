@@ -5,7 +5,7 @@ import { useTheme } from '@/theme/theme-provider';
 /**
  * Soft floating abstract shapes behind screen content.
  * Uses the theme primary scale (#00D95F family) at opacities that stay visible
- * on both light cream and dark olive canvases.
+ * on light and dark Spotify-style canvases.
  */
 export function FloatingBackgroundDecor() {
   const { scheme, colors } = useTheme();

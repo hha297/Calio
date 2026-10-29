@@ -11,17 +11,21 @@
       "bundleIdentifier": "com.calio.app",
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Calio uses the camera to scan food barcodes."
+        "NSCameraUsageDescription": "Calio uses the camera to scan food barcodes.",
+        "NSPhotoLibraryUsageDescription": "Calio needs photo access so you can add an image to a food you create."
       }
     },
     "android": {
       "package": "com.calio.app",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "backgroundColor": "#69B32B",
+        "backgroundColor": "#00D95F",
         "foregroundImage": "./assets/images/logo.png"
       },
-      "permissions": ["CAMERA", "android.permission.CAMERA"],
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -34,7 +38,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#69B32B",
+          "backgroundColor": "#00D95F",
           "image": "./assets/images/translogo.png",
           "imageWidth": 240
         }
@@ -47,7 +51,13 @@
         }
       ],
       "expo-image",
-      "expo-image-picker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Calio to access your photos to add a food image.",
+          "cameraPermission": "Calio uses the camera to scan food barcodes."
+        }
+      ],
       "expo-web-browser",
       "expo-font",
       "expo-localization"

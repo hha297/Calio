@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -54,14 +55,14 @@ export default function WorkoutHomeScreen() {
         ) : null}
 
         {(workouts.data ?? []).map((workout) => (
-          <View key={workout.id} className="border-b border-border py-3">
+          <Card key={workout.id} className="gap-1">
             <Text variant="bodyStrong">{workout.name}</Text>
             <Text variant="caption" tone="secondary">
               {format(new Date(workout.started_at), 'MMM d · HH:mm')}
               {workout.ended_at ? ' · finished' : ' · open'}
               {` · ~${Math.round(workout.estimated_calories)} kcal est.`}
             </Text>
-          </View>
+          </Card>
         ))}
       </View>
     </Screen>

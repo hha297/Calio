@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { brand } from '@/theme/themes';
+import { elevation, iconSizes, motion, radii } from '@/theme';
 import { useTheme } from '@/theme/theme-provider';
 
 const TRACK_WIDTH = 56;
@@ -23,7 +23,7 @@ export function ThemeToggle() {
   const progress = useSharedValue(isDark ? 1 : 0);
 
   useEffect(() => {
-    progress.value = withTiming(isDark ? 1 : 0, { duration: 220 });
+    progress.value = withTiming(isDark ? 1 : 0, { duration: motion.normal });
   }, [isDark, progress]);
 
   const thumbStyle = useAnimatedStyle(() => ({
@@ -34,7 +34,7 @@ export function ThemeToggle() {
   const trackBg = isDark ? colors.surfaceMuted : colors.surface;
   const trackBorder = isDark ? colors.border : colors.primary;
   const thumbBg = colors.primary;
-  const iconColor = isDark ? '#FFFFFF' : colors.textOnPrimary;
+  const iconColor = isDark ? colors.textOnOverlay : colors.textOnPrimary;
 
   return (
     <Pressable
@@ -57,18 +57,18 @@ export function ThemeToggle() {
         <Animated.View
           style={[
             styles.thumb,
+            elevation.thumb('#000000'),
             {
               backgroundColor: thumbBg,
               borderColor: 'transparent',
-              shadowColor: brand.darkBackground,
             },
             thumbStyle,
           ]}
         >
           {isDark ? (
-            <Moon size={14} color={iconColor} strokeWidth={2.5} />
+            <Moon size={iconSizes.xs} color={iconColor} strokeWidth={2.5} />
           ) : (
-            <Sun size={14} color={iconColor} strokeWidth={2.5} />
+            <Sun size={iconSizes.xs} color={iconColor} strokeWidth={2.5} />
           )}
         </Animated.View>
       </Animated.View>
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   track: {
     width: TRACK_WIDTH,
     height: TRACK_HEIGHT,
-    borderRadius: TRACK_HEIGHT / 2,
+    borderRadius: radii.pill,
     borderWidth: 1,
     paddingHorizontal: THUMB_PAD,
     justifyContent: 'center',
@@ -94,13 +94,9 @@ const styles = StyleSheet.create({
   thumb: {
     width: THUMB_SIZE,
     height: THUMB_SIZE,
-    borderRadius: THUMB_SIZE / 2,
+    borderRadius: radii.pill,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 3,
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
   },
 });

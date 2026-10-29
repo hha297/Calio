@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TextInput, View, type TextInputProps } from 'react-native';
 
+import { radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 import { FieldPlaceholder } from './field-placeholder';
@@ -29,10 +30,11 @@ export function CompactInput({
 
   return (
     <View
-      className="h-11 flex-1 justify-center rounded-md border px-3"
+      className="h-11 flex-1 justify-center border px-3"
       style={{
-        backgroundColor: colors.surface,
-        borderColor: focused ? colors.primary : colors.border,
+        backgroundColor: colors.surfaceMuted,
+        borderColor: focused ? colors.borderFocus : colors.border,
+        borderRadius: radii.md,
       }}
     >
       <View style={fieldShell.wrap}>
@@ -45,7 +47,7 @@ export function CompactInput({
           value={value}
           defaultValue={defaultValue}
           placeholder=""
-          style={[{ ...getFieldCompactTypography(colors), paddingVertical: 8 }, style]}
+          style={[{ ...getFieldCompactTypography(colors), paddingVertical: spacing[2] }, style]}
           onChangeText={(text) => {
             if (value === undefined) {
               setInnerValue(text);

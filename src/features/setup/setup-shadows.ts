@@ -1,4 +1,6 @@
-import { Platform, type ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
+
+import { elevation } from '@/theme/elevation';
 
 /**
  * Soft elevation for setup selection / summary cards.
@@ -11,11 +13,5 @@ export function setupCardShadow(shadowColor: string): ViewStyle {
     return {};
   }
 
-  return {
-    shadowColor,
-    shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  };
+  return elevation.raised(shadowColor);
 }

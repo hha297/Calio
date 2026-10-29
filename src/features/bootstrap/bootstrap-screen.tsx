@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandMark } from '@/components/brand-mark';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { brand } from '@/theme/themes';
+import { elevation, radii, spacing } from '@/theme';
 import { useTheme, useThemeColors } from '@/theme/theme-provider';
 
 type BootstrapScreenProps = {
@@ -53,11 +53,8 @@ export function BootstrapScreen({ error, onRetry, onSignIn }: BootstrapScreenPro
             <View
               style={[
                 styles.card,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  shadowColor: brand.darkBackground,
-                },
+                elevation.card('#000000'),
+                { backgroundColor: colors.surface },
               ]}
             >
               <Text
@@ -110,7 +107,7 @@ const styles = StyleSheet.create({
   },
   blob: {
     position: 'absolute',
-    borderRadius: 999,
+    borderRadius: radii.pill,
   },
   blobTop: {
     top: -48,
@@ -140,15 +137,11 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
-    borderRadius: 24,
-    borderWidth: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    gap: 12,
-    elevation: 2,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
+    borderRadius: radii.md,
+    borderWidth: 0,
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[6],
+    gap: spacing[3],
   },
   centerText: {
     textAlign: 'center',

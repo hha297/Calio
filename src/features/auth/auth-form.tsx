@@ -10,6 +10,7 @@ import { CheckboxRow } from '@/components/ui/checkbox-row';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { reportError } from '@/lib/errors/report-error';
+import { radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 import { isEmailNotConfirmedError, toAuthErrorMessage } from './auth-errors';
@@ -95,8 +96,12 @@ function SignInForm({ notice }: { notice?: string }) {
       <View className="gap-5">
         {notice ? (
           <View
-            className="rounded-2xl px-3 py-2.5"
-            style={{ backgroundColor: colors.secondaryMuted }}
+            style={{
+              borderRadius: radii.md,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2] + 2,
+              backgroundColor: colors.surfaceMuted,
+            }}
           >
             <Text variant="bodySmall" tone="secondary">
               {notice}
@@ -179,7 +184,14 @@ function SignInForm({ notice }: { notice?: string }) {
         </View>
 
         {formError ? (
-          <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: colors.errorMuted }}>
+          <View
+            style={{
+              borderRadius: radii.md,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2] + 2,
+              backgroundColor: colors.errorMuted,
+            }}
+          >
             <Text variant="bodySmall" tone="error">
               {formError}
             </Text>
@@ -383,7 +395,14 @@ function SignUpForm() {
         />
 
         {formError ? (
-          <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: colors.errorMuted }}>
+          <View
+            style={{
+              borderRadius: radii.md,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2] + 2,
+              backgroundColor: colors.errorMuted,
+            }}
+          >
             <Text variant="bodySmall" tone="error">
               {formError}
             </Text>

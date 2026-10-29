@@ -23,11 +23,16 @@ Create `.env.local`:
 ```text
 EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+
+# Optional — Create Food image uploads (unsigned Cloudinary preset)
+EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
 ```
 
 `EXPO_PUBLIC_SUPABASE_KEY` is also accepted as an alias.
 
-Never put the service-role key or database password in the app.
+Never put the service-role key, database password, or Cloudinary API secret in the app.
+Food images use an **unsigned** Cloudinary upload preset only (no API secret on device).
 
 `.env.local` is gitignored and remains the default Cloud configuration. Expo reads
 environment variables already set in the terminal before values from `.env.local`,

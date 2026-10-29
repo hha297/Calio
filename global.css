@@ -1,3 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/**
+ * Light-scheme defaults for NativeWind CSS variables (Spotify + Calio primary).
+ * ThemeProvider overrides these at runtime for the resolved light/dark palette.
+ * Channels are space-separated RGB so Tailwind alpha modifiers work (bg-primary/20).
+ */
+:root {
+  --color-primary: 0 217 95;
+  --color-primaryPressed: 0 184 79;
+  --color-primaryMuted: 216 248 230;
+  --color-primaryBright: 24 217 104;
+  --color-secondary: 215 123 82;
+  --color-secondaryPressed: 192 104 66;
+  --color-secondaryMuted: 248 234 227;
+  --color-secondaryHot: 232 149 106;
+  --color-background: 245 245 245;
+  --color-surface: 255 255 255;
+  --color-surfaceMuted: 238 238 238;
+  --color-textPrimary: 18 18 18;
+  --color-textSecondary: 58 58 58;
+  --color-textMuted: 106 106 106;
+  --color-textDisabled: 154 154 154;
+  --color-textOnPrimary: 0 0 0;
+  --color-textOnSecondary: 18 18 18;
+  --color-textOnOverlay: 255 255 255;
+  --color-border: 208 208 208;
+  --color-borderStrong: 179 179 179;
+  --color-borderFocus: 0 217 95;
+  --color-buttonDisabledBackground: 238 238 238;
+  --color-buttonDisabledText: 124 124 124;
+  --color-success: 0 184 79;
+  --color-successBright: 0 217 95;
+  --color-warning: 255 164 43;
+  --color-warningStrong: 255 164 43;
+  --color-error: 243 114 127;
+  --color-errorMuted: 253 232 234;
+  --color-info: 83 157 245;
+  --color-overlay: rgba(0, 0, 0, 0.7);
+  --color-cameraOverlay: rgba(0, 0, 0, 0.72);
+  --color-onOverlayBorder: rgba(255, 255, 255, 0.72);
+  --color-macroCalories: 0 217 95;
+  --color-macroProtein: 83 157 245;
+  --color-macroCarbs: 255 164 43;
+  --color-macroFat: 243 114 127;
+  --color-macroActivity: 0 184 79;
+}

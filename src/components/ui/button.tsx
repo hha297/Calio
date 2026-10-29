@@ -8,15 +8,14 @@ import {
   type PressableProps,
 } from 'react-native';
 
-import { typography } from '@/theme';
+import { layout, radii, spacing } from '@/theme';
 import { fonts } from '@/theme/fonts';
 import { useThemeColors } from '@/theme/theme-provider';
-import { brand } from '@/theme/themes';
 
 /** @deprecated Use `text` — kept for existing call sites. */
 type LegacyGhost = 'ghost';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'text' | LegacyGhost;
+export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'destructive' | LegacyGhost;
 type ButtonSize = 'md' | 'lg';
 
 type ButtonProps = Omit<PressableProps, 'children' | 'style' | 'className'> & {
@@ -24,15 +23,12 @@ type ButtonProps = Omit<PressableProps, 'children' | 'style' | 'className'> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
-  /** Optional leading icon (same color as the label). */
   iconStart?: (color: string) => ReactNode;
-  /** Optional trailing icon (same color as the label). */
   iconEnd?: (color: string) => ReactNode;
-  /** NativeWind: use raw Pressable so theme backgroundColor is not stripped. */
   cssInterop?: false;
 };
 
-type ResolvedVariant = 'primary' | 'secondary' | 'text';
+type ResolvedVariant = 'primary' | 'secondary' | 'text' | 'destructive';
 
 function resolveVariant(variant: ButtonVariant): ResolvedVariant {
   if (variant === 'ghost') return 'text';
@@ -40,8 +36,7 @@ function resolveVariant(variant: ButtonVariant): ResolvedVariant {
 }
 
 /**
- * Theme-driven buttons. NativeWind cssInterop is disabled on Pressable (see wrap-jsx).
- * Primary fill is painted on an inner View so green CTAs stay visible on all platforms.
+ * Spotify-style pill buttons (DESIGN.MD). Primary = Calio green `#00D95F` on black label.
  */
 export function Button({
   label,
@@ -56,14 +51,14 @@ export function Button({
   const colors = useThemeColors();
   const resolved = resolveVariant(variant);
   const isDisabled = Boolean(disabled || loading);
-  const radius = size === 'lg' ? 16 : 8;
+  const radius = radii.pill;
 
   const palette = (pressed: boolean) => {
     if (isDisabled) {
       return {
         backgroundColor: colors.buttonDisabledBackground,
         borderColor: colors.buttonDisabledBackground,
-        borderWidth: resolved === 'secondary' ? 1 : 0,
+        borderWidth: 0,
         labelColor: colors.buttonDisabledText,
         spinnerColor: colors.buttonDisabledText,
       };
@@ -74,18 +69,28 @@ export function Button({
         backgroundColor: pressed ? colors.primaryPressed : colors.primary,
         borderColor: colors.primary,
         borderWidth: 0,
-        labelColor: brand.darkBackground,
-        spinnerColor: brand.darkBackground,
+        labelColor: colors.textOnPrimary,
+        spinnerColor: colors.textOnPrimary,
       };
     }
 
     if (resolved === 'secondary') {
       return {
-        backgroundColor: pressed ? colors.primaryMuted : colors.surface,
-        borderColor: colors.primary,
+        backgroundColor: pressed ? colors.border : colors.surfaceMuted,
+        borderColor: colors.border,
         borderWidth: 1,
-        labelColor: colors.primary,
-        spinnerColor: colors.primary,
+        labelColor: colors.textPrimary,
+        spinnerColor: colors.textPrimary,
+      };
+    }
+
+    if (resolved === 'destructive') {
+      return {
+        backgroundColor: 'transparent',
+        borderColor: colors.error,
+        borderWidth: 1,
+        labelColor: colors.error,
+        spinnerColor: colors.error,
       };
     }
 
@@ -130,7 +135,17 @@ export function Button({
               ) : (
                 <View style={styles.content}>
                   {iconStart?.(p.labelColor)}
-                  <RNText style={[styles.label, { color: p.labelColor }]}>{label}</RNText>
+                  <RNText
+                    style={[
+                      styles.label,
+                      resolved === 'primary' || resolved === 'secondary'
+                        ? styles.labelCased
+                        : null,
+                      { color: p.labelColor },
+                    ]}
+                  >
+                    {label}
+                  </RNText>
                   {iconEnd?.(p.labelColor)}
                 </View>
               )}
@@ -158,22 +173,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing[2],
   },
   md: {
-    minHeight: 48,
-    borderRadius: 8,
-    paddingHorizontal: 16,
+    minHeight: layout.controlMinHeight,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing[4],
   },
   lg: {
-    minHeight: 56,
-    borderRadius: 16,
-    paddingHorizontal: 20,
+    minHeight: 52,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing[6],
   },
   label: {
-    fontFamily: fonts.ibmSemiBold,
-    fontSize: typography.button.size,
-    lineHeight: typography.button.lineHeight,
+    fontFamily: fonts.ibmBold,
+    fontSize: 14,
+    lineHeight: 18,
     textAlign: 'center',
+  },
+  labelCased: {
+    textTransform: 'uppercase',
+    letterSpacing: 1.4,
   },
 });

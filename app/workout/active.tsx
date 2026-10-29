@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Alert, Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { CompactInput } from '@/components/ui/compact-input';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -45,7 +46,7 @@ export default function ActiveWorkoutScreen() {
         'Workout saved',
         `~${result.estimated} kcal estimated · ${result.volume} kg volume · ${result.durationMin} min`,
       );
-      router.replace('/workout/index');
+      router.replace('/workout');
     } catch (error) {
       Alert.alert('Could not save', error instanceof Error ? error.message : 'Try again.');
     }
@@ -82,7 +83,7 @@ export default function ActiveWorkoutScreen() {
         <Button label="Add exercise" variant="secondary" onPress={() => router.push('/workout/exercises')} />
 
         {store.exercises.map((exercise) => (
-          <View key={exercise.localId} className="gap-2 rounded-lg border border-border bg-surface p-3">
+          <Card key={exercise.localId} className="gap-2">
             <View className="flex-row items-center justify-between">
               <Text variant="headingSmall">{exercise.name}</Text>
               <Pressable onPress={() => store.removeExercise(exercise.localId)}>
@@ -134,7 +135,7 @@ export default function ActiveWorkoutScreen() {
               </View>
             ))}
             <Button label="Add set" variant="ghost" onPress={() => store.addSet(exercise.localId)} />
-          </View>
+          </Card>
         ))}
 
         <Button

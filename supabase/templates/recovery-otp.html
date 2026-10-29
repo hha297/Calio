@@ -11,7 +11,7 @@
   Important: use {{ .Token }} only — do NOT include {{ .ConfirmationURL }}.
   A confirmation link would consume the OTP when mail scanners open it.
 -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -22,12 +22,18 @@
     style="
       margin: 0;
       padding: 0;
-      background: #f6f8ef;
+      background: #f5f5f5;
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      color: #1b2518;
+      color: #121212;
     "
   >
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f6f8ef; padding: 32px 16px">
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      style="background: #f5f5f5; padding: 32px 16px"
+    >
       <tr>
         <td align="center">
           <table
@@ -35,25 +41,39 @@
             width="100%"
             cellspacing="0"
             cellpadding="0"
-            style="max-width: 480px; background: #ffffff; border-radius: 24px; overflow: hidden; border: 1px solid #dce6d4"
+            style="
+              max-width: 480px;
+              background: #ffffff;
+              border-radius: 8px;
+              overflow: hidden;
+            "
           >
             <tr>
-              <td style="background: #69b32b; padding: 28px 24px; text-align: center">
-                <p style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.04em; color: #141a12">
+              <td style="background: #00d95f; padding: 28px 24px; text-align: center">
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 700;
+                    letter-spacing: 0.04em;
+                    color: #000000;
+                  "
+                >
                   Calio
                 </p>
-                <p style="margin: 8px 0 0; font-size: 14px; color: rgba(20, 26, 18, 0.85)">
+                <p style="margin: 8px 0 0; font-size: 14px; color: rgba(0, 0, 0, 0.85)">
                   Password reset
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding: 28px 24px 8px">
-                <p style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #1b2518">
+                <p style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #121212">
                   Here’s your reset code
                 </p>
-                <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: #7a8674">
-                  Enter this code in the Calio app to choose a new password. It expires soon and can only be used once.
+                <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: #6a6a6a">
+                  Enter this code in the Calio app to choose a new password. It expires soon and can
+                  only be used once.
                 </p>
                 <p
                   style="
@@ -64,25 +84,26 @@
                     font-size: 32px;
                     font-weight: 700;
                     letter-spacing: 0.28em;
-                    color: #141a12;
-                    background: #e8f4dc;
-                    border-radius: 16px;
+                    color: #121212;
+                    background: #eeeeee;
+                    border-radius: 8px;
                   "
                 >
                   {{ .Token }}
                 </p>
-                <p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #7a8674">
+                <p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #6a6a6a">
                   Open Calio → Forgot password → enter the code for
-                  <strong style="color: #1b2518">{{ .Email }}</strong>.
+                  <strong style="color: #121212">{{ .Email }}</strong>.
                 </p>
-                <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #7a8674">
-                  If you didn’t ask to reset your password, you can ignore this email. Your password will stay the same.
+                <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #6a6a6a">
+                  If you didn’t ask to reset your password, you can ignore this email. Your password
+                  will stay the same.
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding: 20px 24px 28px">
-                <p style="margin: 0; font-size: 12px; color: #aab6a2; text-align: center">
+                <p style="margin: 0; font-size: 12px; color: #b3b3b3; text-align: center">
                   Sent by Calio · Meals, workouts, and progress in one place
                 </p>
               </td>

@@ -27,6 +27,7 @@ import {
   type UpdatePasswordValues,
 } from '@/features/auth/schema';
 import { reportError } from '@/lib/errors/report-error';
+import { radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 type Step = 'otp' | 'password';
@@ -233,8 +234,12 @@ export default function ResetPasswordScreen() {
 
           {otpError ? (
             <View
-              className="rounded-2xl px-3 py-2.5"
-              style={{ backgroundColor: colors.errorMuted }}
+              style={{
+                borderRadius: radii.md,
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[2] + 2,
+                backgroundColor: colors.errorMuted,
+              }}
             >
               <Text variant="bodySmall" tone="error">
                 {otpError}
@@ -244,8 +249,12 @@ export default function ResetPasswordScreen() {
 
           {resendMessage ? (
             <View
-              className="rounded-2xl px-3 py-2.5"
-              style={{ backgroundColor: colors.secondaryMuted }}
+              style={{
+                borderRadius: radii.md,
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[2] + 2,
+                backgroundColor: colors.surfaceMuted,
+              }}
             >
               <Text variant="bodySmall" tone="secondary">
                 {resendMessage}
@@ -369,8 +378,12 @@ export default function ResetPasswordScreen() {
 
           {passwordError ? (
             <View
-              className="rounded-2xl px-3 py-2.5"
-              style={{ backgroundColor: colors.errorMuted }}
+              style={{
+                borderRadius: radii.md,
+                paddingHorizontal: spacing[3],
+                paddingVertical: spacing[2] + 2,
+                backgroundColor: colors.errorMuted,
+              }}
             >
               <Text variant="bodySmall" tone="error">
                 {passwordError}

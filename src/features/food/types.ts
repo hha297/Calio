@@ -26,4 +26,5 @@ export type Food = {
   carbs_g: number;
   fat_g: number;
   source: string;
+  image_url?: string | null;
 };
