@@ -2,9 +2,9 @@ import type { ColorName } from './colors';
 
 /** Raw brand tokens from the Calio redesign. */
 export const brand = {
-  primary: '#69B32B',
+  primary: '#00D95F',
   secondary: '#D77B52',
-  primaryPressed: '#4F8D25',
+  primaryPressed: '#00B84F',
   lightBackground: '#F6F8EF',
   lightSurface: '#FFFFFF',
   lightText: '#1B2518',
@@ -26,8 +26,8 @@ export type ThemeColors = Record<ColorName, string>;
 export const lightColors: ThemeColors = {
   primary: brand.primary,
   primaryPressed: brand.primaryPressed,
-  primaryMuted: '#E8F4DC',
-  primaryBright: '#7FC43A',
+  primaryMuted: '#D8F8E6',
+  primaryBright: '#18D968',
   secondary: brand.secondary,
   secondaryPressed: '#C06842',
   secondaryMuted: '#F8EAE3',
@@ -62,8 +62,8 @@ export const lightColors: ThemeColors = {
 export const darkColors: ThemeColors = {
   primary: brand.primary,
   primaryPressed: brand.primaryPressed,
-  primaryMuted: '#1F2E18',
-  primaryBright: '#7FC43A',
+  primaryMuted: '#0F2A1A',
+  primaryBright: '#18D968',
   secondary: brand.secondary,
   secondaryPressed: '#C06842',
   secondaryMuted: '#3A2A22',
@@ -81,7 +81,7 @@ export const darkColors: ThemeColors = {
   borderStrong: '#4A5A44',
   buttonDisabledBackground: brand.darkDisabledBackground,
   buttonDisabledText: brand.darkDisabledText,
-  success: '#7FC43A',
+  success: '#18D968',
   successBright: brand.primary,
   warning: brand.secondary,
   error: '#E07070',
@@ -92,5 +92,5 @@ export const darkColors: ThemeColors = {
   macroProtein: '#7AA8B8',
   macroCarbs: brand.secondary,
   macroFat: '#C47A98',
-  macroActivity: '#7FC43A',
+  macroActivity: '#18D968',
 };

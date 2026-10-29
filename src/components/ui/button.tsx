@@ -2,16 +2,16 @@ import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  StyleSheet,
   Text as RNText,
+  StyleSheet,
   View,
   type PressableProps,
 } from 'react-native';
 
-import { fonts } from '@/theme/fonts';
 import { typography } from '@/theme';
-import { brand } from '@/theme/themes';
+import { fonts } from '@/theme/fonts';
 import { useThemeColors } from '@/theme/theme-provider';
+import { brand } from '@/theme/themes';
 
 /** @deprecated Use `text` — kept for existing call sites. */
 type LegacyGhost = 'ghost';

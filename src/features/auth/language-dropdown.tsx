@@ -1,13 +1,8 @@
 import { usePathname } from 'expo-router';
-import { ChevronDown } from 'lucide-react-native';
+import { Check, ChevronDown } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Dimensions,
-  Modal,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
 import {
@@ -18,17 +13,18 @@ import {
   type AppLanguage,
 } from '@/i18n';
 import { useThemeColors } from '@/theme/theme-provider';
+import { brand } from '@/theme/themes';
 
 const LANGUAGE_FLAGS: Record<AppLanguage, string> = {
-  en: '🇬🇧',
-  fi: '🇫🇮',
-  sv: '🇸🇪',
-  vi: '🇻🇳',
+  en: '\u{1F1EC}\u{1F1E7}',
+  fi: '\u{1F1EB}\u{1F1EE}',
+  sv: '\u{1F1F8}\u{1F1EA}',
+  vi: '\u{1F1FB}\u{1F1F3}',
 };
 
-const MENU_MIN_WIDTH = 196;
-const MENU_MAX_WIDTH = 260;
-const GAP_BELOW_TRIGGER = 6;
+const MENU_MIN_WIDTH = 220;
+const MENU_MAX_WIDTH = 272;
+const GAP_BELOW_TRIGGER = 8;
 
 type MenuPosition = {
   top: number;
@@ -36,7 +32,7 @@ type MenuPosition = {
   minWidth: number;
 };
 
-/** Compact language dropdown with flag + full name. */
+/** Animated language selector shared by the auth screens. */
 export function LanguageDropdown() {
   const colors = useThemeColors();
   const pathname = usePathname();
@@ -44,6 +40,11 @@ export function LanguageDropdown() {
   const [menuPos, setMenuPos] = useState<MenuPosition | null>(null);
   const triggerRef = useRef<View>(null);
   const language = useAppLanguage();
+  const openProgress = useSharedValue(0);
+
+  useEffect(() => {
+    openProgress.value = withTiming(open ? 1 : 0, { duration: 180 });
+  }, [open, openProgress]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -53,6 +54,10 @@ export function LanguageDropdown() {
     return () => clearTimeout(timer);
   }, [pathname]);
 
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${openProgress.value * 180}deg` }],
+  }));
+
   function closeMenu() {
     setOpen(false);
     setMenuPos(null);
@@ -60,24 +65,17 @@ export function LanguageDropdown() {
 
   function openMenu() {
     triggerRef.current?.measureInWindow((x, y, width, height) => {
-      const screenW = Dimensions.get('window').width;
+      const screenWidth = Dimensions.get('window').width;
       const minWidth = Math.min(MENU_MAX_WIDTH, Math.max(MENU_MIN_WIDTH, width));
-      const left = Math.max(12, Math.min(x, screenW - minWidth - 12));
-      setMenuPos({
-        top: y + height + GAP_BELOW_TRIGGER,
-        left,
-        minWidth,
-      });
+      const left = Math.max(12, Math.min(x, screenWidth - minWidth - 12));
+      setMenuPos({ top: y + height + GAP_BELOW_TRIGGER, left, minWidth });
       setOpen(true);
     });
   }
 
   function toggleMenu() {
-    if (open) {
-      closeMenu();
-      return;
-    }
-    openMenu();
+    if (open) closeMenu();
+    else openMenu();
   }
 
   return (
@@ -90,27 +88,30 @@ export function LanguageDropdown() {
           hitSlop={6}
           onPress={toggleMenu}
           cssInterop={false}
-          style={[
+          style={({ pressed }) => [
             styles.trigger,
             {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
+              backgroundColor: open ? colors.primaryMuted : colors.surface,
+              borderColor: open ? colors.primary : colors.border,
             },
+            pressed && styles.pressed,
           ]}
         >
-          <Text style={styles.flag}>{LANGUAGE_FLAGS[language]}</Text>
-          <Text
-            variant="label"
-            numberOfLines={1}
-            style={{ color: colors.textPrimary, maxWidth: 110 }}
-          >
-            {LANGUAGE_LABELS[language]}
-          </Text>
-          <ChevronDown
-            size={14}
-            color={colors.textMuted}
-            style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
-          />
+          <View style={[styles.triggerFlagWrap, { backgroundColor: colors.surfaceMuted }]}>
+            <Text style={styles.flag}>{LANGUAGE_FLAGS[language]}</Text>
+          </View>
+          <View style={styles.triggerCopy}>
+            <Text
+              variant="bodyStrong"
+              numberOfLines={1}
+              style={[styles.triggerLabel, { color: colors.textPrimary }]}
+            >
+              {LANGUAGE_LABELS[language]}
+            </Text>
+          </View>
+          <Animated.View style={chevronStyle}>
+            <ChevronDown size={16} color={colors.textMuted} strokeWidth={2.2} />
+          </Animated.View>
         </Pressable>
       </View>
 
@@ -139,7 +140,7 @@ export function LanguageDropdown() {
                   minWidth: menuPos.minWidth,
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
-                  shadowColor: '#000000',
+                  shadowColor: brand.darkBackground,
                 },
               ]}
             >
@@ -149,26 +150,32 @@ export function LanguageDropdown() {
                   <Pressable
                     key={code}
                     accessibilityRole="menuitem"
+                    accessibilityLabel={LANGUAGE_LABELS[code]}
                     accessibilityState={{ selected }}
                     cssInterop={false}
-                    onPress={() => {
-                      void changeAppLanguage(code).then(closeMenu);
-                    }}
-                    style={[
+                    onPress={() => void changeAppLanguage(code).then(closeMenu)}
+                    style={({ pressed }) => [
                       styles.option,
                       selected ? { backgroundColor: colors.primaryMuted } : null,
+                      pressed && !selected ? { backgroundColor: colors.surfaceMuted } : null,
                     ]}
                   >
-                    <Text style={styles.flag}>{LANGUAGE_FLAGS[code]}</Text>
-                    <Text
-                      variant={selected ? 'bodyStrong' : 'body'}
-                      style={{
-                        color: selected ? colors.primary : colors.textPrimary,
-                        flex: 1,
-                      }}
-                    >
-                      {LANGUAGE_LABELS[code]}
-                    </Text>
+                    <View style={[styles.optionFlagWrap, { backgroundColor: colors.surfaceMuted }]}>
+                      <Text style={styles.optionFlag}>{LANGUAGE_FLAGS[code]}</Text>
+                    </View>
+                    <View style={styles.optionCopy}>
+                      <Text
+                        variant={selected ? 'bodyStrong' : 'body'}
+                        style={{ color: selected ? colors.primary : colors.textPrimary }}
+                      >
+                        {LANGUAGE_LABELS[code]}
+                      </Text>
+                    </View>
+                    {selected ? (
+                      <View style={[styles.check, { backgroundColor: colors.primary }]}>
+                        <Check size={15} color={colors.textOnPrimary} strokeWidth={2.8} />
+                      </View>
+                    ) : null}
                   </Pressable>
                 );
               })}
@@ -181,46 +188,73 @@ export function LanguageDropdown() {
 }
 
 const styles = StyleSheet.create({
-  anchor: {
-    alignSelf: 'flex-start',
-  },
+  anchor: { alignSelf: 'flex-start' },
   trigger: {
-    minHeight: 36,
-    maxWidth: 180,
+    minHeight: 50,
+    width: 158,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 999,
+    gap: 9,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 17,
     borderWidth: 1,
   },
-  flag: {
-    fontSize: 16,
-    lineHeight: 20,
+  pressed: { opacity: 0.84, transform: [{ scale: 0.98 }] },
+  triggerFlagWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  modalRoot: {
+  triggerCopy: {
     flex: 1,
+    minWidth: 0,
+    height: 34,
+    justifyContent: 'center',
   },
+  triggerLabel: {
+    fontSize: 16,
+    lineHeight: 22,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  flag: { fontSize: 16, lineHeight: 20 },
+  modalRoot: { flex: 1 },
   menu: {
     position: 'absolute',
     maxWidth: MENU_MAX_WIDTH,
-    borderRadius: 14,
+    borderRadius: 20,
     borderWidth: 1,
-    paddingVertical: 4,
-    elevation: 8,
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    overflow: 'hidden',
+    padding: 8,
+    elevation: 10,
+    shadowOpacity: 0.17,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
   },
   option: {
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    minHeight: 44,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+  },
+  optionFlagWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionFlag: { fontSize: 19, lineHeight: 23 },
+  optionCopy: { flex: 1 },
+  check: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

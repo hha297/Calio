@@ -30,10 +30,11 @@ export function ThemeToggle() {
     transform: [{ translateX: progress.value * TRAVEL }],
   }));
 
-  // Light: muted track + white thumb. Dark (active): primary thumb + moon on white.
-  const trackBg = colors.surfaceMuted;
-  const thumbBg = isDark ? colors.primary : '#FFFFFF';
-  const iconColor = isDark ? '#FFFFFF' : colors.primary;
+  // Light: white track + primary border/thumb. Dark: muted track + primary thumb.
+  const trackBg = isDark ? colors.surfaceMuted : colors.surface;
+  const trackBorder = isDark ? colors.border : colors.primary;
+  const thumbBg = colors.primary;
+  const iconColor = isDark ? '#FFFFFF' : colors.textOnPrimary;
 
   return (
     <Pressable
@@ -49,7 +50,7 @@ export function ThemeToggle() {
           styles.track,
           {
             backgroundColor: trackBg,
-            borderColor: colors.border,
+            borderColor: trackBorder,
           },
         ]}
       >
@@ -58,7 +59,7 @@ export function ThemeToggle() {
             styles.thumb,
             {
               backgroundColor: thumbBg,
-              borderColor: isDark ? 'transparent' : colors.border,
+              borderColor: 'transparent',
               shadowColor: brand.darkBackground,
             },
             thumbStyle,

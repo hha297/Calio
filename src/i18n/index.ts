@@ -46,11 +46,13 @@ if (!i18next.isInitialized) {
   });
 }
 
-void AsyncStorage.getItem(LANGUAGE_KEY).then((stored) => {
-  if (stored && (SUPPORTED_LANGUAGES as readonly string[]).includes(stored)) {
-    void i18next.changeLanguage(stored);
-  }
-});
+if (typeof window !== 'undefined') {
+  void AsyncStorage.getItem(LANGUAGE_KEY).then((stored) => {
+    if (stored && (SUPPORTED_LANGUAGES as readonly string[]).includes(stored)) {
+      void i18next.changeLanguage(stored);
+    }
+  });
+}
 
 export async function changeAppLanguage(next: AppLanguage) {
   await AsyncStorage.setItem(LANGUAGE_KEY, next);

@@ -133,6 +133,7 @@ export default function VerifyEmailScreen() {
     <AuthShell
       title={t('auth.verifyEmailTitle')}
       subtitle={t('auth.verifyEmailSubtitle')}
+      slideFrom="top"
       footer={
         <AuthTextLink
           label={t('auth.backToSignIn')}

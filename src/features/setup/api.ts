@@ -71,11 +71,65 @@ export type CompleteSetupResult = {
   calorieTarget: number;
 };
 
+async function saveInitialWeight(
+  userId: string,
+  measuredOn: string,
+  weightKg: number,
+  bodyFatPercent: number | null,
+): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const payload = {
+    weight_kg: weightKg,
+    body_fat_percent: bodyFatPercent,
+    notes: 'Initial weight from setup',
+  };
+
+  // Prefer select → update/insert so hosted DBs without a unique
+  // (user_id, measured_on) index still complete setup. Upsert+onConflict
+  // fails hard when that constraint is missing.
+  const { data: existing, error: lookupError } = await supabase
+    .from('body_measurements')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('measured_on', measuredOn)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (lookupError) {
+    throw lookupError;
+  }
+
+  if (existing?.id) {
+    const { error: updateError } = await supabase
+      .from('body_measurements')
+      .update(payload)
+      .eq('id', existing.id);
+    if (updateError) {
+      throw updateError;
+    }
+    return;
+  }
+
+  const { error: insertError } = await supabase.from('body_measurements').insert({
+    user_id: userId,
+    measured_on: measuredOn,
+    ...payload,
+  });
+  if (insertError) {
+    throw insertError;
+  }
+}
+
 /**
  * Persists profile, active goal, and initial weight. Retry-safe:
- * - profile upsert by id
+ * - profile update by id
  * - deactivates prior goals then inserts one active goal
- * - weight upsert on (user_id, measured_on)
+ * - weight select → update/insert for (user_id, measured_on)
  * - deletes draft progress and sets onboarding_completed_at last
  */
 export async function completeSetup(userId: string, answers: SetupAnswers): Promise<CompleteSetupResult> {
@@ -191,63 +245,7 @@ export async function completeSetup(userId: string, answers: SetupAnswers): Prom
     throw goalError;
   }
 
-  const { error: weightError } = await supabase.from('body_measurements').upsert(
-    {
-      user_id: userId,
-      measured_on: today,
-      weight_kg: answers.weightKg,
-      body_fat_percent: answers.bodyFatPercent,
-      notes: 'Initial weight from setup',
-    },
-    { onConflict: 'user_id,measured_on' },
-  );
-
-  if (weightError) {
-    // Hosted DBs that never got the unique index still need a safe path.
-    const missingConflictTarget = weightError.message
-      .toLowerCase()
-      .includes('no unique or exclusion constraint');
-
-    if (!missingConflictTarget) {
-      throw weightError;
-    }
-
-    const { data: existing, error: lookupError } = await supabase
-      .from('body_measurements')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('measured_on', today)
-      .maybeSingle();
-
-    if (lookupError) {
-      throw lookupError;
-    }
-
-    if (existing?.id) {
-      const { error: updateError } = await supabase
-        .from('body_measurements')
-        .update({
-          weight_kg: answers.weightKg,
-          body_fat_percent: answers.bodyFatPercent,
-          notes: 'Initial weight from setup',
-        })
-        .eq('id', existing.id);
-      if (updateError) {
-        throw updateError;
-      }
-    } else {
-      const { error: insertError } = await supabase.from('body_measurements').insert({
-        user_id: userId,
-        measured_on: today,
-        weight_kg: answers.weightKg,
-        body_fat_percent: answers.bodyFatPercent,
-        notes: 'Initial weight from setup',
-      });
-      if (insertError) {
-        throw insertError;
-      }
-    }
-  }
+  await saveInitialWeight(userId, today, answers.weightKg, answers.bodyFatPercent);
 
   const { error: completeError } = await supabase
     .from('profiles')

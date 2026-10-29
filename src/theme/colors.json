@@ -1,8 +1,8 @@
 {
-  "primary": "#69B32B",
-  "primaryPressed": "#4F8D25",
-  "primaryMuted": "#E8F4DC",
-  "primaryBright": "#7FC43A",
+  "primary": "#00D95F",
+  "primaryPressed": "#00B84F",
+  "primaryMuted": "#D8F8E6",
+  "primaryBright": "#18D968",
   "secondary": "#D77B52",
   "secondaryPressed": "#C06842",
   "secondaryMuted": "#F8EAE3",
@@ -20,15 +20,15 @@
   "borderStrong": "#C5D2BB",
   "buttonDisabledBackground": "#E2E8DD",
   "buttonDisabledText": "#8A9585",
-  "success": "#4F8D25",
-  "successBright": "#69B32B",
+  "success": "#00B84F",
+  "successBright": "#00D95F",
   "warning": "#D77B52",
   "error": "#C44B4B",
   "errorMuted": "#F6D0D3",
   "info": "#4A7A8C",
-  "macroCalories": "#69B32B",
+  "macroCalories": "#00D95F",
   "macroProtein": "#4A7A8C",
   "macroCarbs": "#D77B52",
   "macroFat": "#A75A79",
-  "macroActivity": "#4F8D25"
+  "macroActivity": "#00B84F"
 }

@@ -9,6 +9,10 @@ export function parseDiaryDateKey(key: string): Date {
   return startOfDay(parseISO(key));
 }
 
-export function formatDiaryHeading(key: string): string {
-  return format(parseDiaryDateKey(key), 'EEE, MMM d');
+export function formatDiaryHeading(key: string, locale?: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  }).format(parseDiaryDateKey(key));
 }

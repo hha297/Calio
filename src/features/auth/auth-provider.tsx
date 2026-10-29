@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import {
   createContext,
   useCallback,
@@ -19,8 +20,15 @@ import { isSupabaseConfigured } from '@/lib/supabase/env';
 import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 
 import { isEmailConfirmed } from './email-confirmed';
+import { getAuthRedirectUri } from './redirect';
 import { getRememberMe, setRememberMe } from './remember-me';
-import { createSessionFromUrl } from './session-from-url';
+import {
+  createSessionFromUrl,
+  isAuthCallbackUrl,
+  type SessionFromUrlResult,
+} from './session-from-url';
+
+WebBrowser.maybeCompleteAuthSession();
 
 type SignUpResult = {
   /** True when the user must enter the signup email OTP before continuing. */
@@ -33,6 +41,8 @@ type AuthContextValue = {
   session: Session | null;
   passwordRecovery: boolean;
   signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
+  signInWithGoogle: () => Promise<'success' | 'cancelled'>;
+  handleAuthCallback: (url: string | null) => Promise<SessionFromUrlResult | null>;
   signUp: (email: string, password: string) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
   /** Resends the signup confirmation email (OTP when Confirm signup template uses {{ .Token }}). */
@@ -63,30 +73,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isReady, setIsReady] = useState(!configured);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
-  const handledUrls = useRef(new Set<string>());
+  const callbackResults = useRef(new Map<string, Promise<SessionFromUrlResult>>());
+  const googleSignInInFlight = useRef<Promise<'success' | 'cancelled'> | null>(null);
   /** True while verifyOtp(recovery) is in flight — blocks dashboard routing on SIGNED_IN. */
   const recoveryOtpInFlight = useRef(false);
 
-  const handleIncomingUrl = useCallback(async (url: string | null) => {
-    if (!url || handledUrls.current.has(url)) {
-      return;
-    }
+  const handleAuthCallback = useCallback(async (url: string | null) => {
+    if (!isAuthCallbackUrl(url)) return null;
+
+    const existing = callbackResults.current.get(url);
+    if (existing) return existing;
 
     // Email confirm / OAuth callbacks only — password reset uses in-app OTP.
-    if (!url.includes('auth/callback') && !url.includes('access_token') && !url.includes('code=')) {
-      return;
-    }
-
-    handledUrls.current.add(url);
-
-    try {
+    const callback = (async () => {
+      await setRememberMe(true);
       const result = await createSessionFromUrl(url);
-      if (result.isPasswordRecovery) {
-        setPasswordRecovery(true);
-      }
+      if (result.isPasswordRecovery) setPasswordRecovery(true);
+      return result;
+    })();
+
+    callbackResults.current.set(url, callback);
+    try {
+      return await callback;
     } catch (error) {
-      handledUrls.current.delete(url);
-      reportError(error, { area: 'auth', action: 'deep-link' });
+      callbackResults.current.delete(url);
+      throw error;
     }
   }, []);
 
@@ -103,12 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const remember = await getRememberMe();
         const initialUrl = await Linking.getInitialURL();
-        const fromAuthLink = Boolean(
-          initialUrl &&
-            (initialUrl.includes('auth/callback') ||
-              initialUrl.includes('access_token') ||
-              initialUrl.includes('code=')),
-        );
+        const fromAuthLink = isAuthCallbackUrl(initialUrl);
 
         const { data, error } = await supabase.auth.getSession();
         if (!active) {
@@ -144,10 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
 
-      if (
-        event === 'PASSWORD_RECOVERY' ||
-        (event === 'SIGNED_IN' && recoveryOtpInFlight.current)
-      ) {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && recoveryOtpInFlight.current)) {
         setPasswordRecovery(true);
       }
 
@@ -162,11 +165,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     void Linking.getInitialURL().then((url) => {
-      void handleIncomingUrl(url);
+      void handleAuthCallback(url).catch((error: unknown) => {
+        reportError(error, { area: 'auth', action: 'initial-deep-link' });
+      });
     });
 
     const linkingSub = Linking.addEventListener('url', ({ url }) => {
-      void handleIncomingUrl(url);
+      void handleAuthCallback(url).catch((error: unknown) => {
+        reportError(error, { area: 'auth', action: 'deep-link' });
+      });
     });
 
     return () => {
@@ -174,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data.subscription.unsubscribe();
       linkingSub.remove();
     };
-  }, [handleIncomingUrl]);
+  }, [handleAuthCallback]);
 
   const signIn = useCallback(async (email: string, password: string, rememberMe = true) => {
     const supabase = getSupabase();
@@ -190,6 +197,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await setRememberMe(rememberMe);
     analytics.track('auth_sign_in_succeeded');
   }, []);
+
+  const signInWithGoogle = useCallback(() => {
+    if (googleSignInInFlight.current) return googleSignInInFlight.current;
+
+    const request = (async (): Promise<'success' | 'cancelled'> => {
+      const supabase = getSupabase();
+      if (!supabase) throw new Error('Supabase is not configured.');
+
+      const redirectTo = getAuthRedirectUri();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+          scopes: 'openid email profile',
+        },
+      });
+      if (error) throw error;
+      if (!data.url) throw new Error('Google sign-in could not be started.');
+
+      const browserResult = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (browserResult.type === 'cancel' || browserResult.type === 'dismiss') {
+        return 'cancelled';
+      }
+      if (browserResult.type !== 'success') {
+        throw new Error('Google sign-in did not complete.');
+      }
+
+      const result = await handleAuthCallback(browserResult.url);
+      if (!result?.session) throw new Error('Google sign-in did not create a session.');
+
+      analytics.track('auth_google_sign_in_succeeded');
+      return 'success';
+    })();
+
+    googleSignInInFlight.current = request;
+    void request.then(
+      () => {
+        googleSignInInFlight.current = null;
+      },
+      () => {
+        googleSignInInFlight.current = null;
+      },
+    );
+    return request;
+  }, [handleAuthCallback]);
 
   const signUp = useCallback(async (email: string, password: string) => {
     const supabase = getSupabase();
@@ -360,6 +413,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       passwordRecovery,
       signIn,
+      signInWithGoogle,
+      handleAuthCallback,
       signUp,
       signOut,
       resendConfirmationEmail,
@@ -375,6 +430,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       passwordRecovery,
       signIn,
+      signInWithGoogle,
+      handleAuthCallback,
       signUp,
       signOut,
       resendConfirmationEmail,

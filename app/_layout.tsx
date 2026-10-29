@@ -10,6 +10,7 @@ import '../global.css';
 
 import '@/i18n';
 
+import { ScanImageProvider } from '@/components/navigation/scan-image';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { BootstrapProvider, useBootstrap } from '@/features/bootstrap/bootstrap-provider';
 import { BootstrapScreen } from '@/features/bootstrap/bootstrap-screen';
@@ -31,13 +32,15 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <BootstrapProvider>
-              <RootNavigator />
-            </BootstrapProvider>
-          </AuthProvider>
-        </QueryClientProvider>
+        <ScanImageProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <BootstrapProvider>
+                <RootNavigator />
+              </BootstrapProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </ScanImageProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );
@@ -90,15 +93,8 @@ function RootNavigator() {
   const showSetup = destination === 'setup';
   const showMain = destination === 'main';
   const showAuth =
-    destination === 'auth' ||
-    destination === 'update-password' ||
-    destination === 'verify-email';
-  const statusStyle =
-    showAuth || showMain
-      ? scheme === 'dark'
-        ? 'light'
-        : 'dark'
-      : 'light';
+    destination === 'auth' || destination === 'update-password' || destination === 'verify-email';
+  const statusStyle = showAuth || showMain ? (scheme === 'dark' ? 'light' : 'dark') : 'light';
 
   return (
     <>

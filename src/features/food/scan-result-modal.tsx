@@ -1,0 +1,1102 @@
+import { Image } from 'expo-image';
+import {
+  addDays,
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  isSameDay,
+  isSameMonth,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns';
+import {
+  Beef,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Droplets,
+  Flame,
+  PackageOpen,
+  Wheat,
+  X,
+} from 'lucide-react-native';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Text } from '@/components/ui/text';
+import { useThemeColors } from '@/theme/theme-provider';
+import { formatDiaryHeading, parseDiaryDateKey, toDiaryDateKey } from '@/utils/date';
+
+import type { MealType } from './types';
+import type { CalioFood, FoodLookupError, NutritionBasis } from './open-food-facts';
+import { parsePositiveAmount, scaleNutritionForAmount } from './scan-calculations';
+
+export type ScanModalResult =
+  | { kind: 'loading'; barcode: string }
+  | { kind: 'found'; barcode: string; food: CalioFood }
+  | { kind: 'not_found'; barcode: string }
+  | { kind: 'error'; barcode: string; error: FoodLookupError }
+  | { kind: 'unsupported'; barcode: string };
+
+export type ScanSaveInput = {
+  barcode: string;
+  name: string;
+  brand: string | null;
+  source: 'manual' | 'open_food_facts';
+  imageUrl: string | null;
+  dateKey: string;
+  mealType: MealType;
+  amount: number;
+  amountUnit: 'g' | 'ml' | 'serving';
+  nutritionBasis: 'per100' | 'serving';
+  basisUnit: 'g' | 'ml' | 'serving';
+  basisAmount: number | null;
+  nutritionUserEdited: boolean;
+  servingLabel: string;
+  servingGrams: number | null;
+  totals: { calories: number; proteinG: number; carbsG: number; fatG: number };
+};
+
+type Props = {
+  result: ScanModalResult | null;
+  initialDateKey: string;
+  initialMealType: MealType | null;
+  onClose: () => void;
+  onRescan: () => void;
+  onRetry: () => void;
+  onSave: (input: ScanSaveInput) => Promise<void>;
+};
+
+const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
+
+export function ScanResultModal({
+  result,
+  initialDateKey,
+  initialMealType,
+  onClose,
+  onRescan,
+  onRetry,
+  onSave,
+}: Props) {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
+  const initialFood = result?.kind === 'found' ? result.food : null;
+  const [manual, setManual] = useState(false);
+  const [dateKey, setDateKey] = useState(initialDateKey);
+  const [mealType, setMealType] = useState<MealType | null>(initialMealType);
+  const [amount, setAmount] = useState(
+    initialFood?.basis.kind === 'serving' ? (initialFood.basis.amount?.toString() ?? '100') : '100',
+  );
+  const [amountUnit, setAmountUnit] = useState<'g' | 'ml' | 'serving'>(
+    initialFood?.basis.kind === 'serving'
+      ? (initialFood.basis.unit ?? 'g')
+      : (initialFood?.basis.unit ?? 'g'),
+  );
+  const [manualUnit, setManualUnit] = useState<'g' | 'ml'>('g');
+  const [name, setName] = useState(initialFood?.name ?? '');
+  const [brand, setBrand] = useState(initialFood?.brand ?? '');
+  const [calories, setCalories] = useState(initialFood?.calories?.toString() ?? '');
+  const [protein, setProtein] = useState(initialFood?.proteinG?.toString() ?? '');
+  const [carbs, setCarbs] = useState(initialFood?.carbsG?.toString() ?? '');
+  const [fat, setFat] = useState(initialFood?.fatG?.toString() ?? '');
+  const [imageFailed, setImageFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const food = result?.kind === 'found' ? result.food : null;
+  const basis: NutritionBasis = manual
+    ? { kind: 'per100', unit: manualUnit }
+    : (food?.basis ?? { kind: 'per100', unit: amountUnit === 'ml' ? 'ml' : 'g' });
+  const parsedNutrition = {
+    calories: parseNonNegative(calories),
+    proteinG: parseNonNegative(protein),
+    carbsG: parseNonNegative(carbs),
+    fatG: parseNonNegative(fat),
+  };
+  const parsedAmount = parsePositiveAmount(amount);
+  const totals = (() => {
+    if (!parsedAmount) return null;
+    try {
+      return scaleNutritionForAmount(
+        parsedNutrition,
+        basis,
+        parsedAmount,
+        amountUnit,
+        food?.serving ?? null,
+      );
+    } catch {
+      return null;
+    }
+  })();
+  const nutritionComplete = Object.values(parsedNutrition).every((value) => value !== null);
+  const nutritionUserEdited = manual;
+  const canSave = Boolean(
+    name.trim() && mealType && parsedAmount && totals && nutritionComplete && !saving,
+  );
+
+  const enterManual = () => {
+    setManual(true);
+    setManualUnit('g');
+    setAmountUnit('g');
+    setAmount('100');
+    setName(food?.name ?? '');
+    setBrand(food?.brand ?? '');
+    setCalories(food?.calories?.toString() ?? '');
+    setProtein(food?.proteinG?.toString() ?? '');
+    setCarbs(food?.carbsG?.toString() ?? '');
+    setFat(food?.fatG?.toString() ?? '');
+  };
+
+  const save = async () => {
+    if (!result || !parsedAmount || !mealType || !totals || !nutritionComplete) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await onSave({
+        barcode: result.barcode,
+        name: name.trim(),
+        brand: brand.trim() || null,
+        source: manual ? 'manual' : 'open_food_facts',
+        imageUrl: manual ? null : (food?.imageUrl ?? null),
+        dateKey,
+        mealType,
+        amount: parsedAmount,
+        amountUnit,
+        nutritionBasis: basis.kind,
+        basisUnit: basis.kind === 'per100' ? basis.unit : 'serving',
+        basisAmount: basis.kind === 'per100' ? 100 : basis.amount,
+        nutritionUserEdited,
+        servingLabel:
+          amountUnit === 'serving'
+            ? `${formatNumber(parsedAmount)} × ${basis.kind === 'serving' ? basis.label : (food?.serving?.label ?? t('scan.serving'))}`
+            : `${formatNumber(parsedAmount)} ${amountUnit}`,
+        servingGrams: amountUnit === 'g' ? parsedAmount : null,
+        totals: {
+          calories: totals.calories!,
+          proteinG: totals.proteinG!,
+          carbsG: totals.carbsG!,
+          fatG: totals.fatG!,
+        },
+      });
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : t('scan.saveFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      visible={Boolean(result)}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: colors.background }]}
+        edges={['top', 'bottom', 'left', 'right']}
+      >
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <View className="flex-1">
+              <Text variant="headingSmall">
+                {manual ? t('scan.manualTitle') : t('scan.resultTitle')}
+              </Text>
+              {result?.barcode ? (
+                <Text variant="caption" tone="secondary">
+                  {result.barcode}
+                </Text>
+              ) : null}
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('scan.close')}
+              hitSlop={8}
+              onPress={onClose}
+              style={styles.closeButton}
+            >
+              <X size={22} color={colors.textPrimary} />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            {result?.kind === 'loading' ? <LoadingContent t={t} /> : null}
+            {!manual && result?.kind === 'not_found' ? (
+              <NotFoundContent
+                barcode={result.barcode}
+                t={t}
+                onManual={enterManual}
+                onRescan={onRescan}
+                onClose={onClose}
+              />
+            ) : null}
+            {!manual && result?.kind === 'unsupported' ? (
+              <UnsupportedContent
+                barcode={result.barcode}
+                t={t}
+                onRescan={onRescan}
+                onClose={onClose}
+              />
+            ) : null}
+            {!manual && result?.kind === 'error' ? (
+              <ErrorContent
+                t={t}
+                error={result.error}
+                onRetry={onRetry}
+                onManual={enterManual}
+                onClose={onClose}
+              />
+            ) : null}
+
+            {(manual || food) && result?.kind !== 'loading' ? (
+              <Animated.View
+                key={manual ? 'manual-form' : 'scan-result'}
+                entering={FadeInDown.duration(260)}
+                style={styles.formStack}
+              >
+                {!manual && food ? (
+                  <ProductHeader
+                    food={food}
+                    imageFailed={imageFailed}
+                    onImageError={() => setImageFailed(true)}
+                    t={t}
+                  />
+                ) : (
+                  <Card className="gap-3">
+                    <Input label={t('scan.foodName')} value={name} onChangeText={setName} />
+                    <Input label={t('scan.brandOptional')} value={brand} onChangeText={setBrand} />
+                    <Text variant="caption" tone="secondary">
+                      {t('scan.manualPrivate')}
+                    </Text>
+                  </Card>
+                )}
+
+                {manual ? (
+                  <Card className="gap-3">
+                    <Text variant="headingSmall">{t('scan.nutritionBasis')}</Text>
+                    <Segmented
+                      options={[
+                        { value: 'g', label: 'g' },
+                        { value: 'ml', label: 'ml' },
+                      ]}
+                      value={manualUnit}
+                      onChange={(unit) => {
+                        setManualUnit(unit);
+                        setAmountUnit(unit);
+                      }}
+                    />
+                    <Text variant="bodySmall" tone="secondary">
+                      {t('scan.per100', { unit: manualUnit })}
+                    </Text>
+                  </Card>
+                ) : null}
+
+                {manual ? (
+                  <NutritionEditor
+                    t={t}
+                    basis={basis}
+                    values={{ calories, protein, carbs, fat }}
+                    onChange={{
+                      calories: setCalories,
+                      protein: setProtein,
+                      carbs: setCarbs,
+                      fat: setFat,
+                    }}
+                  />
+                ) : food ? (
+                  <NutritionDisplay t={t} food={food} />
+                ) : null}
+
+                <AmountCard
+                  t={t}
+                  basis={basis}
+                  amount={amount}
+                  amountUnit={amountUnit}
+                  onAmount={setAmount}
+                  onUnit={setAmountUnit}
+                  totals={totals}
+                />
+                <FoodLogContextPicker
+                  dateKey={dateKey}
+                  mealType={mealType}
+                  onDate={setDateKey}
+                  onMeal={setMealType}
+                />
+
+                {!nutritionComplete ? (
+                  <Text variant="bodySmall" tone="error">
+                    {t('scan.completeNutrition')}
+                  </Text>
+                ) : null}
+                {saveError ? (
+                  <Text variant="bodySmall" tone="error">
+                    {saveError}
+                  </Text>
+                ) : null}
+                <Button
+                  label={t('scan.saveLog')}
+                  size="lg"
+                  disabled={!canSave}
+                  loading={saving}
+                  onPress={() => void save()}
+                />
+                <Button
+                  label={t('scan.rescan')}
+                  variant="secondary"
+                  disabled={saving}
+                  onPress={onRescan}
+                />
+                {!manual &&
+                food &&
+                (!food.name ||
+                  [food.calories, food.proteinG, food.carbsG, food.fatG].some(
+                    (value) => value === null,
+                  )) ? (
+                  <Button label={t('scan.enterManually')} variant="text" onPress={enterManual} />
+                ) : null}
+              </Animated.View>
+            ) : null}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+function ProductHeader({
+  food,
+  imageFailed,
+  onImageError,
+  t,
+}: {
+  food: CalioFood;
+  imageFailed: boolean;
+  onImageError: () => void;
+  t: T;
+}) {
+  const colors = useThemeColors();
+  return (
+    <Card className="gap-4">
+      <View style={styles.productRow}>
+        {food.imageUrl && !imageFailed ? (
+          <Image
+            source={{ uri: food.imageUrl }}
+            style={styles.productImage}
+            contentFit="contain"
+            onError={onImageError}
+          />
+        ) : (
+          <View style={[styles.imagePlaceholder, { backgroundColor: colors.surfaceMuted }]}>
+            <PackageOpen size={34} color={colors.textMuted} />
+            <Text variant="caption" tone="secondary">
+              {t('scan.noImage')}
+            </Text>
+          </View>
+        )}
+        <View className="flex-1 gap-1">
+          <Text variant="headingSmall">{food.name || t('scan.unnamedProduct')}</Text>
+          {food.brand ? (
+            <Text variant="bodySmall" tone="secondary">
+              {food.brand}
+            </Text>
+          ) : null}
+          <Text variant="caption" tone="primary">
+            {basisLabel(food.basis, t)}
+          </Text>
+        </View>
+      </View>
+      {[food.fiberG, food.sugarsG, food.saltG].some((value) => value !== null) ? (
+        <Text variant="caption" tone="secondary">
+          {t('scan.extraNutrition', {
+            fiber: displayNutrient(food.fiberG),
+            sugars: displayNutrient(food.sugarsG),
+            salt: displayNutrient(food.saltG),
+          })}
+        </Text>
+      ) : null}
+    </Card>
+  );
+}
+
+function NutritionEditor({
+  t,
+  basis,
+  values,
+  onChange,
+}: {
+  t: T;
+  basis: NutritionBasis;
+  values: Record<'calories' | 'protein' | 'carbs' | 'fat', string>;
+  onChange: Record<'calories' | 'protein' | 'carbs' | 'fat', (value: string) => void>;
+}) {
+  const colors = useThemeColors();
+  const fields = [
+    {
+      key: 'calories' as const,
+      unit: 'kcal',
+      color: colors.macroCalories,
+      icon: <Flame size={20} color={colors.macroCalories} />,
+    },
+    {
+      key: 'protein' as const,
+      unit: 'g',
+      color: colors.macroProtein,
+      icon: <Beef size={20} color={colors.macroProtein} />,
+    },
+    {
+      key: 'carbs' as const,
+      unit: 'g',
+      color: colors.macroCarbs,
+      icon: <Wheat size={20} color={colors.macroCarbs} />,
+    },
+    {
+      key: 'fat' as const,
+      unit: 'g',
+      color: colors.macroFat,
+      icon: <Droplets size={20} color={colors.macroFat} />,
+    },
+  ];
+  return (
+    <Card className="gap-3">
+      <View>
+        <Text variant="headingSmall">{t('scan.nutrition')}</Text>
+        <Text variant="bodySmall" tone="secondary">
+          {basisLabel(basis, t)}
+        </Text>
+      </View>
+      {fields.map(({ key, unit, color, icon }) => (
+        <View
+          key={key}
+          style={[
+            styles.nutritionField,
+            { backgroundColor: colors.surfaceMuted, borderColor: `${color}66` },
+          ]}
+        >
+          <View style={[styles.nutritionIcon, { backgroundColor: `${color}18` }]}>{icon}</View>
+          <View className="flex-1">
+            <Input
+              label={t(`scan.${key}`)}
+              value={values[key]}
+              onChangeText={onChange[key]}
+              keyboardType="decimal-pad"
+            />
+          </View>
+          <Text variant="bodySmall" tone="secondary">
+            {unit}
+          </Text>
+        </View>
+      ))}
+    </Card>
+  );
+}
+
+function NutritionDisplay({ t, food }: { t: T; food: CalioFood }) {
+  const colors = useThemeColors();
+  const fields = [
+    {
+      key: 'calories',
+      value: food.calories,
+      unit: 'kcal',
+      color: colors.macroCalories,
+      icon: <Flame size={20} color={colors.macroCalories} />,
+    },
+    {
+      key: 'protein',
+      value: food.proteinG,
+      unit: 'g',
+      color: colors.macroProtein,
+      icon: <Beef size={20} color={colors.macroProtein} />,
+    },
+    {
+      key: 'carbs',
+      value: food.carbsG,
+      unit: 'g',
+      color: colors.macroCarbs,
+      icon: <Wheat size={20} color={colors.macroCarbs} />,
+    },
+    {
+      key: 'fat',
+      value: food.fatG,
+      unit: 'g',
+      color: colors.macroFat,
+      icon: <Droplets size={20} color={colors.macroFat} />,
+    },
+  ] as const;
+
+  return (
+    <Card className="gap-3">
+      <View>
+        <Text variant="headingSmall">{t('scan.nutrition')}</Text>
+        <Text variant="bodySmall" tone="secondary">
+          {basisLabel(food.basis, t)}
+        </Text>
+      </View>
+      <View style={styles.nutritionGrid}>
+        {fields.map(({ key, value, unit, color, icon }) => (
+          <View
+            key={key}
+            style={[
+              styles.nutritionDisplayRow,
+              { backgroundColor: `${color}12`, borderColor: `${color}55` },
+            ]}
+          >
+            <View style={[styles.nutritionIcon, { backgroundColor: `${color}1F` }]}>{icon}</View>
+            <Text variant="bodyStrong" style={styles.nutritionLabel}>
+              {t(`scan.${key}`)}
+            </Text>
+            <Text variant="bodyStrong" style={{ color }}>
+              {value === null ? '—' : `${formatNumber(value)} ${unit}`}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </Card>
+  );
+}
+
+function AmountCard({
+  t,
+  basis,
+  amount,
+  amountUnit,
+  onAmount,
+  onUnit,
+  totals,
+}: {
+  t: T;
+  basis: NutritionBasis;
+  amount: string;
+  amountUnit: 'g' | 'ml' | 'serving';
+  onAmount: (value: string) => void;
+  onUnit: (value: 'g' | 'ml' | 'serving') => void;
+  totals: ReturnType<typeof scaleNutritionForAmount> | null;
+}) {
+  const colors = useThemeColors();
+  const options = [
+    { value: 'g' as const, label: 'g' },
+    { value: 'ml' as const, label: 'ml' },
+  ];
+  return (
+    <Card className="gap-3">
+      <View>
+        <Text variant="headingSmall">{t('scan.amountConsumed')}</Text>
+        <Text variant="bodySmall" tone="secondary">
+          {amountUnit === 'serving'
+            ? t('scan.servingCountHint')
+            : t('scan.servingUnitHint', { unit: amountUnit })}
+        </Text>
+      </View>
+      <Segmented
+        options={options}
+        value={amountUnit === 'serving' ? 'g' : amountUnit}
+        onChange={onUnit}
+      />
+      <Input
+        label={t('scan.servingSizeUnit', {
+          unit: amountUnit === 'serving' ? 'g' : amountUnit,
+        })}
+        value={amount}
+        onChangeText={onAmount}
+        keyboardType="decimal-pad"
+      />
+      <Text variant="caption" tone="secondary">
+        {t('scan.basisNotice', { basis: basisLabel(basis, t) })}
+      </Text>
+      <View style={styles.totalGrid}>
+        <TotalCell
+          icon={<Flame size={18} color={colors.macroCalories} />}
+          color={colors.macroCalories}
+          label={t('scan.calories')}
+          value={totals?.calories ?? null}
+          unit="kcal"
+        />
+        <TotalCell
+          icon={<Beef size={18} color={colors.macroProtein} />}
+          color={colors.macroProtein}
+          label={t('scan.protein')}
+          value={totals?.proteinG ?? null}
+          unit="g"
+        />
+        <TotalCell
+          icon={<Wheat size={18} color={colors.macroCarbs} />}
+          color={colors.macroCarbs}
+          label={t('scan.carbs')}
+          value={totals?.carbsG ?? null}
+          unit="g"
+        />
+        <TotalCell
+          icon={<Droplets size={18} color={colors.macroFat} />}
+          color={colors.macroFat}
+          label={t('scan.fat')}
+          value={totals?.fatG ?? null}
+          unit="g"
+        />
+      </View>
+    </Card>
+  );
+}
+
+function TotalCell({
+  icon,
+  color,
+  label,
+  value,
+  unit,
+}: {
+  icon: ReactNode;
+  color: string;
+  label: string;
+  value: number | null;
+  unit: string;
+}) {
+  const colors = useThemeColors();
+  return (
+    <View
+      style={[
+        styles.totalCell,
+        { backgroundColor: colors.surfaceMuted, borderColor: `${color}66` },
+      ]}
+    >
+      <View className="flex-row items-center gap-2">
+        {icon}
+        <Text variant="caption" tone="secondary">
+          {label}
+        </Text>
+      </View>
+      <Text variant="bodyStrong" style={{ color: colors.textPrimary }}>
+        {value === null ? '—' : `${formatNumber(value)} ${unit}`}
+      </Text>
+    </View>
+  );
+}
+
+export function FoodLogContextPicker({
+  dateKey,
+  mealType,
+  onDate,
+  onMeal,
+}: {
+  dateKey: string;
+  mealType: MealType | null;
+  onDate: (value: string) => void;
+  onMeal: (value: MealType) => void;
+}) {
+  const colors = useThemeColors();
+  const { t, i18n } = useTranslation();
+  const appLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+  // Scan copy is currently localized in Vietnamese and English. FI/SV scan copy still
+  // falls back to English, so its calendar must stay English instead of leaking the
+  // device's Finnish/Swedish date labels into an otherwise English modal.
+  const locale = appLanguage === 'vi' ? 'vi' : 'en';
+  const selectedDate = parseDiaryDateKey(dateKey);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState(startOfMonth(selectedDate));
+  const calendarDays = eachDayOfInterval({
+    start: startOfWeek(startOfMonth(visibleMonth), { weekStartsOn: 1 }),
+    end: endOfWeek(endOfMonth(visibleMonth), { weekStartsOn: 1 }),
+  });
+  const weekdayLabels = eachDayOfInterval({
+    start: startOfWeek(new Date(), { weekStartsOn: 1 }),
+    end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+  }).map((day) => new Intl.DateTimeFormat(locale, { weekday: 'narrow' }).format(day));
+
+  const changeDate = (nextDate: Date) => {
+    onDate(toDiaryDateKey(nextDate));
+    setVisibleMonth(startOfMonth(nextDate));
+  };
+
+  return (
+    <Card className="gap-3">
+      <Text variant="headingSmall">{t('scan.logTo')}</Text>
+      <View style={styles.dateRow}>
+        <Pressable
+          onPress={() => changeDate(addDays(selectedDate, -1))}
+          style={[styles.dateButton, { borderColor: colors.border }]}
+        >
+          <ChevronLeft size={20} color={colors.textPrimary} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            setVisibleMonth(startOfMonth(selectedDate));
+            setCalendarOpen((open) => !open);
+          }}
+          style={[
+            styles.datePickerButton,
+            { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+          ]}
+        >
+          <CalendarDays size={19} color={colors.primary} />
+          <Text variant="bodyStrong" tone="primary">
+            {formatDiaryHeading(dateKey, locale)}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => changeDate(addDays(selectedDate, 1))}
+          style={[styles.dateButton, { borderColor: colors.border }]}
+        >
+          <ChevronRight size={20} color={colors.textPrimary} />
+        </Pressable>
+      </View>
+      {calendarOpen ? (
+        <Animated.View
+          entering={FadeInDown.duration(220)}
+          style={[
+            styles.calendar,
+            { backgroundColor: colors.surfaceMuted, borderColor: colors.border },
+          ]}
+        >
+          <View style={styles.calendarHeader}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setVisibleMonth((month) => addMonths(month, -1))}
+              style={styles.calendarNav}
+            >
+              <ChevronLeft size={20} color={colors.textPrimary} />
+            </Pressable>
+            <Text variant="bodyStrong">
+              {new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
+                visibleMonth,
+              )}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setVisibleMonth((month) => addMonths(month, 1))}
+              style={styles.calendarNav}
+            >
+              <ChevronRight size={20} color={colors.textPrimary} />
+            </Pressable>
+          </View>
+          <View style={styles.calendarGrid}>
+            {weekdayLabels.map((label, index) => (
+              <Text
+                key={`${label}-${index}`}
+                variant="caption"
+                tone="secondary"
+                style={styles.calendarCell}
+              >
+                {label}
+              </Text>
+            ))}
+            {calendarDays.map((day) => {
+              const selected = isSameDay(day, selectedDate);
+              return (
+                <Pressable
+                  key={toDiaryDateKey(day)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  onPress={() => {
+                    changeDate(day);
+                    setCalendarOpen(false);
+                  }}
+                  style={[styles.calendarDay, selected && { backgroundColor: colors.primary }]}
+                >
+                  <Text
+                    variant="bodySmall"
+                    style={{
+                      color: selected
+                        ? colors.textOnPrimary
+                        : isSameMonth(day, visibleMonth)
+                          ? colors.textPrimary
+                          : colors.textMuted,
+                    }}
+                  >
+                    {day.getDate()}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Animated.View>
+      ) : null}
+      <View style={styles.mealGrid}>
+        {mealTypes.map((meal) => (
+          <Pressable
+            key={meal}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: mealType === meal }}
+            onPress={() => onMeal(meal)}
+            style={[
+              styles.mealButton,
+              {
+                borderColor: mealType === meal ? colors.primary : colors.border,
+                backgroundColor: mealType === meal ? colors.primaryMuted : colors.surface,
+              },
+            ]}
+          >
+            <Text variant="bodySmall" tone={mealType === meal ? 'primary' : 'secondary'}>
+              {t(`scan.meals.${meal}`)}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      {!mealType ? (
+        <Text variant="caption" tone="error">
+          {t('scan.chooseMeal')}
+        </Text>
+      ) : null}
+    </Card>
+  );
+}
+
+function Segmented<TValue extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: TValue; label: string }[];
+  value: string;
+  onChange: (value: TValue) => void;
+}) {
+  const colors = useThemeColors();
+  return (
+    <View style={[styles.segmented, { backgroundColor: colors.surfaceMuted }]}>
+      {options.map((option) => (
+        <Pressable
+          key={option.value}
+          onPress={() => onChange(option.value)}
+          style={[
+            styles.segment,
+            value === option.value && {
+              backgroundColor: colors.surface,
+              borderColor: colors.primary,
+              borderWidth: 1,
+            },
+          ]}
+        >
+          <Text variant="bodyStrong" tone={value === option.value ? 'primary' : 'secondary'}>
+            {option.label}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+function LoadingContent({ t }: { t: T }) {
+  return (
+    <View style={styles.state}>
+      <Text variant="headingSmall">{t('scan.lookingUp')}</Text>
+      <Text variant="bodySmall" tone="secondary">
+        {t('scan.lookingUpBody')}
+      </Text>
+    </View>
+  );
+}
+function NotFoundContent({
+  barcode,
+  t,
+  onManual,
+  onRescan,
+  onClose,
+}: {
+  barcode: string;
+  t: T;
+  onManual: () => void;
+  onRescan: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <View style={styles.state}>
+      <PackageOpen size={44} />
+      <Text variant="headingLarge">{t('scan.notFoundTitle')}</Text>
+      <Text variant="body" tone="secondary">
+        {t('scan.notFoundBody')}
+      </Text>
+      <Text variant="bodyStrong">{barcode}</Text>
+      <Button label={t('scan.enterManually')} onPress={onManual} />
+      <Button label={t('scan.rescan')} variant="secondary" onPress={onRescan} />
+      <Button label={t('scan.close')} variant="text" onPress={onClose} />
+    </View>
+  );
+}
+function UnsupportedContent({
+  barcode,
+  t,
+  onRescan,
+  onClose,
+}: {
+  barcode: string;
+  t: T;
+  onRescan: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <View style={styles.state}>
+      <Text variant="headingLarge">{t('scan.unsupportedTitle')}</Text>
+      <Text variant="body" tone="secondary">
+        {t('scan.unsupportedBody')}
+      </Text>
+      <Text variant="bodyStrong">{barcode}</Text>
+      <Button label={t('scan.rescan')} onPress={onRescan} />
+      <Button label={t('scan.close')} variant="text" onPress={onClose} />
+    </View>
+  );
+}
+function ErrorContent({
+  t,
+  error,
+  onRetry,
+  onManual,
+  onClose,
+}: {
+  t: T;
+  error: FoodLookupError;
+  onRetry: () => void;
+  onManual: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <View style={styles.state}>
+      <Text variant="headingLarge">{t('scan.lookupErrorTitle')}</Text>
+      <Text variant="body" tone="secondary">
+        {t(`scan.errors.${error.kind}`)}
+      </Text>
+      <Button label={t('scan.retry')} onPress={onRetry} />
+      <Button label={t('scan.enterManually')} variant="secondary" onPress={onManual} />
+      <Button label={t('scan.close')} variant="text" onPress={onClose} />
+    </View>
+  );
+}
+
+type T = (key: string, options?: Record<string, unknown>) => string;
+function parseNonNegative(value: string) {
+  if (!value.trim()) return null;
+  const parsed = Number(value.replace(',', '.'));
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+function formatNumber(value: number) {
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
+}
+function displayNutrient(value: number | null) {
+  return value === null ? '—' : `${formatNumber(value)} g`;
+}
+function basisLabel(basis: NutritionBasis, t: T) {
+  return basis.kind === 'per100'
+    ? t('scan.per100', { unit: basis.unit })
+    : t('scan.perServing', { serving: basis.label });
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  safeArea: { flex: 1 },
+  header: {
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  closeButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 22,
+  },
+  content: { padding: 16, paddingBottom: 32 },
+  formStack: { gap: 16 },
+  state: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingVertical: 48 },
+  productRow: { flexDirection: 'row', gap: 14 },
+  productImage: { width: 104, height: 104, borderRadius: 16 },
+  imagePlaceholder: {
+    width: 104,
+    height: 104,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderRadius: 16,
+  },
+  segmented: { minHeight: 46, flexDirection: 'row', gap: 4, padding: 4, borderRadius: 14 },
+  segment: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
+  segmentActive: { borderWidth: 1 },
+  totalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  totalCell: { width: '48%', gap: 2, borderWidth: 1, borderRadius: 12, padding: 10 },
+  nutritionField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 10,
+  },
+  nutritionGrid: { gap: 8 },
+  nutritionDisplayRow: {
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  nutritionLabel: { flex: 1 },
+  nutritionIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  dateRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dateButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  datePickerButton: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+  },
+  calendar: { gap: 10, borderWidth: 1, borderRadius: 16, padding: 10 },
+  calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  calendarNav: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  calendarCell: { width: '14.285%', textAlign: 'center' },
+  calendarDay: {
+    width: '13%',
+    aspectRatio: 1,
+    marginHorizontal: '0.642%',
+    marginVertical: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+  },
+  mealGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mealButton: {
+    width: '48%',
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  mealButtonActive: { borderWidth: 2 },
+});

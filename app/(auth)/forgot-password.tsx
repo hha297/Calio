@@ -52,6 +52,7 @@ export default function ForgotPasswordScreen() {
     <AuthShell
       title={t('auth.forgotTitle')}
       subtitle={t('auth.forgotSubtitle', { count: RECOVERY_OTP_LENGTH })}
+      slideFrom="bottom"
       footer={
         <AuthTextLink
           href="/(auth)/sign-in"
