@@ -41,8 +41,9 @@
   --color-cameraOverlay: rgba(0, 0, 0, 0.72);
   --color-onOverlayBorder: rgba(255, 255, 255, 0.72);
   --color-macroCalories: 0 217 95;
-  --color-macroProtein: 59 130 246;
-  --color-macroCarbs: 196 127 26;
-  --color-macroFat: 214 69 69;
+  --color-macroProtein: 214 69 69;
+  --color-macroCarbs: 0 217 95;
+  --color-macroFat: 230 180 34;
+  --color-macroFiber: 13 148 136;
   --color-macroActivity: 0 184 79;
 }

@@ -856,7 +856,7 @@ export function FoodLogContextPicker({
             ]}
           >
             <Text variant="bodySmall" tone={mealType === meal ? 'primary' : 'secondary'}>
-              {t(`scan.meals.${meal}`)}
+              {t(`meals.${meal}`)}
             </Text>
           </Pressable>
         ))}

@@ -17,6 +17,7 @@ export function useFoodEntries(dateKey: string) {
     queryKey: ['food-entries', userId, dateKey],
     enabled: Boolean(userId),
     queryFn: () => fetchFoodEntries(userId!, dateKey),
+    staleTime: 30_000,
   });
 }
 
@@ -154,6 +155,9 @@ export function useLogFoodEntry() {
       await queryClient.invalidateQueries({
         queryKey: ['food-entries', session?.user.id, variables.dateKey],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ['food-entries', 'range', session?.user.id],
+      });
       await queryClient.invalidateQueries({ queryKey: ['foods', 'recent', session?.user.id] });
     },
   });
@@ -173,6 +177,9 @@ export function useDeleteFoodEntry() {
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({
         queryKey: ['food-entries', session?.user.id, variables.dateKey],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['food-entries', 'range', session?.user.id],
       });
     },
   });

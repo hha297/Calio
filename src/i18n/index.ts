@@ -38,6 +38,8 @@ function deviceLanguage(): AppLanguage {
   return 'en';
 }
 
+const localeBundles: Record<AppLanguage, typeof en> = { en, fi, sv, vi };
+
 if (!i18next.isInitialized) {
   void i18next.use(initReactI18next).init({
     compatibilityJSON: 'v4',
@@ -52,6 +54,11 @@ if (!i18next.isInitialized) {
     supportedLngs: [...SUPPORTED_LANGUAGES],
     interpolation: { escapeValue: false },
   });
+} else {
+  // Fast Refresh can leave i18next initialized with a stale bundle; re-merge locales.
+  for (const lng of SUPPORTED_LANGUAGES) {
+    i18next.addResourceBundle(lng, 'translation', localeBundles[lng], true, true);
+  }
 }
 
 if (typeof window !== 'undefined') {

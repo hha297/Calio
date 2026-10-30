@@ -4,7 +4,7 @@
     "slug": "calio",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/branding/logo.png",
     "scheme": "calio",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -20,7 +20,7 @@
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#00D95F",
-        "foregroundImage": "./assets/images/logo.png"
+        "foregroundImage": "./assets/images/branding/logo.png"
       },
       "permissions": [
         "CAMERA",
@@ -31,7 +31,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/images/branding/logo.png"
     },
     "plugins": [
       "expo-router",
@@ -39,7 +39,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#00D95F",
-          "image": "./assets/images/translogo.png",
+          "image": "./assets/images/branding/translogo.png",
           "imageWidth": 240
         }
       ],

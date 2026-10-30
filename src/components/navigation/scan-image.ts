@@ -10,7 +10,7 @@ import {
 
 import { useThemeColors } from '@/theme/theme-provider';
 
-export const scanImageSource = require('../../../assets/images/scan.gif');
+export const scanImageSource = require('../../../assets/icons/scan.gif');
 
 type ScanImages = {
   active: ImageRef | null;

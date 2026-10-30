@@ -16,14 +16,14 @@ const sizes = {
   hero: { width: 360, height: 120 },
 } as const;
 
-/** Calio wordmark — uses assets/images/translogo.png. */
+/** Calio wordmark — uses assets/images/branding/translogo.png. */
 export function BrandMark({ size = 'lg', className }: BrandMarkProps) {
   const dims = sizes[size];
 
   return (
     <View accessibilityRole="header" className={cx('items-center', className)}>
       <Image
-        source={require('../../assets/images/translogo.png')}
+        source={require('../../assets/images/branding/translogo.png')}
         style={{ width: dims.width, height: dims.height }}
         contentFit="contain"
         accessibilityLabel="Calio"

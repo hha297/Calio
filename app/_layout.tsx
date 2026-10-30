@@ -108,6 +108,7 @@ function RootNavigator() {
 
         <Stack.Protected guard={showMain}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="diary" />
           <Stack.Screen name="food" options={{ presentation: 'modal' }} />
           <Stack.Screen name="workout" />
           <Stack.Screen name="goals" options={{ presentation: 'modal' }} />

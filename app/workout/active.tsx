@@ -1,34 +1,58 @@
 import { router } from 'expo-router';
+import { Check, Pause, Play, Plus, TimerReset, X } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CompactInput } from '@/components/ui/compact-input';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useLatestWeight } from '@/features/measurements/hooks';
-import { useFinishWorkout } from '@/features/workout/hooks';
 import { totalVolumeKg } from '@/features/workout/calculations';
+import { formatElapsed, useFinishWorkout } from '@/features/workout/hooks';
+import { radii } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 
 export default function ActiveWorkoutScreen() {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
   const store = useActiveWorkoutStore();
   const finish = useFinishWorkout();
   const weight = useLatestWeight();
+  const [tick, setTick] = useState(0);
+  const [discardOpen, setDiscardOpen] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => setTick((value) => value + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   if (!store.startedAt) {
     return (
       <Screen>
-        <Text variant="body">No active workout.</Text>
-        <Button label="Back" onPress={() => router.back()} />
+        <Text variant="body">{t('workout.noActive')}</Text>
+        <Button label={t('workout.back')} onPress={() => router.back()} />
       </Screen>
     );
+  }
+
+  void tick;
+  const elapsed = store.getActiveDurationSec();
+  const restLeft = store.restEndsAt
+    ? Math.max(0, Math.ceil((new Date(store.restEndsAt).getTime() - Date.now()) / 1000))
+    : 0;
+  if (store.restEndsAt && restLeft <= 0) {
+    store.clearRest();
   }
 
   const volume = totalVolumeKg(
     store.exercises.flatMap((exercise) =>
       exercise.sets
-        .filter((set) => set.weightKg && set.reps)
+        .filter((set) => set.completed && set.weightKg && set.reps)
         .map((set) => ({ weightKg: Number(set.weightKg), reps: Number(set.reps) })),
     ),
   );
@@ -38,79 +62,177 @@ export default function ActiveWorkoutScreen() {
       const result = await finish.mutateAsync({
         name: store.name,
         startedAt: store.startedAt!,
+        activeDurationSec: store.getActiveDurationSec(),
+        notes: store.notes,
+        sourceTemplateId: store.sourceTemplateId,
         exercises: store.exercises,
         bodyWeightKg: weight.weightKg ?? 70,
       });
       store.reset();
-      Alert.alert(
-        'Workout saved',
-        `~${result.estimated} kcal estimated · ${result.volume} kg volume · ${result.durationMin} min`,
-      );
-      router.replace('/workout');
+      router.replace({
+        pathname: '/workout/summary',
+        params: {
+          id: result.workoutId,
+          estimated: String(result.estimated),
+          volume: String(result.volume),
+          durationMin: String(result.durationMin),
+        },
+      });
     } catch (error) {
-      Alert.alert('Could not save', error instanceof Error ? error.message : 'Try again.');
+      Alert.alert(
+        t('workout.saveFailed'),
+        error instanceof Error ? error.message : t('workout.retry'),
+      );
     }
   }
 
   return (
     <Screen scroll keyboard edges={['top', 'bottom', 'left', 'right']}>
       <View className="gap-4">
-        <View className="flex-row items-center justify-between">
-          <Text variant="headingLarge">Active workout</Text>
-          <Pressable
-            onPress={() => {
-              Alert.alert('Discard workout?', 'This cannot be undone.', [
-                { text: 'Keep', style: 'cancel' },
-                {
-                  text: 'Discard',
-                  style: 'destructive',
-                  onPress: () => {
-                    store.reset();
-                    router.back();
-                  },
-                },
-              ]);
-            }}
-          >
-            <Text variant="bodyStrong" tone="error">
-              Discard
+        <View className="flex-row items-start justify-between gap-3">
+          <View className="min-w-0 flex-1 gap-1">
+            <Text variant="headingLarge" numberOfLines={1}>
+              {store.name}
             </Text>
-          </Pressable>
+            <Text variant="headingSmall" tone="brand">
+              {formatElapsed(elapsed)}
+              {store.paused ? ` · ${t('workout.paused')}` : ''}
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-2">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={store.paused ? t('workout.resume') : t('workout.paused')}
+              onPress={() => (store.paused ? store.resume() : store.pause())}
+              className="h-10 w-10 items-center justify-center"
+              style={{ backgroundColor: colors.surfaceMuted, borderRadius: radii.md }}
+            >
+              {store.paused ? (
+                <Play size={18} color={colors.primary} />
+              ) : (
+                <Pause size={18} color={colors.textPrimary} />
+              )}
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('workout.discard')}
+              onPress={() => setDiscardOpen(true)}
+              className="h-10 w-10 items-center justify-center"
+              style={{ backgroundColor: colors.surfaceMuted, borderRadius: radii.md }}
+            >
+              <X size={18} color={colors.error} />
+            </Pressable>
+          </View>
         </View>
-        <Text variant="bodySmall" tone="secondary">
-          Volume so far: {volume} kg · calorie burn is an estimate
-        </Text>
-        <Button label="Add exercise" variant="secondary" onPress={() => router.push('/workout/exercises')} />
 
-        {store.exercises.map((exercise) => (
+        <ConfirmDialog
+          visible={discardOpen}
+          title={t('workout.discardTitle')}
+          body={t('workout.discardBody')}
+          cancelLabel={t('workout.keep')}
+          confirmLabel={t('workout.discard')}
+          confirmVariant="destructive"
+          onCancel={() => setDiscardOpen(false)}
+          onConfirm={() => {
+            setDiscardOpen(false);
+            store.reset();
+            router.back();
+          }}
+        />
+
+        <Text variant="caption" tone="secondary">
+          {t('workout.volumeSoFar', { value: volume })}
+        </Text>
+
+        {restLeft > 0 ? (
+          <Card className="flex-row items-center gap-3">
+            <TimerReset size={18} color={colors.primary} />
+            <View className="min-w-0 flex-1">
+              <Text variant="bodyStrong">{t('workout.restTimer')}</Text>
+              <Text variant="headingSmall" tone="brand">
+                {formatElapsed(restLeft)}
+              </Text>
+            </View>
+            <Pressable onPress={() => store.adjustRest(-15)}>
+              <Text variant="caption" tone="secondary">
+                −15s
+              </Text>
+            </Pressable>
+            <Pressable onPress={() => store.adjustRest(15)}>
+              <Text variant="caption" tone="secondary">
+                +15s
+              </Text>
+            </Pressable>
+            <Pressable onPress={() => store.clearRest()}>
+              <Text variant="caption" tone="brand">
+                {t('workout.skipRest')}
+              </Text>
+            </Pressable>
+          </Card>
+        ) : null}
+
+        <Button
+          label={t('workout.addExercise')}
+          variant="secondary"
+          onPress={() => router.push('/workout/exercises')}
+        />
+
+        {store.exercises.length === 0 ? (
+          <Text variant="bodySmall" tone="muted">
+            {t('workout.addExerciseHint')}
+          </Text>
+        ) : null}
+
+        {store.exercises.map((exercise, index) => (
           <Card key={exercise.localId} className="gap-2">
-            <View className="flex-row items-center justify-between">
-              <Text variant="headingSmall">{exercise.name}</Text>
+            <View className="flex-row items-center justify-between gap-2">
+              <View className="min-w-0 flex-1">
+                <Text variant="headingSmall" numberOfLines={1}>
+                  {exercise.name}
+                </Text>
+                <Text variant="caption" tone="secondary">
+                  {t(`workout.type.${exercise.exerciseType}`)}
+                </Text>
+              </View>
+              <Pressable onPress={() => store.reorderExercise(exercise.localId, 'up')}>
+                <Text variant="caption" tone="secondary">
+                  ↑
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => store.reorderExercise(exercise.localId, 'down')}>
+                <Text variant="caption" tone="secondary">
+                  ↓
+                </Text>
+              </Pressable>
               <Pressable onPress={() => store.removeExercise(exercise.localId)}>
                 <Text variant="caption" tone="error">
-                  Remove
+                  {t('workout.remove')}
                 </Text>
               </Pressable>
             </View>
+
             {exercise.sets.map((set) => (
               <View key={set.localId} className="flex-row items-center gap-2">
-                <Text variant="caption" tone="secondary" className="w-8">
+                <Text variant="caption" tone="secondary" className="w-6">
                   {set.setNumber}
                 </Text>
-                {(exercise.exerciseType === 'strength' || exercise.exerciseType === 'bodyweight') && (
+                {(exercise.exerciseType === 'strength' ||
+                  exercise.exerciseType === 'bodyweight') && (
                   <>
-                    <CompactInput
-                      value={set.weightKg}
-                      placeholder="kg"
-                      keyboardType="decimal-pad"
-                      onChangeText={(value) =>
-                        store.updateSet(exercise.localId, set.localId, { weightKg: value })
-                      }
-                    />
+                    {exercise.exerciseType === 'strength' ? (
+                      <CompactInput
+                        value={set.weightKg}
+                        placeholder={t('workout.kg')}
+                        keyboardType="decimal-pad"
+                        onChangeText={(value) =>
+                          store.updateSet(exercise.localId, set.localId, { weightKg: value })
+                        }
+                      />
+                    ) : null}
                     <CompactInput
                       value={set.reps}
-                      placeholder="reps"
-                      keyboardType="decimal-pad"
+                      placeholder={t('workout.reps')}
+                      keyboardType="number-pad"
                       onChangeText={(value) =>
                         store.updateSet(exercise.localId, set.localId, { reps: value })
                       }
@@ -118,35 +240,67 @@ export default function ActiveWorkoutScreen() {
                   </>
                 )}
                 {(exercise.exerciseType === 'cardio' || exercise.exerciseType === 'other') && (
-                  <CompactInput
-                    value={set.durationSec}
-                    placeholder="sec"
-                    keyboardType="decimal-pad"
-                    onChangeText={(value) =>
-                      store.updateSet(exercise.localId, set.localId, { durationSec: value })
-                    }
-                  />
+                  <>
+                    <CompactInput
+                      value={set.durationSec}
+                      placeholder={t('workout.sec')}
+                      keyboardType="number-pad"
+                      onChangeText={(value) =>
+                        store.updateSet(exercise.localId, set.localId, { durationSec: value })
+                      }
+                    />
+                    {exercise.exerciseType === 'cardio' ? (
+                      <CompactInput
+                        value={set.distanceM}
+                        placeholder={t('workout.meters')}
+                        keyboardType="decimal-pad"
+                        onChangeText={(value) =>
+                          store.updateSet(exercise.localId, set.localId, { distanceM: value })
+                        }
+                      />
+                    ) : null}
+                  </>
                 )}
-                <Pressable onPress={() => store.removeSet(exercise.localId, set.localId)}>
-                  <Text variant="caption" tone="muted">
-                    ✕
-                  </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => store.toggleSetCompleted(exercise.localId, set.localId)}
+                  className="h-9 w-9 items-center justify-center"
+                  style={{
+                    borderRadius: radii.pill,
+                    backgroundColor: set.completed ? colors.primary : colors.surfaceMuted,
+                  }}
+                >
+                  <Check
+                    size={16}
+                    color={set.completed ? '#FFFFFF' : colors.textMuted}
+                    strokeWidth={2.5}
+                  />
                 </Pressable>
               </View>
             ))}
-            <Button label="Add set" variant="ghost" onPress={() => store.addSet(exercise.localId)} />
+
+            <Pressable
+              onPress={() => store.addSet(exercise.localId)}
+              className="flex-row items-center gap-1 py-1"
+            >
+              <Plus size={14} color={colors.primary} />
+              <Text variant="caption" tone="brand">
+                {t('workout.addSet')}
+              </Text>
+            </Pressable>
+            {index === store.exercises.length - 1 ? null : null}
           </Card>
         ))}
 
         <Button
-          label="Finish workout"
-          loading={finish.isPending}
+          label={t('workout.finish')}
           onPress={() => {
             void onFinish();
           }}
+          loading={finish.isPending}
+          disabled={finish.isPending || store.exercises.length === 0}
         />
       </View>
     </Screen>
   );
 }
-

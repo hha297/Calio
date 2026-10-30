@@ -12,6 +12,8 @@ export type FoodEntry = {
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+  amount?: number | null;
+  amount_unit?: 'g' | 'ml' | 'serving' | null;
 };
 
 export type Food = {

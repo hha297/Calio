@@ -74,10 +74,12 @@ export const lightColors: ThemeColors = {
   overlay,
   cameraOverlay,
   onOverlayBorder,
+  // Diary dashboard: Carbs green, Protein red, Fat yellow (product requirement).
   macroCalories: brand.primary,
-  macroProtein: brand.info,
-  macroCarbs: brand.warning,
-  macroFat: brand.error,
+  macroProtein: brand.error,
+  macroCarbs: brand.primary,
+  macroFat: '#E6B422',
+  macroFiber: '#0D9488',
   macroActivity: brand.primaryPressed,
 };
 
@@ -116,8 +118,9 @@ export const darkColors: ThemeColors = {
   cameraOverlay,
   onOverlayBorder,
   macroCalories: brand.primary,
-  macroProtein: brand.info,
-  macroCarbs: brand.warning,
-  macroFat: '#e86a6a',
+  macroProtein: '#e86a6a',
+  macroCarbs: brand.primary,
+  macroFat: '#E6B422',
+  macroFiber: '#2DD4BF',
   macroActivity: brand.primaryBright,
 };

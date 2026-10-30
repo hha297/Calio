@@ -33,8 +33,9 @@
   "cameraOverlay": "rgba(0,0,0,0.72)",
   "onOverlayBorder": "rgba(255,255,255,0.72)",
   "macroCalories": "#00D95F",
-  "macroProtein": "#3b82f6",
-  "macroCarbs": "#c47f1a",
-  "macroFat": "#d64545",
+  "macroProtein": "#d64545",
+  "macroCarbs": "#00D95F",
+  "macroFat": "#E6B422",
+  "macroFiber": "#0D9488",
   "macroActivity": "#00B84F"
 }
