@@ -8,7 +8,7 @@ import { SetupShell } from '@/features/setup/setup-shell';
 import { setupCardShadow } from '@/features/setup/setup-shadows';
 import { requiresManualCalories } from '@/features/setup/types';
 import { formatHeight, formatWeight } from '@/features/setup/units';
-import { brand } from '@/theme/themes';
+import { radii } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 function StatTile({
@@ -25,10 +25,7 @@ function StatTile({
     <View
       style={[
         styles.tile,
-        {
-          backgroundColor: colors.surfaceMuted,
-          borderColor: colors.border,
-        },
+        { backgroundColor: colors.surfaceMuted },
       ]}
     >
       <Text variant="caption" tone="muted">
@@ -133,11 +130,8 @@ export function SummaryStep() {
         <View
           style={[
             styles.section,
-            {
-              backgroundColor: colors.surfaceMuted,
-              borderColor: colors.border,
-            },
-            setupCardShadow(brand.darkBackground),
+            { backgroundColor: colors.surfaceMuted },
+            setupCardShadow('#000000'),
           ]}
         >
           <Text variant="label" tone="muted">
@@ -217,8 +211,8 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   section: {
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: radii.md,
+    borderWidth: 0,
     paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 4,
@@ -235,14 +229,14 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: '30%',
     minWidth: 96,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: radii.md,
+    borderWidth: 0,
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 4,
   },
   errorBox: {
-    borderRadius: 16,
+    borderRadius: radii.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },

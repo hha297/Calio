@@ -1,14 +1,15 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandMark } from '@/components/brand-mark';
+import { FloatingBackgroundDecor } from '@/components/floating-background-decor';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useBootstrap } from '@/features/bootstrap/bootstrap-provider';
 import { reportError } from '@/lib/errors/report-error';
+import { elevation, radii, spacing, withAlpha } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 const steps = [
@@ -51,13 +52,9 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <LinearGradient
-      colors={[colors.primaryBright, colors.primary, colors.primaryPressed]}
-      start={{ x: 0.1, y: 0 }}
-      end={{ x: 0.9, y: 1 }}
-      style={{ flex: 1 }}
-    >
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom', 'left', 'right']}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <FloatingBackgroundDecor />
+      <SafeAreaView style={{ flex: 1, zIndex: 1 }} edges={['top', 'bottom', 'left', 'right']}>
         <View className="flex-1 justify-between px-5 py-3">
           <View className="items-end">
             {!isLast ? (
@@ -70,7 +67,7 @@ export default function OnboardingScreen() {
                 }}
                 hitSlop={12}
               >
-                <Text variant="bodyStrong" style={{ color: colors.secondary }}>
+                <Text variant="bodyStrong" style={{ color: colors.primary }}>
                   Skip
                 </Text>
               </Pressable>
@@ -83,12 +80,16 @@ export default function OnboardingScreen() {
             <BrandMark size="hero" />
 
             <View
-              className="w-full overflow-hidden rounded-[28px] px-5 py-6"
-              style={{
-                backgroundColor: colors.surface,
-                borderWidth: 3,
-                borderColor: colors.secondary,
-              }}
+              className="w-full px-5 py-6"
+              style={[
+                elevation.card('#000000'),
+                {
+                  backgroundColor: colors.surface,
+                  borderRadius: radii.md,
+                  paddingHorizontal: spacing[5],
+                  paddingVertical: spacing[6],
+                },
+              ]}
             >
               <Text variant="display" className="mb-3">
                 {step.title}
@@ -103,15 +104,15 @@ export default function OnboardingScreen() {
                 <View
                   key={item.title}
                   style={{
-                    height: 10,
-                    width: stepIndex === index ? 28 : 10,
-                    borderRadius: 999,
+                    height: 8,
+                    width: stepIndex === index ? 24 : 8,
+                    borderRadius: radii.pill,
                     backgroundColor:
                       stepIndex === index
-                        ? colors.secondary
+                        ? colors.primary
                         : stepIndex < index
-                          ? 'rgba(215,123,82,0.45)'
-                          : 'rgba(255,255,255,0.25)',
+                          ? withAlpha(colors.primary, 0.45)
+                          : colors.surfaceMuted,
                   }}
                 />
               ))}
@@ -141,7 +142,7 @@ export default function OnboardingScreen() {
                 }}
                 className="items-center py-2"
               >
-                <Text variant="bodyStrong" style={{ color: colors.secondary }}>
+                <Text variant="bodyStrong" style={{ color: colors.primary }}>
                   I already have an account
                 </Text>
               </Pressable>
@@ -149,6 +150,6 @@ export default function OnboardingScreen() {
           </View>
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }

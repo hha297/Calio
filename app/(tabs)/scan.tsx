@@ -16,16 +16,21 @@ import {
   FoodLookupError,
   isSupportedProductBarcode,
 } from '@/features/food/open-food-facts';
+import { suggestedMealForDate } from '@/features/food/scan-calculations';
 import {
   type ScanModalResult,
   ScanResultModal,
   type ScanSaveInput,
 } from '@/features/food/scan-result-modal';
-import { suggestedMealForDate } from '@/features/food/scan-calculations';
+import { brand, iconSizes, radii, spacing, withAlpha } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 import { toDiaryDateKey } from '@/utils/date';
+
+const WHITE_OVERLAY = withAlpha(brand.white, 0.2);
 
 export default function ScanScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     date?: string;
@@ -194,25 +199,36 @@ export default function ScanScreen() {
           barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'itf14'] }}
           onBarcodeScanned={result ? undefined : handleBarcode}
         />
-        <View style={[styles.topControls, { top: insets.top + 12 }]}>
-          <CameraControl label={t('scan.close')} onPress={() => router.replace('/')}>
-            <X color="#FFFFFF" size={24} strokeWidth={2.4} />
+        <View style={[styles.topControls, { top: insets.top + spacing[3] }]}>
+          <CameraControl
+            label={t('scan.close')}
+            onPress={() => router.replace('/')}
+            backgroundColor={colors.cameraOverlay}
+            borderColor={colors.onOverlayBorder}
+            activeBorderColor={brand.white}
+            activeBackgroundColor={WHITE_OVERLAY}
+          >
+            <X color={brand.white} size={iconSizes.lg} strokeWidth={2.4} />
           </CameraControl>
           <CameraControl
             label={torchEnabled ? t('scan.flashOff') : t('scan.flashOn')}
             active={torchEnabled}
             onPress={() => setTorchEnabled((enabled) => !enabled)}
+            backgroundColor={colors.cameraOverlay}
+            borderColor={colors.onOverlayBorder}
+            activeBorderColor={brand.white}
+            activeBackgroundColor={WHITE_OVERLAY}
           >
             {torchEnabled ? (
-              <FlashlightOff color="#FFFFFF" size={22} strokeWidth={2.2} />
+              <FlashlightOff color={brand.white} size={iconSizes.lg - 2} strokeWidth={2.2} />
             ) : (
-              <Flashlight color="#FFFFFF" size={22} strokeWidth={2.2} />
+              <Flashlight color={brand.white} size={iconSizes.lg - 2} strokeWidth={2.2} />
             )}
           </CameraControl>
         </View>
-        <ScanFrame />
-        <View style={[styles.instructions, { paddingBottom: insets.bottom + 24 }]}>
-          <Text variant="body" style={styles.lightText}>
+        <ScanFrame accent={colors.primary} />
+        <View style={[styles.instructions, { paddingBottom: insets.bottom + spacing[6] }]}>
+          <Text variant="body" style={[styles.lightText, { color: colors.textOnOverlay }]}>
             {t('scan.align')}
           </Text>
           <View style={styles.manualAction}>
@@ -235,9 +251,15 @@ export default function ScanScreen() {
             <Pressable
               accessibilityRole="button"
               onPress={() => resetResult(true)}
-              style={styles.rescanPill}
+              style={[
+                styles.rescanPill,
+                {
+                  backgroundColor: colors.cameraOverlay,
+                  borderColor: brand.white,
+                },
+              ]}
             >
-              <Text variant="bodyStrong" style={styles.lightText}>
+              <Text variant="bodyStrong" style={{ color: colors.textOnOverlay, textAlign: 'center' }}>
                 {t('scan.rescan')}
               </Text>
             </Pressable>
@@ -266,11 +288,19 @@ function CameraControl({
   active,
   onPress,
   children,
+  backgroundColor,
+  borderColor,
+  activeBorderColor,
+  activeBackgroundColor,
 }: {
   label: string;
   active?: boolean;
   onPress: () => void;
   children: React.ReactNode;
+  backgroundColor: string;
+  borderColor: string;
+  activeBorderColor: string;
+  activeBackgroundColor: string;
 }) {
   return (
     <Pressable
@@ -281,7 +311,10 @@ function CameraControl({
       onPress={onPress}
       style={({ pressed }) => [
         styles.cameraControl,
-        active && styles.cameraControlActive,
+        {
+          backgroundColor: active ? activeBackgroundColor : backgroundColor,
+          borderColor: active ? activeBorderColor : borderColor,
+        },
         pressed && styles.pressed,
       ]}
     >
@@ -289,13 +322,14 @@ function CameraControl({
     </Pressable>
   );
 }
-function ScanFrame() {
+
+function ScanFrame({ accent }: { accent: string }) {
   return (
     <View pointerEvents="none" style={styles.scanFrame}>
-      <View style={[styles.corner, styles.topLeft]} />
-      <View style={[styles.corner, styles.topRight]} />
-      <View style={[styles.corner, styles.bottomLeft]} />
-      <View style={[styles.corner, styles.bottomRight]} />
+      <View style={[styles.corner, styles.topLeft, { borderColor: accent }]} />
+      <View style={[styles.corner, styles.topRight, { borderColor: accent }]} />
+      <View style={[styles.corner, styles.bottomLeft, { borderColor: accent }]} />
+      <View style={[styles.corner, styles.bottomRight, { borderColor: accent }]} />
     </View>
   );
 }
@@ -310,51 +344,60 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   topControls: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: spacing[4],
+    right: spacing[4],
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   cameraControl: {
-    width: 48,
-    height: 48,
+    width: spacing[12],
+    height: spacing[12],
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
-    backgroundColor: 'rgba(20,26,18,0.72)',
+    borderRadius: radii.pill,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.72)',
   },
-  cameraControlActive: { backgroundColor: 'rgba(255,255,255,0.2)', borderColor: '#FFFFFF' },
   pressed: { opacity: 0.78, transform: [{ scale: 0.94 }] },
-  scanFrame: { position: 'absolute', top: '31%', left: 32, right: 32, height: 154 },
-  corner: { position: 'absolute', width: 34, height: 34, borderColor: '#00D95F' },
-  topLeft: { left: 0, top: 0, borderLeftWidth: 4, borderTopWidth: 4, borderTopLeftRadius: 18 },
-  topRight: { right: 0, top: 0, borderRightWidth: 4, borderTopWidth: 4, borderTopRightRadius: 18 },
+  scanFrame: { position: 'absolute', top: '31%', left: spacing[8], right: spacing[8], height: 154 },
+  corner: { position: 'absolute', width: 34, height: 34 },
+  topLeft: {
+    left: 0,
+    top: 0,
+    borderLeftWidth: 4,
+    borderTopWidth: 4,
+    borderTopLeftRadius: radii.xl + 2,
+  },
+  topRight: {
+    right: 0,
+    top: 0,
+    borderRightWidth: 4,
+    borderTopWidth: 4,
+    borderTopRightRadius: radii.xl + 2,
+  },
   bottomLeft: {
     left: 0,
     bottom: 0,
     borderLeftWidth: 4,
     borderBottomWidth: 4,
-    borderBottomLeftRadius: 18,
+    borderBottomLeftRadius: radii.xl + 2,
   },
   bottomRight: {
     right: 0,
     bottom: 0,
     borderRightWidth: 4,
     borderBottomWidth: 4,
-    borderBottomRightRadius: 18,
+    borderBottomRightRadius: radii.xl + 2,
   },
   instructions: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: spacing[4],
+    right: spacing[4],
     bottom: 0,
     gap: 6,
     alignItems: 'center',
   },
-  lightText: { color: '#F1F5E9', textAlign: 'center' },
+  lightText: { textAlign: 'center' },
   manualAction: { width: '100%' },
   rescanPill: {
     minHeight: 44,
@@ -362,8 +405,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 18,
     borderWidth: 1,
-    borderColor: '#FFFFFF',
-    borderRadius: 22,
-    backgroundColor: 'rgba(20,26,18,0.72)',
+    borderRadius: radii.pill,
   },
 });

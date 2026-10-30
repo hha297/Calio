@@ -21,9 +21,9 @@ export const fieldCursorProps = getFieldCursorProps();
  */
 export function getFieldTypography(themeColors: ThemeColors = staticColors) {
   return {
-    fontFamily: fonts.dmRegular,
+    fontFamily: fonts.bodyRegular,
     fontSize: 16,
-    lineHeight: 22,
+    lineHeight: 24,
     color: themeColors.textPrimary,
     ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
   } as const;
@@ -31,9 +31,9 @@ export function getFieldTypography(themeColors: ThemeColors = staticColors) {
 
 export function getFieldPlaceholderTypography(themeColors: ThemeColors = staticColors) {
   return {
-    fontFamily: fonts.dmRegular,
+    fontFamily: fonts.bodyRegular,
     fontSize: 16,
-    lineHeight: 22,
+    lineHeight: 24,
     color: themeColors.textMuted,
     ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
   } as const;
@@ -41,9 +41,9 @@ export function getFieldPlaceholderTypography(themeColors: ThemeColors = staticC
 
 export function getFieldCompactTypography(themeColors: ThemeColors = staticColors) {
   return {
-    fontFamily: fonts.dmRegular,
+    fontFamily: fonts.bodyRegular,
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 20,
     color: themeColors.textPrimary,
     ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
   } as const;
@@ -51,9 +51,9 @@ export function getFieldCompactTypography(themeColors: ThemeColors = staticColor
 
 export function getFieldCompactPlaceholderTypography(themeColors: ThemeColors = staticColors) {
   return {
-    fontFamily: fonts.dmRegular,
+    fontFamily: fonts.bodyRegular,
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 20,
     color: themeColors.textMuted,
     ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
   } as const;

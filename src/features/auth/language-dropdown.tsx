@@ -1,26 +1,19 @@
 import { usePathname } from 'expo-router';
 import { Check, ChevronDown } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Dimensions, Modal, Pressable, StyleSheet, View, type ViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
 import {
+  LANGUAGE_FLAGS,
   LANGUAGE_LABELS,
   SUPPORTED_LANGUAGES,
   changeAppLanguage,
-  useAppLanguage,
-  type AppLanguage,
+  useAppLanguage
 } from '@/i18n';
+import { elevation, iconSizes, motion, radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
-import { brand } from '@/theme/themes';
-
-const LANGUAGE_FLAGS: Record<AppLanguage, string> = {
-  en: '\u{1F1EC}\u{1F1E7}',
-  fi: '\u{1F1EB}\u{1F1EE}',
-  sv: '\u{1F1F8}\u{1F1EA}',
-  vi: '\u{1F1FB}\u{1F1F3}',
-};
 
 const MENU_MIN_WIDTH = 220;
 const MENU_MAX_WIDTH = 272;
@@ -38,12 +31,12 @@ export function LanguageDropdown() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<MenuPosition | null>(null);
-  const triggerRef = useRef<View>(null);
+  const triggerRef = useRef<ViewInstance>(null);
   const language = useAppLanguage();
   const openProgress = useSharedValue(0);
 
   useEffect(() => {
-    openProgress.value = withTiming(open ? 1 : 0, { duration: 180 });
+    openProgress.value = withTiming(open ? 1 : 0, { duration: motion.fast + 30 });
   }, [open, openProgress]);
 
   useEffect(() => {
@@ -64,7 +57,7 @@ export function LanguageDropdown() {
   }
 
   function openMenu() {
-    triggerRef.current?.measureInWindow((x, y, width, height) => {
+    triggerRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
       const screenWidth = Dimensions.get('window').width;
       const minWidth = Math.min(MENU_MAX_WIDTH, Math.max(MENU_MIN_WIDTH, width));
       const left = Math.max(12, Math.min(x, screenWidth - minWidth - 12));
@@ -110,7 +103,7 @@ export function LanguageDropdown() {
             </Text>
           </View>
           <Animated.View style={chevronStyle}>
-            <ChevronDown size={16} color={colors.textMuted} strokeWidth={2.2} />
+            <ChevronDown size={iconSizes.sm} color={colors.textMuted} strokeWidth={2.2} />
           </Animated.View>
         </Pressable>
       </View>
@@ -134,13 +127,12 @@ export function LanguageDropdown() {
               pointerEvents="box-none"
               style={[
                 styles.menu,
+                elevation.dropdown('#000000'),
                 {
                   top: menuPos.top,
                   left: menuPos.left,
                   minWidth: menuPos.minWidth,
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  shadowColor: brand.darkBackground,
                 },
               ]}
             >
@@ -173,7 +165,7 @@ export function LanguageDropdown() {
                     </View>
                     {selected ? (
                       <View style={[styles.check, { backgroundColor: colors.primary }]}>
-                        <Check size={15} color={colors.textOnPrimary} strokeWidth={2.8} />
+                        <Check size={iconSizes.xs + 1} color={colors.textOnPrimary} strokeWidth={2.8} />
                       </View>
                     ) : null}
                   </Pressable>
@@ -194,17 +186,17 @@ const styles = StyleSheet.create({
     width: 158,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
-    paddingHorizontal: 9,
+    gap: spacing[2] + 1,
+    paddingHorizontal: spacing[2] + 1,
     paddingVertical: 6,
-    borderRadius: 17,
+    borderRadius: radii.pill,
     borderWidth: 1,
   },
   pressed: { opacity: 0.84, transform: [{ scale: 0.98 }] },
   triggerFlagWrap: {
     width: 34,
     height: 34,
-    borderRadius: 11,
+    borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -225,35 +217,31 @@ const styles = StyleSheet.create({
   menu: {
     position: 'absolute',
     maxWidth: MENU_MAX_WIDTH,
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 8,
-    elevation: 10,
-    shadowOpacity: 0.17,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 10 },
+    borderRadius: radii.md,
+    borderWidth: 0,
+    padding: spacing[2],
   },
   option: {
     minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 8,
-    borderRadius: 14,
+    gap: spacing[2] + 2,
+    paddingHorizontal: spacing[2],
+    borderRadius: radii.lg,
   },
   optionFlagWrap: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   optionFlag: { fontSize: 19, lineHeight: 23 },
   optionCopy: { flex: 1 },
   check: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: spacing[6],
+    height: spacing[6],
+    borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },

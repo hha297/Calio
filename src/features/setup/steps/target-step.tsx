@@ -15,6 +15,7 @@ import { SelectionCard } from '@/features/setup/selection-card';
 import { useSetup } from '@/features/setup/setup-provider';
 import { SetupShell } from '@/features/setup/setup-shell';
 import { formatWeight, kgToLb, lbToKg } from '@/features/setup/units';
+import { radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 const PACES: { value: Pace; label: string; kg: number }[] = [
@@ -119,10 +120,14 @@ export function TargetStep() {
 
         {directionWarning ? (
           <View
-            className="rounded-2xl px-3 py-2.5"
-            style={{ backgroundColor: colors.secondaryMuted }}
+            style={{
+              borderRadius: radii.md,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2] + 2,
+              backgroundColor: colors.surfaceMuted,
+            }}
           >
-            <Text variant="bodySmall" style={{ color: colors.secondaryPressed }}>
+            <Text variant="bodySmall" style={{ color: colors.warningStrong }}>
               {directionWarning}
             </Text>
           </View>
@@ -130,10 +135,14 @@ export function TargetStep() {
 
         {rangeWarning ? (
           <View
-            className="rounded-2xl px-3 py-2.5"
-            style={{ backgroundColor: colors.secondaryMuted }}
+            style={{
+              borderRadius: radii.md,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2] + 2,
+              backgroundColor: colors.surfaceMuted,
+            }}
           >
-            <Text variant="bodySmall" style={{ color: colors.secondaryPressed }}>
+            <Text variant="bodySmall" style={{ color: colors.warningStrong }}>
               {rangeWarning}
             </Text>
           </View>
@@ -153,7 +162,14 @@ export function TargetStep() {
         ))}
 
         {weeks != null && compatible ? (
-          <View className="rounded-2xl px-3 py-2.5" style={{ backgroundColor: colors.primaryMuted }}>
+          <View
+            style={{
+              borderRadius: radii.md,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2] + 2,
+              backgroundColor: colors.primaryMuted,
+            }}
+          >
             <Text variant="bodySmall" tone="muted">
               Estimated timeline: about {weeks} week{weeks === 1 ? '' : 's'} (rough guide only).
             </Text>

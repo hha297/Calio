@@ -16,7 +16,6 @@ import { BootstrapProvider, useBootstrap } from '@/features/bootstrap/bootstrap-
 import { BootstrapScreen } from '@/features/bootstrap/bootstrap-screen';
 import { reportError } from '@/lib/errors/report-error';
 import { queryClient } from '@/lib/query/query-client';
-import { brand } from '@/theme';
 import { useAppFonts } from '@/theme/fonts';
 import { ThemeProvider, useTheme } from '@/theme/theme-provider';
 
@@ -48,14 +47,13 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { isBootstrapping, destination, error, retry, recoverToAuth } = useBootstrap();
-  const { scheme } = useTheme();
+  const { scheme, colors } = useTheme();
 
   useEffect(() => {
-    const bg = scheme === 'dark' ? brand.darkBackground : brand.lightBackground;
-    SystemUI.setBackgroundColorAsync(bg).catch((err: unknown) => {
+    SystemUI.setBackgroundColorAsync(colors.background).catch((err: unknown) => {
       reportError(err, { area: 'system-ui' });
     });
-  }, [scheme]);
+  }, [colors.background, scheme]);
 
   useEffect(() => {
     SplashScreen.hideAsync().catch((err: unknown) => {
@@ -110,10 +108,12 @@ function RootNavigator() {
 
         <Stack.Protected guard={showMain}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="diary" />
           <Stack.Screen name="food" options={{ presentation: 'modal' }} />
           <Stack.Screen name="workout" />
           <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
           <Stack.Screen name="measurements" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="account" options={{ presentation: 'modal' }} />
         </Stack.Protected>
 
         <Stack.Protected guard={showAuth}>

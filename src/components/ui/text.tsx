@@ -15,19 +15,34 @@ const variantClass = {
   caption: 'text-caption',
   label: 'text-label',
   button: 'text-button',
+  metric: 'text-metric',
 } as const;
 
+/** Replicate-inspired stack: Bricolage display, Geist body, JetBrains metrics. */
 const variantFont: Record<keyof typeof variantClass, TextStyle> = {
-  display: { fontFamily: fonts.ibmBold },
-  headingLarge: { fontFamily: fonts.ibmBold },
-  headingMedium: { fontFamily: fonts.ibmSemiBold },
-  headingSmall: { fontFamily: fonts.ibmSemiBold },
-  body: { fontFamily: fonts.dmRegular },
-  bodyStrong: { fontFamily: fonts.dmSemiBold },
-  bodySmall: { fontFamily: fonts.dmRegular },
-  caption: { fontFamily: fonts.dmRegular },
-  label: { fontFamily: fonts.dmMedium },
-  button: { fontFamily: fonts.ibmSemiBold },
+  display: {
+    fontFamily: fonts.displayExtraBold,
+    letterSpacing: -1.2,
+  },
+  headingLarge: {
+    fontFamily: fonts.displayBold,
+    letterSpacing: -0.8,
+  },
+  headingMedium: {
+    fontFamily: fonts.displaySemiBold,
+    letterSpacing: -0.4,
+  },
+  headingSmall: {
+    fontFamily: fonts.bodySemiBold,
+    letterSpacing: -0.2,
+  },
+  body: { fontFamily: fonts.bodyRegular },
+  bodyStrong: { fontFamily: fonts.bodySemiBold },
+  bodySmall: { fontFamily: fonts.bodyRegular },
+  caption: { fontFamily: fonts.bodyMedium },
+  label: { fontFamily: fonts.bodySemiBold },
+  button: { fontFamily: fonts.bodySemiBold },
+  metric: { fontFamily: fonts.monoSemiBold },
 };
 
 export type TextVariant = keyof typeof variantClass;

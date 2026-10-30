@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
+import { radii } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 import { assessPasswordStrength } from './password-strength';
@@ -96,12 +97,12 @@ const styles = StyleSheet.create({
   },
   track: {
     height: 8,
-    borderRadius: 999,
+    borderRadius: radii.pill,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
-    borderRadius: 999,
+    borderRadius: radii.pill,
   },
   hintSlot: {
     minHeight: 18,

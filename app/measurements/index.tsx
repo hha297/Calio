@@ -12,9 +12,12 @@ import {
   useAddBodyMeasurement,
   useBodyMeasurements,
 } from '@/features/measurements/hooks';
+import { radii, spacing } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 import { toDiaryDateKey } from '@/utils/date';
 
 export default function MeasurementsScreen() {
+  const colors = useThemeColors();
   const profile = useProfile();
   const history = useBodyMeasurements();
   const add = useAddBodyMeasurement();
@@ -76,9 +79,20 @@ export default function MeasurementsScreen() {
         />
         <Text variant="headingSmall">History</Text>
         {(history.data ?? []).map((row) => (
-          <View key={row.id} className="flex-row justify-between border-b border-border py-3">
+          <View
+            key={row.id}
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: colors.surface,
+              borderRadius: radii.md,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[3],
+            }}
+          >
             <Text variant="body">{row.measured_on}</Text>
-            <Text variant="bodyStrong">
+            <Text variant="bodyStrong" tone="brand">
               {row.weight_kg != null ? `${row.weight_kg} kg` : '—'}
             </Text>
           </View>

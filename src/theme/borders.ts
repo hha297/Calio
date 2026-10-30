@@ -1,10 +1,12 @@
 import { StyleSheet } from 'react-native';
 
-import { colors } from './colors';
-
+/**
+ * Border widths only. Colors come from `useThemeColors()` (`border`, `borderStrong`,
+ * `borderFocus`, `error`) so they track light/dark correctly.
+ */
 export const borders = {
   hairline: StyleSheet.hairlineWidth,
   width: 1,
-  color: colors.border,
-  strong: colors.borderStrong,
+  widthStrong: 1.5,
+  widthEmphasis: 2,
 } as const;

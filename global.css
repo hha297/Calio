@@ -1,3 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/**
+ * Light defaults: Replicate warm bone + locked Calio `#00D95F`.
+ * ThemeProvider overrides at runtime for light/dark.
+ */
+:root {
+  --color-primary: 0 217 95;
+  --color-primaryPressed: 0 184 79;
+  --color-primaryMuted: 216 248 230;
+  --color-primaryBright: 24 217 104;
+  --color-secondary: 32 32 32;
+  --color-secondaryPressed: 0 0 0;
+  --color-secondaryMuted: 243 240 232;
+  --color-secondaryHot: 87 87 87;
+  --color-background: 249 247 243;
+  --color-surface: 255 255 255;
+  --color-surfaceMuted: 243 240 232;
+  --color-textPrimary: 32 32 32;
+  --color-textSecondary: 58 58 58;
+  --color-textMuted: 100 100 100;
+  --color-textDisabled: 141 141 141;
+  --color-textOnPrimary: 32 32 32;
+  --color-textOnSecondary: 252 252 252;
+  --color-textOnOverlay: 252 252 252;
+  --color-border: 228 224 216;
+  --color-borderStrong: 32 32 32;
+  --color-borderFocus: 0 217 95;
+  --color-buttonDisabledBackground: 243 240 232;
+  --color-buttonDisabledText: 141 141 141;
+  --color-success: 43 154 102;
+  --color-successBright: 0 217 95;
+  --color-warning: 196 127 26;
+  --color-warningStrong: 196 127 26;
+  --color-error: 214 69 69;
+  --color-errorMuted: 252 232 232;
+  --color-info: 59 130 246;
+  --color-overlay: rgba(0, 0, 0, 0.55);
+  --color-cameraOverlay: rgba(0, 0, 0, 0.72);
+  --color-onOverlayBorder: rgba(255, 255, 255, 0.72);
+  --color-macroCalories: 0 217 95;
+  --color-macroProtein: 214 69 69;
+  --color-macroCarbs: 0 217 95;
+  --color-macroFat: 230 180 34;
+  --color-macroFiber: 13 148 136;
+  --color-macroActivity: 0 184 79;
+}

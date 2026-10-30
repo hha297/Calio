@@ -2,11 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/theme/theme-provider';
 
-/**
- * Soft floating abstract shapes behind screen content.
- * Uses the theme primary scale (#00D95F family) at opacities that stay visible
- * on both light cream and dark olive canvases.
- */
+/** Quiet primary accents for auth/hero — scarce green on Replicate bone canvases. */
 export function FloatingBackgroundDecor() {
   const { scheme, colors } = useTheme();
   const isDark = scheme === 'dark';
@@ -19,7 +15,7 @@ export function FloatingBackgroundDecor() {
           styles.blobTopRight,
           {
             backgroundColor: colors.primaryBright,
-            opacity: isDark ? 0.5 : 0.6,
+            opacity: isDark ? 0.18 : 0.14,
           },
         ]}
       />
@@ -29,27 +25,7 @@ export function FloatingBackgroundDecor() {
           styles.blobMidLeft,
           {
             backgroundColor: colors.primary,
-            opacity: isDark ? 0.32 : 0.36,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.blob,
-          styles.blobBottomRight,
-          {
-            backgroundColor: colors.primaryPressed,
-            opacity: isDark ? 0.34 : 0.38,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.block,
-          styles.blockLowerLeft,
-          {
-            backgroundColor: colors.primaryBright,
-            opacity: isDark ? 0.4 : 0.45,
+            opacity: isDark ? 0.12 : 0.1,
           },
         ]}
       />
@@ -59,17 +35,7 @@ export function FloatingBackgroundDecor() {
           styles.ringUpperLeft,
           {
             borderColor: colors.primary,
-            opacity: isDark ? 0.5 : 0.48,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.ring,
-          styles.ringLowerRight,
-          {
-            borderColor: colors.primaryBright,
-            opacity: isDark ? 0.42 : 0.4,
+            opacity: isDark ? 0.22 : 0.16,
           },
         ]}
       />
@@ -88,52 +54,26 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   blobTopRight: {
-    top: -56,
+    top: -64,
     right: -72,
-    width: 240,
-    height: 240,
-    borderRadius: 80,
-    transform: [{ rotate: '18deg' }],
+    width: 220,
+    height: 220,
   },
   blobMidLeft: {
-    top: '32%',
-    left: -90,
-    width: 190,
-    height: 190,
-  },
-  blobBottomRight: {
-    bottom: 100,
-    right: -48,
+    top: '40%',
+    left: -80,
     width: 160,
     height: 160,
-  },
-  block: {
-    position: 'absolute',
-    borderRadius: 18,
-  },
-  blockLowerLeft: {
-    bottom: 200,
-    left: 24,
-    width: 56,
-    height: 56,
-    transform: [{ rotate: '-12deg' }],
   },
   ring: {
     position: 'absolute',
     width: 96,
     height: 96,
-    borderRadius: 48,
-    borderWidth: 2.5,
+    borderRadius: 999,
+    borderWidth: 2,
   },
   ringUpperLeft: {
     top: 120,
-    left: -30,
-  },
-  ringLowerRight: {
-    bottom: 150,
-    right: 24,
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    left: -28,
   },
 });

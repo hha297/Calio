@@ -1,18 +1,20 @@
 import { borders } from './borders';
 import { colors } from './colors';
+import { elevation } from './elevation';
+import { iconSizes } from './icons';
+import { motion } from './motion';
 import { radii } from './radii';
-import { spacing } from './spacing';
+import { layout, spacing } from './spacing';
 import { typography } from './typography';
 
-export { borders, colors, radii, spacing, typography };
+export { hexToRgbChannels, themeToCssVars, withAlpha } from './color-utils';
 export { fonts, useAppFonts } from './fonts';
-export { brand, lightColors, darkColors, type ThemeColors } from './themes';
 export { ThemeProvider, useTheme, useThemeColors, type ThemePreference } from './theme-provider';
+export { brand, darkColors, lightColors, type ThemeColors } from './themes';
+export { borders, colors, elevation, iconSizes, layout, motion, radii, spacing, typography };
 
 /**
- * Secondary terracotta is an accent fill. On the light background its contrast
- * is too low to use as body text, so text on that fill uses textOnSecondary.
- * `success` is a darker brand-aligned green for readable success copy/icons;
- * `successBright` matches primary for meter fills at “Very strong”.
- * Display/UI uses IBM Plex Sans; body copy uses DM Sans.
+ * Replicate-inspired warm bone/ink UI with locked Calio primary `#00D95F`.
+ * Type: Bricolage Grotesque (display) + Geist (body) + JetBrains Mono (metrics).
+ * Runtime paint: prefer `useThemeColors()`. Static `colors` is the light palette.
  */

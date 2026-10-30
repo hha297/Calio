@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { Text } from '@/components/ui/text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useActiveGoal } from '@/features/goals/hooks';
 import { getSupabase } from '@/lib/supabase/client';
+import { radii, spacing } from '@/theme';
+import { useThemeColors } from '@/theme/theme-provider';
 
 const types = [
   { id: 'lose_weight', label: 'Lose weight' },
@@ -18,6 +20,7 @@ const types = [
 ] as const;
 
 export default function GoalsScreen() {
+  const colors = useThemeColors();
   const { session } = useAuth();
   const existing = useActiveGoal();
   const queryClient = useQueryClient();
@@ -75,11 +78,12 @@ export default function GoalsScreen() {
             <Pressable
               key={type.id}
               onPress={() => setGoalType(type.id)}
-              className={
-                goalType === type.id
-                  ? 'rounded-md bg-primary px-3 py-2'
-                  : 'rounded-md border border-border bg-surface px-3 py-2'
-              }
+              style={[
+                styles.goalChip,
+                {
+                  backgroundColor: goalType === type.id ? colors.primary : colors.surfaceMuted,
+                },
+              ]}
             >
               <Text
                 variant="label"
@@ -105,3 +109,11 @@ export default function GoalsScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  goalChip: {
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+  },
+});

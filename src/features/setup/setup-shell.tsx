@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { FloatingBackgroundDecor } from '@/components/floating-background-decor';
 import { setupCardShadow } from '@/features/setup/setup-shadows';
-import { brand } from '@/theme/themes';
+import { radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 type SetupShellProps = {
@@ -129,9 +129,8 @@ export function SetupShell({
                 styles.card,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.border,
                 },
-                setupCardShadow(brand.darkBackground),
+                setupCardShadow('#000000'),
               ]}
             >
               {children}
@@ -179,25 +178,25 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   progressTrack: {
-    marginHorizontal: 20,
+    marginHorizontal: spacing[5],
     height: 6,
-    borderRadius: 999,
+    borderRadius: radii.pill,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 999,
+    borderRadius: radii.pill,
   },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[10],
   },
   hero: {
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    gap: spacing[2],
+    marginBottom: spacing[4],
   },
   title: { textAlign: 'center' },
   subtitle: {
@@ -206,12 +205,12 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    borderRadius: radii.md,
+    borderWidth: 0,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[5],
     paddingBottom: 22,
   },
-  cta: { marginTop: 20 },
+  cta: { marginTop: spacing[5] },
   footer: { marginTop: 18, alignItems: 'center' },
 });

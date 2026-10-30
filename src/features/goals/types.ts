@@ -1,3 +1,5 @@
+import type { DietPresetId } from '@/features/diary/diet-presets';
+
 export type Profile = {
   id: string;
   display_name: string | null;
@@ -7,6 +9,7 @@ export type Profile = {
   units: 'metric' | 'imperial';
   activity_level: 'sedentary' | 'light' | 'moderate' | 'demanding' | null;
   onboarding_completed_at: string | null;
+  avatar_url?: string | null;
 };
 
 export type Goal = {
@@ -18,5 +21,10 @@ export type Goal = {
   protein_g: number | null;
   carbs_g: number | null;
   fat_g: number | null;
+  fiber_g: number | null;
+  diet_preset: DietPresetId | null;
+  carbs_pct: number | null;
+  protein_pct: number | null;
+  fat_pct: number | null;
   is_active: boolean;
 };

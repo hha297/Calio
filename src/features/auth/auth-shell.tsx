@@ -13,9 +13,8 @@ import { FloatingBackgroundDecor } from '@/components/floating-background-decor'
 import { SlideTransition, type SlideSide } from '@/components/ui/slide-transition';
 import { Text } from '@/components/ui/text';
 import { AuthTopBar } from '@/features/auth/auth-top-bar';
+import { elevation, radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
-import { brand } from '@/theme/themes';
-
 type AuthShellProps = {
   title: string;
   /** Optional welcome copy under the title. Omit when it adds nothing. */
@@ -81,10 +80,9 @@ export function AuthShell({
           <View
             style={[
               styles.card,
+              elevation.card('#000000'),
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
-                shadowColor: brand.darkBackground,
               },
             ]}
           >
@@ -155,19 +153,15 @@ const styles = StyleSheet.create({
   },
   card: {
     marginTop: 18,
-    borderRadius: 24,
-    borderWidth: 1,
-    paddingHorizontal: 20,
+    borderRadius: radii.md,
+    borderWidth: 0,
+    paddingHorizontal: spacing[5],
     paddingTop: 22,
-    paddingBottom: 24,
-    elevation: 2,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
+    paddingBottom: spacing[6],
   },
   footer: {
     marginTop: 22,
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing[2],
   },
 });

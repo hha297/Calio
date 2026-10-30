@@ -8,7 +8,7 @@ Calorie and activity numbers are estimates for everyday tracking — not medical
 - Node.js 22+
 - npm
 - A physical Android or iPhone
-- [Expo Go for SDK 57](https://expo.dev/go)
+- [Expo Go for SDK 58](https://expo.dev/go) (store build may lag a few weeks after SDK release; use a development build if needed)
 
 ## Install
 
@@ -23,11 +23,22 @@ Create `.env.local`:
 ```text
 EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+
+# Optional — Create Food image / avatar uploads (unsigned Cloudinary preset)
+EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
+
+# Optional — Account legal / support links (omit until real URLs exist)
+# EXPO_PUBLIC_PRIVACY_POLICY_URL=https://example.com/privacy
+# EXPO_PUBLIC_TERMS_OF_SERVICE_URL=https://example.com/terms
+# EXPO_PUBLIC_SUPPORT_EMAIL=support@example.com
 ```
 
 `EXPO_PUBLIC_SUPABASE_KEY` is also accepted as an alias.
 
-Never put the service-role key or database password in the app.
+Never put the service-role key, database password, or Cloudinary API secret in the app.
+Food images and profile avatars use an **unsigned** Cloudinary upload preset only (no API secret on device).
+Avatars are stored under the Cloudinary folder `calio/avatars`; only the HTTPS URL is saved on `profiles.avatar_url`.
 
 `.env.local` is gitignored and remains the default Cloud configuration. Expo reads
 environment variables already set in the terminal before values from `.env.local`,
@@ -44,6 +55,18 @@ npx supabase db push
 ```
 
 The core migration creates profiles, goals, foods, food_entries, exercises, workouts, measurements, RLS policies, and a starter exercise catalog.
+
+### Account deletion (Edge Function)
+
+Account deletion uses the `delete-account` Edge Function with the **service role** on the server. Deploy it after linking the project:
+
+```bash
+npx supabase functions deploy delete-account
+```
+
+Ensure the function has `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` (set automatically on hosted Supabase). Do not put the service-role key in the mobile app.
+
+Also apply `supabase/migrations/20261029210000_profile_avatar.sql` so `profiles.avatar_url` exists.
 
 ## Local Supabase (Docker)
 
@@ -127,7 +150,7 @@ public Internet. Stop only this HTTPS proxy later with
 npm start
 ```
 
-Scan the QR code with Expo Go (SDK 57). Use `--tunnel` only if LAN discovery fails:
+Scan the QR code with Expo Go (SDK 58). Use `--tunnel` only if LAN discovery fails:
 
 ```bash
 npx expo start --tunnel

@@ -4,38 +4,42 @@
     "slug": "calio",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/branding/logo.png",
     "scheme": "calio",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.calio.app",
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Calio uses the camera to scan food barcodes."
+        "NSCameraUsageDescription": "Calio uses the camera to scan food barcodes.",
+        "NSPhotoLibraryUsageDescription": "Calio needs photo access so you can add an image to a food you create."
       }
     },
     "android": {
       "package": "com.calio.app",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "backgroundColor": "#69B32B",
-        "foregroundImage": "./assets/images/logo.png"
+        "backgroundColor": "#00D95F",
+        "foregroundImage": "./assets/images/branding/logo.png"
       },
-      "permissions": ["CAMERA", "android.permission.CAMERA"],
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/images/branding/logo.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#69B32B",
-          "image": "./assets/images/translogo.png",
+          "backgroundColor": "#00D95F",
+          "image": "./assets/images/branding/translogo.png",
           "imageWidth": 240
         }
       ],
@@ -47,7 +51,13 @@
         }
       ],
       "expo-image",
-      "expo-image-picker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Calio to access your photos to add a food image.",
+          "cameraPermission": "Calio uses the camera to scan food barcodes."
+        }
+      ],
       "expo-web-browser",
       "expo-font",
       "expo-localization"

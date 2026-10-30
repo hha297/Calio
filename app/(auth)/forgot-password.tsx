@@ -15,6 +15,7 @@ import { AuthTextLink } from '@/features/auth/auth-text-link';
 import { RECOVERY_OTP_LENGTH } from '@/features/auth/recovery-constants';
 import { createEmailOnlySchema, type EmailOnly } from '@/features/auth/schema';
 import { reportError } from '@/lib/errors/report-error';
+import { radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 export default function ForgotPasswordScreen() {
@@ -78,7 +79,9 @@ export default function ForgotPasswordScreen() {
               keyboardType="email-address"
               textContentType="emailAddress"
               returnKeyType="done"
-              onSubmitEditing={onSubmit}
+              onSubmitEditing={() => {
+                void onSubmit();
+              }}
               placeholder={t('auth.emailPlaceholder')}
             />
           )}
@@ -86,8 +89,12 @@ export default function ForgotPasswordScreen() {
 
         {error ? (
           <View
-            className="rounded-2xl px-3 py-2.5"
-            style={{ backgroundColor: colors.errorMuted }}
+            style={{
+              borderRadius: radii.md,
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2] + 2,
+              backgroundColor: colors.errorMuted,
+            }}
           >
             <Text variant="bodySmall" tone="error">
               {error}
@@ -101,7 +108,9 @@ export default function ForgotPasswordScreen() {
           size="lg"
           loading={formState.isSubmitting}
           disabled={formState.isSubmitting}
-          onPress={onSubmit}
+          onPress={() => {
+            void onSubmit();
+          }}
         />
       </View>
     </AuthShell>

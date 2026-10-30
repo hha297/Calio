@@ -2,55 +2,84 @@ import { Image } from 'expo-image';
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { elevation, iconSizes, radii, withAlpha } from '@/theme';
 import { fonts } from '@/theme/fonts';
-import { useThemeColors } from '@/theme/theme-provider';
-import { brand } from '@/theme/themes';
+import { useTheme, useThemeColors } from '@/theme/theme-provider';
 
 import { scanImageSource, useScanImages } from './scan-image';
 
-const DOCK_HEIGHT = 68;
-const DOCK_HEIGHT_COMPACT = 62;
-const SCAN_SIZE = 62;
-const SCAN_SIZE_COMPACT = 58;
+const DOCK_HEIGHT = 64;
+const DOCK_HEIGHT_COMPACT = 58;
+const SCAN_SIZE = 58;
+const SCAN_SIZE_COMPACT = 54;
+
+export function useFloatingTabBarClearance(): number {
+  const { width, height } = useWindowDimensions();
+  const compact = width <= 360 || height <= 500;
+  const dockHeight = compact ? DOCK_HEIGHT_COMPACT : DOCK_HEIGHT;
+  return dockHeight + 40;
+}
 
 type FloatingTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
-export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBarProps) {
+export function FloatingTabBar({
+  state,
+  descriptors,
+  navigateToTab,
+  emitter,
+  insets,
+}: FloatingTabBarProps) {
   const colors = useThemeColors();
+  const { scheme } = useTheme();
+  const isDark = scheme === 'dark';
   const scanImages = useScanImages();
-  const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const compact = width <= 360 || height <= 500;
   const landscape = width > height;
   const dockHeight = compact ? DOCK_HEIGHT_COMPACT : DOCK_HEIGHT;
   const scanSize = compact ? SCAN_SIZE_COMPACT : SCAN_SIZE;
+  const scanIconSize = scanSize - 6;
   const scanFocused = state.routes[state.index]?.name === 'scan';
-  const bottomGap = Math.max(14, insets.bottom + (landscape ? 0 : 2));
-  const horizontalGap = landscape ? 24 : compact ? 8 : 16;
+  const bottomGap = Math.max(8, insets.bottom);
+  const horizontalGap = landscape ? 24 : compact ? 12 : 16;
   const dockWidth = Math.min(width - horizontalGap * 2, 620);
+  const dockElevation = isDark
+    ? ({
+        shadowColor: colors.primary,
+        shadowOpacity: Platform.OS === 'ios' ? 0.18 : 0.22,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 6,
+      } as const)
+    : elevation.tabBar('#202020');
+  const dockBorder = isDark ? withAlpha(colors.primary, 0.16) : colors.border;
 
   if (scanFocused) return null;
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={[
-        styles.tabBarRoot,
-        { height: dockHeight + bottomGap, backgroundColor: colors.background },
-      ]}
-    >
+    <View pointerEvents="box-none" style={styles.overlay}>
+      {insets.bottom > 0 ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.homeIndicatorFill,
+            { height: insets.bottom, backgroundColor: colors.background },
+          ]}
+        />
+      ) : null}
+
       <View
         style={[
           styles.dock,
+          dockElevation,
           {
             bottom: bottomGap,
             width: dockWidth,
             height: dockHeight,
             backgroundColor: colors.surface,
-            borderColor: `${colors.primary}55`,
-            shadowColor: colors.primary,
+            borderColor: dockBorder,
+            borderRadius: radii.pill,
           },
         ]}
       >
@@ -67,21 +96,18 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
                 : route.name;
 
           const onPress = () => {
-            const event = navigation.emit({
+            const event = emitter.emit({
               type: 'tabPress',
               target: route.key,
               canPreventDefault: true,
             });
             if (!focused && !event.defaultPrevented) {
-              navigation.navigate(
-                route.name,
-                isScan ? { source: 'navbar', nonce: Date.now().toString() } : route.params,
-              );
+              navigateToTab(route.key);
             }
           };
 
           const onLongPress = () => {
-            navigation.emit({ type: 'tabLongPress', target: route.key });
+            emitter.emit({ type: 'tabLongPress', target: route.key });
           };
 
           if (isScan) {
@@ -98,30 +124,27 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
                 <View
                   style={[
                     styles.scanButton,
+                    elevation.floatingControl('#202020'),
                     {
                       width: scanSize,
                       height: scanSize,
-                      borderRadius: scanSize / 2,
-                      backgroundColor: focused ? colors.primary : colors.surface,
-                      borderColor: `${colors.primary}55`,
-                      shadowColor: brand.darkBackground,
+                      borderRadius: radii.pill,
+                      backgroundColor: colors.primary,
+                      // Lift Scan so its label sits on the same baseline as Diary/etc.
+                      top: -(scanSize * 0.42),
                     },
                   ]}
                 >
                   <Image
                     source={(focused ? scanImages.active : scanImages.inactive) ?? scanImageSource}
-                    style={{ width: scanSize - 12, height: scanSize - 12 }}
+                    style={{ width: scanIconSize, height: scanIconSize }}
                     contentFit="contain"
                     cachePolicy="memory"
                     autoplay
                     tintColor={
-                      focused
-                        ? scanImages.active
-                          ? undefined
-                          : colors.textOnPrimary
-                        : scanImages.inactive
-                          ? undefined
-                          : colors.textMuted
+                      scanImages.active || scanImages.inactive
+                        ? undefined
+                        : colors.textOnPrimary
                     }
                     accessible={false}
                   />
@@ -129,7 +152,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
                 <Text
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.25}
-                  style={[styles.scanLabel, { color }]}
+                  style={[styles.label, { color: focused ? colors.primary : colors.textMuted }]}
                 >
                   {label}
                 </Text>
@@ -148,7 +171,11 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
               style={styles.tab}
             >
               <View style={styles.iconWrap}>
-                {options.tabBarIcon?.({ focused, color, size: compact ? 21 : 23 })}
+                {options.tabBarIcon?.({
+                  focused,
+                  color,
+                  size: compact ? iconSizes.md + 1 : iconSizes.lg - 1,
+                })}
               </View>
               <Text
                 numberOfLines={1}
@@ -168,71 +195,70 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
 }
 
 const styles = StyleSheet.create({
-  tabBarRoot: {
-    alignItems: 'center',
+  overlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    top: 0,
+    backgroundColor: 'transparent',
+    overflow: 'visible',
+  },
+  homeIndicatorFill: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   dock: {
     position: 'absolute',
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 24,
-    paddingHorizontal: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 8,
     overflow: 'visible',
-    elevation: 9,
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
   },
   tab: {
     flex: 1,
     minWidth: 48,
     minHeight: 48,
+    height: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
+    justifyContent: 'flex-end',
+    gap: 3,
+    paddingBottom: 10,
     paddingHorizontal: 2,
   },
   iconWrap: {
-    minWidth: 40,
-    height: 30,
-    paddingHorizontal: 9,
-    borderRadius: 15,
+    minWidth: 28,
+    height: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
-    fontFamily: fonts.dmMedium,
-    fontSize: 12,
+    fontFamily: fonts.bodyMedium,
+    fontSize: 13,
     lineHeight: 16,
     textAlign: 'center',
     width: '100%',
   },
   scanSlot: {
     flex: 1,
-    minWidth: 58,
+    minWidth: 56,
     minHeight: 48,
     height: '100%',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    gap: 3,
     paddingBottom: 10,
     paddingHorizontal: 2,
+    overflow: 'visible',
+    zIndex: 2,
   },
   scanButton: {
     position: 'absolute',
-    top: -26,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    elevation: 4,
-    shadowOpacity: Platform.OS === 'ios' ? 0.14 : 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  scanLabel: {
-    fontFamily: fonts.dmSemiBold,
-    fontSize: 12,
-    lineHeight: 16,
-    textAlign: 'center',
   },
 });

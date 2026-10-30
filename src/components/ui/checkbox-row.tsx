@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { borders, iconSizes, radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
 import { Text } from './text';
@@ -35,7 +36,9 @@ export function CheckboxRow({ label, checked, onChange, hint }: CheckboxRowProps
           },
         ]}
       >
-        {checked ? <Check size={14} color={colors.textOnPrimary} strokeWidth={3} /> : null}
+        {checked ? (
+          <Check size={iconSizes.xs} color={colors.textOnPrimary} strokeWidth={3} />
+        ) : null}
       </View>
       <View style={[styles.labelWrap, alignStart && styles.labelWrapTop]}>
         <Text variant="bodySmall" tone="primary" numberOfLines={2} style={styles.label}>
@@ -54,7 +57,7 @@ export function CheckboxRow({ label, checked, onChange, hint }: CheckboxRowProps
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    gap: 10,
+    gap: spacing[2] + 2,
     alignSelf: 'flex-start',
     maxWidth: '100%',
   },
@@ -65,10 +68,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   box: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
+    width: spacing[6],
+    height: spacing[6],
+    borderRadius: radii.sm,
+    borderWidth: borders.widthEmphasis,
     alignItems: 'center',
     justifyContent: 'center',
   },

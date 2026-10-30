@@ -1,24 +1,87 @@
+import Constants from 'expo-constants';
 import { Link, router } from 'expo-router';
+import {
+  CircleHelp,
+  FileText,
+  Flag,
+  Info,
+  Lock,
+  LogOut,
+  Moon,
+  Ruler,
+  Scale,
+  Shield,
+  Sun,
+  Trash2,
+  UserRound,
+  Download,
+} from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Alert, Linking, Pressable, Text as RNText, View } from 'react-native';
 
-import { BrandMark } from '@/components/brand-mark';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
+import { ErrorState, LoadingState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
+import {
+  getPrivacyPolicyUrl,
+  getTermsOfServiceUrl,
+} from '@/features/account/constants';
+import { ProfileAvatar } from '@/features/account/profile-avatar';
+import { SettingsRow, SettingsSection } from '@/features/account/settings-row';
 import { toAuthErrorMessage } from '@/features/auth/auth-errors';
 import { useAuth } from '@/features/auth/auth-provider';
-import { useActiveGoal } from '@/features/goals/hooks';
-import { useLatestWeight } from '@/features/measurements/hooks';
+import { ThemeToggle } from '@/features/auth/theme-toggle';
+import { useActiveGoal, useProfile } from '@/features/goals/hooks';
+import {
+  LANGUAGE_FLAGS,
+  LANGUAGE_LABELS,
+  useAppLanguage,
+  type AppLanguage,
+} from '@/i18n';
 import { reportError } from '@/lib/errors/report-error';
+import { iconSizes, spacing } from '@/theme';
+import { useTheme, useThemeColors } from '@/theme/theme-provider';
+
+function goalLabelKey(type: string): string {
+  switch (type) {
+    case 'lose_weight':
+      return 'account.goalLoseWeight';
+    case 'gain_weight':
+      return 'account.goalGainWeight';
+    case 'maintain_weight':
+    default:
+      return 'account.goalMaintainWeight';
+  }
+}
+
+async function openOptionalUrl(url: string | null, unavailableLabel: string) {
+  if (!url) {
+    Alert.alert(unavailableLabel);
+    return;
+  }
+  try {
+    await Linking.openURL(url);
+  } catch (err) {
+    reportError(err, { area: 'account', action: 'open-legal-url' });
+    Alert.alert(unavailableLabel);
+  }
+}
 
 export default function AccountScreen() {
+  const { t } = useTranslation();
+  const colors = useThemeColors();
   const { session, signOut } = useAuth();
+  const profile = useProfile();
   const goal = useActiveGoal();
-  const weight = useLatestWeight();
+  const language = useAppLanguage();
+  const { scheme } = useTheme();
   const [error, setError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+
+  const version =
+    Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '1.0.0';
 
   async function handleSignOut() {
     setError(null);
@@ -33,85 +96,246 @@ export default function AccountScreen() {
     }
   }
 
-  return (
-    <Screen scroll slideFrom="bottom">
-      <View className="gap-4">
-        <BrandMark />
-        <Text variant="headingLarge">Account</Text>
-
-        {session ? (
-          <Card className="gap-1">
-            <Text variant="label" tone="secondary">
-              Signed in
-            </Text>
-            <Text variant="bodyStrong">{session.user.email ?? 'Signed in'}</Text>
-          </Card>
-        ) : (
+  if (!session) {
+    return (
+      <Screen scroll slideFrom="bottom" padForTabBar>
+        <View style={{ gap: spacing[4] }}>
+          <Text variant="headingLarge">{t('account.title')}</Text>
           <Card className="gap-2">
-            <Text variant="headingSmall">Sign in</Text>
+            <Text variant="headingSmall">{t('account.signInPromptTitle')}</Text>
             <Text variant="body" tone="secondary">
-              Sign in to sync your diary and workouts.
+              {t('account.signInPromptBody')}
             </Text>
             <Link href="/(auth)/sign-in">
               <Text variant="bodyStrong" tone="brand">
-                Open sign in
+                {t('account.openSignIn')}
               </Text>
             </Link>
           </Card>
-        )}
+        </View>
+      </Screen>
+    );
+  }
 
-        <Card className="gap-2">
-          <Text variant="headingSmall">Goal</Text>
-          <Text variant="body" tone="secondary">
-            {goal.data
-              ? `${goal.data.goal_type.replaceAll('_', ' ')} · ${goal.data.daily_calorie_target} kcal/day`
-              : 'No active goal yet'}
-          </Text>
-          <Pressable onPress={() => router.push('/goals')}>
-            <Text variant="bodyStrong" tone="brand">
-              Edit goal & macros
-            </Text>
-          </Pressable>
+  if (profile.isLoading) {
+    return (
+      <Screen padForTabBar>
+        <LoadingState label={t('account.title')} />
+      </Screen>
+    );
+  }
+
+  if (profile.error) {
+    return (
+      <Screen padForTabBar>
+        <ErrorState
+          title={t('account.loadError')}
+          body={profile.error instanceof Error ? profile.error.message : t('account.retry')}
+          onRetry={() => void profile.refetch()}
+        />
+      </Screen>
+    );
+  }
+
+  const displayName =
+    profile.data?.display_name?.trim() ||
+    session.user.email?.split('@')[0] ||
+    t('account.title');
+
+  const isDark = scheme === 'dark';
+
+  return (
+    <Screen scroll slideFrom="bottom" padForTabBar>
+      <View style={{ gap: spacing[5] }}>
+        <Text variant="headingLarge">{t('account.title')}</Text>
+
+        <Card style={{ width: '100%' }}>
+          <View
+            style={{
+              width: '100%',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('account.editProfile')}
+              onPress={() => router.push('/account/edit-profile')}
+              cssInterop={false}
+              style={({ pressed }) => [
+                {
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  flexBasis: 0,
+                  marginRight: spacing[4],
+                  opacity: pressed ? 0.9 : 1,
+                },
+              ]}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing[3],
+                }}
+              >
+                <ProfileAvatar
+                  displayName={profile.data?.display_name}
+                  email={session.user.email}
+                  avatarUrl={profile.data?.avatar_url}
+                  size={72}
+                />
+                <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+                  <Text variant="headingSmall" numberOfLines={1}>
+                    {displayName}
+                  </Text>
+                  <Text variant="caption" tone="muted" numberOfLines={1}>
+                    {session.user.email}
+                  </Text>
+                  <Text variant="caption" tone="secondary" numberOfLines={2}>
+                    {goal.data
+                      ? t('account.goalSummary', {
+                          goal: t(goalLabelKey(goal.data.goal_type)),
+                          calories: goal.data.daily_calorie_target,
+                        })
+                      : t('account.noGoal')}
+                  </Text>
+                  <Text variant="label" tone="brand">
+                    {t('account.editProfile')}
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('account.signOut')}
+              disabled={signingOut}
+              onPress={() => void handleSignOut()}
+              hitSlop={8}
+              style={({ pressed }) => [
+                {
+                  flexGrow: 0,
+                  flexShrink: 0,
+                  width: 48,
+                  height: 48,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: pressed || signingOut ? 0.55 : 1,
+                },
+              ]}
+            >
+              <LogOut size={iconSizes.lg} color={colors.textPrimary} strokeWidth={2.2} />
+            </Pressable>
+          </View>
         </Card>
 
-        <Card className="gap-2">
-          <Text variant="headingSmall">Body</Text>
-          <Text variant="body" tone="secondary">
-            Latest weight: {weight.weightKg != null ? `${weight.weightKg} kg` : 'not logged'}
-          </Text>
-          <Text variant="caption" tone="muted">
-            Height and units come from setup. Log weight anytime in Measurements.
-          </Text>
-          <Pressable onPress={() => router.push('/measurements')}>
-            <Text variant="bodyStrong" tone="brand">
-              Measurements
-            </Text>
-          </Pressable>
-        </Card>
+        <SettingsSection title={t('account.profile')}>
+          <SettingsRow
+            icon={UserRound}
+            title={t('account.editProfile')}
+            subtitle={t('account.profileSubtitle')}
+            onPress={() => router.push('/account/edit-profile')}
+          />
+          <SettingsRow
+            icon={Flag}
+            title={t('account.goals')}
+            subtitle={t('account.goalsSubtitle')}
+            onPress={() => router.push('/goals')}
+          />
+          <SettingsRow
+            icon={Scale}
+            title={t('account.measurements')}
+            subtitle={t('account.measurementsSubtitle')}
+            onPress={() => router.push('/measurements')}
+          />
+        </SettingsSection>
 
-        <Card className="gap-2">
-          <Text variant="headingSmall">About Calio</Text>
-          <Text variant="bodySmall" tone="secondary">
-            Calorie and activity numbers are estimates for everyday tracking, not medical
-            measurements.
-          </Text>
-        </Card>
+        <SettingsSection title={t('account.preferences')}>
+          <SettingsRow
+            leading={
+              <RNText style={{ fontSize: 18 }}>
+                {LANGUAGE_FLAGS[language as AppLanguage] ?? '🌐'}
+              </RNText>
+            }
+            title={t('account.language')}
+            trailing={LANGUAGE_LABELS[language as AppLanguage] ?? language}
+            onPress={() => router.push('/account/language')}
+          />
+          <SettingsRow
+            icon={isDark ? Moon : Sun}
+            title={t('account.appearance')}
+            subtitle={isDark ? t('auth.themeDark') : t('auth.themeLight')}
+            showChevron={false}
+            trailing={<ThemeToggle />}
+          />
+          <SettingsRow
+            icon={Ruler}
+            title={t('account.units')}
+            trailing={
+              profile.data?.units === 'imperial' ? t('account.imperial') : t('account.metric')
+            }
+            onPress={() => router.push('/account/units')}
+          />
+        </SettingsSection>
+
+        <SettingsSection title={t('account.privacyData')}>
+          <SettingsRow
+            icon={Lock}
+            title={t('account.accountSecurity')}
+            subtitle={session.user.email ?? undefined}
+            onPress={() => router.push('/account/security')}
+          />
+          <SettingsRow
+            icon={Download}
+            title={t('account.exportData')}
+            subtitle={t('account.exportDataSubtitle')}
+            onPress={() => router.push('/account/export-data')}
+          />
+          <SettingsRow
+            icon={Trash2}
+            title={t('account.deleteAccount')}
+            subtitle={t('account.deleteAccountSubtitle')}
+            destructive
+            onPress={() => router.push('/account/delete-account')}
+          />
+          <SettingsRow
+            icon={Shield}
+            title={t('account.privacyPolicy')}
+            subtitle={getPrivacyPolicyUrl() ? undefined : t('account.legalUnavailable')}
+            onPress={() =>
+              void openOptionalUrl(getPrivacyPolicyUrl(), t('account.legalUnavailable'))
+            }
+          />
+          <SettingsRow
+            icon={FileText}
+            title={t('account.terms')}
+            subtitle={getTermsOfServiceUrl() ? undefined : t('account.legalUnavailable')}
+            onPress={() =>
+              void openOptionalUrl(getTermsOfServiceUrl(), t('account.legalUnavailable'))
+            }
+          />
+        </SettingsSection>
+
+        <SettingsSection title={t('account.helpAbout')}>
+          <SettingsRow
+            icon={CircleHelp}
+            title={t('account.help')}
+            onPress={() => router.push('/(tabs)/help')}
+          />
+          <SettingsRow
+            icon={Info}
+            title={t('account.about')}
+            subtitle={t('account.version', { version })}
+            onPress={() => router.push('/account/about')}
+          />
+        </SettingsSection>
 
         {error ? (
           <Text variant="bodySmall" tone="error">
             {error}
           </Text>
-        ) : null}
-
-        {session ? (
-          <Button
-            label="Sign out"
-            variant="ghost"
-            loading={signingOut}
-            onPress={() => {
-              void handleSignOut();
-            }}
-          />
         ) : null}
       </View>
     </Screen>

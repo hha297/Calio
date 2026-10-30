@@ -40,6 +40,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
+import { radii, withAlpha } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 import { formatDiaryHeading, parseDiaryDateKey, toDiaryDateKey } from '@/utils/date';
 
@@ -405,7 +406,7 @@ function ProductHeader({
           <Image
             source={{ uri: food.imageUrl }}
             style={styles.productImage}
-            contentFit="contain"
+            contentFit="cover"
             onError={onImageError}
           />
         ) : (
@@ -416,14 +417,16 @@ function ProductHeader({
             </Text>
           </View>
         )}
-        <View className="flex-1 gap-1">
-          <Text variant="headingSmall">{food.name || t('scan.unnamedProduct')}</Text>
+        <View style={styles.productCopy}>
+          <Text variant="headingSmall" numberOfLines={3} ellipsizeMode="tail">
+            {food.name || t('scan.unnamedProduct')}
+          </Text>
           {food.brand ? (
-            <Text variant="bodySmall" tone="secondary">
+            <Text variant="bodySmall" tone="secondary" numberOfLines={2} ellipsizeMode="tail">
               {food.brand}
             </Text>
           ) : null}
-          <Text variant="caption" tone="primary">
+          <Text variant="caption" tone="brand" numberOfLines={1}>
             {basisLabel(food.basis, t)}
           </Text>
         </View>
@@ -492,10 +495,12 @@ function NutritionEditor({
           key={key}
           style={[
             styles.nutritionField,
-            { backgroundColor: colors.surfaceMuted, borderColor: `${color}66` },
+            { backgroundColor: colors.surfaceMuted },
           ]}
         >
-          <View style={[styles.nutritionIcon, { backgroundColor: `${color}18` }]}>{icon}</View>
+          <View style={[styles.nutritionIcon, { backgroundColor: withAlpha(color, 0.09) }]}>
+            {icon}
+          </View>
           <View className="flex-1">
             <Input
               label={t(`scan.${key}`)}
@@ -560,10 +565,12 @@ function NutritionDisplay({ t, food }: { t: T; food: CalioFood }) {
             key={key}
             style={[
               styles.nutritionDisplayRow,
-              { backgroundColor: `${color}12`, borderColor: `${color}55` },
+              { backgroundColor: colors.surfaceMuted },
             ]}
           >
-            <View style={[styles.nutritionIcon, { backgroundColor: `${color}1F` }]}>{icon}</View>
+            <View style={[styles.nutritionIcon, { backgroundColor: withAlpha(color, 0.12) }]}>
+              {icon}
+            </View>
             <Text variant="bodyStrong" style={styles.nutritionLabel}>
               {t(`scan.${key}`)}
             </Text>
@@ -677,7 +684,7 @@ function TotalCell({
     <View
       style={[
         styles.totalCell,
-        { backgroundColor: colors.surfaceMuted, borderColor: `${color}66` },
+        { backgroundColor: colors.surfaceMuted },
       ]}
     >
       <View className="flex-row items-center gap-2">
@@ -842,13 +849,14 @@ export function FoodLogContextPicker({
             style={[
               styles.mealButton,
               {
-                borderColor: mealType === meal ? colors.primary : colors.border,
-                backgroundColor: mealType === meal ? colors.primaryMuted : colors.surface,
+                borderColor: mealType === meal ? colors.primary : 'transparent',
+                borderWidth: mealType === meal ? 1 : 0,
+                backgroundColor: mealType === meal ? colors.primaryMuted : colors.surfaceMuted,
               },
             ]}
           >
             <Text variant="bodySmall" tone={mealType === meal ? 'primary' : 'secondary'}>
-              {t(`scan.meals.${meal}`)}
+              {t(`meals.${meal}`)}
             </Text>
           </Pressable>
         ))}
@@ -1016,52 +1024,73 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 22,
+    borderRadius: radii.pill,
   },
   content: { padding: 16, paddingBottom: 32 },
   formStack: { gap: 16 },
   state: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingVertical: 48 },
-  productRow: { flexDirection: 'row', gap: 14 },
-  productImage: { width: 104, height: 104, borderRadius: 16 },
+  productRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  productImage: {
+    width: 96,
+    height: 96,
+    borderRadius: radii.md,
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   imagePlaceholder: {
-    width: 104,
-    height: 104,
+    width: 96,
+    height: 96,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    borderRadius: 16,
+    borderRadius: radii.md,
+    flexGrow: 0,
+    flexShrink: 0,
+    paddingHorizontal: 8,
   },
-  segmented: { minHeight: 46, flexDirection: 'row', gap: 4, padding: 4, borderRadius: 14 },
-  segment: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
-  segmentActive: { borderWidth: 1 },
+  productCopy: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    gap: 6,
+    paddingTop: 2,
+  },
+  segmented: { minHeight: 40, flexDirection: 'row', gap: 4, padding: 4, borderRadius: radii.pill },
+  segment: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
+  segmentActive: { borderWidth: 0 },
   totalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  totalCell: { width: '48%', gap: 2, borderWidth: 1, borderRadius: 12, padding: 10 },
+  totalCell: { width: '48%', gap: 2, borderWidth: 0, borderRadius: radii.md, padding: 10 },
   nutritionField: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 10,
+    gap: 8,
+    borderWidth: 0,
+    borderRadius: radii.md,
+    padding: 8,
   },
   nutritionGrid: { gap: 8 },
   nutritionDisplayRow: {
-    minHeight: 64,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: 0,
+    borderRadius: radii.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   nutritionLabel: { flex: 1 },
   nutritionIcon: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: radii.md,
   },
   dateRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   dateButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
@@ -1072,10 +1101,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: radii.pill,
     paddingHorizontal: 14,
   },
-  calendar: { gap: 10, borderWidth: 1, borderRadius: 16, padding: 10 },
+  calendar: { gap: 10, borderWidth: 0, borderRadius: radii.md, padding: 10 },
   calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   calendarNav: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
@@ -1087,7 +1116,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 999,
+    borderRadius: radii.pill,
   },
   mealGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   mealButton: {
@@ -1095,8 +1124,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radii.pill,
   },
-  mealButtonActive: { borderWidth: 2 },
+  mealButtonActive: { borderWidth: 0 },
 });

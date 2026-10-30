@@ -20,6 +20,14 @@ export const LANGUAGE_LABELS: Record<AppLanguage, string> = {
   vi: 'Tiếng Việt',
 };
 
+/** Regional flags for language pickers (GB / FI / SE / VN). */
+export const LANGUAGE_FLAGS: Record<AppLanguage, string> = {
+  en: '\u{1F1EC}\u{1F1E7}',
+  fi: '\u{1F1EB}\u{1F1EE}',
+  sv: '\u{1F1F8}\u{1F1EA}',
+  vi: '\u{1F1FB}\u{1F1F3}',
+};
+
 const LANGUAGE_KEY = 'calio.language';
 
 function deviceLanguage(): AppLanguage {
@@ -29,6 +37,8 @@ function deviceLanguage(): AppLanguage {
   }
   return 'en';
 }
+
+const localeBundles: Record<AppLanguage, typeof en> = { en, fi, sv, vi };
 
 if (!i18next.isInitialized) {
   void i18next.use(initReactI18next).init({
@@ -44,6 +54,11 @@ if (!i18next.isInitialized) {
     supportedLngs: [...SUPPORTED_LANGUAGES],
     interpolation: { escapeValue: false },
   });
+} else {
+  // Fast Refresh can leave i18next initialized with a stale bundle; re-merge locales.
+  for (const lng of SUPPORTED_LANGUAGES) {
+    i18next.addResourceBundle(lng, 'translation', localeBundles[lng], true, true);
+  }
 }
 
 if (typeof window !== 'undefined') {

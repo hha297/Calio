@@ -8,15 +8,14 @@ import {
   type PressableProps,
 } from 'react-native';
 
-import { typography } from '@/theme';
+import { layout, radii, spacing } from '@/theme';
 import { fonts } from '@/theme/fonts';
 import { useThemeColors } from '@/theme/theme-provider';
-import { brand } from '@/theme/themes';
 
 /** @deprecated Use `text` — kept for existing call sites. */
 type LegacyGhost = 'ghost';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'text' | LegacyGhost;
+export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'destructive' | LegacyGhost;
 type ButtonSize = 'md' | 'lg';
 
 type ButtonProps = Omit<PressableProps, 'children' | 'style' | 'className'> & {
@@ -24,15 +23,13 @@ type ButtonProps = Omit<PressableProps, 'children' | 'style' | 'className'> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
-  /** Optional leading icon (same color as the label). */
+  fullWidth?: boolean;
   iconStart?: (color: string) => ReactNode;
-  /** Optional trailing icon (same color as the label). */
   iconEnd?: (color: string) => ReactNode;
-  /** NativeWind: use raw Pressable so theme backgroundColor is not stripped. */
   cssInterop?: false;
 };
 
-type ResolvedVariant = 'primary' | 'secondary' | 'text';
+type ResolvedVariant = 'primary' | 'secondary' | 'text' | 'destructive';
 
 function resolveVariant(variant: ButtonVariant): ResolvedVariant {
   if (variant === 'ghost') return 'text';
@@ -40,14 +37,14 @@ function resolveVariant(variant: ButtonVariant): ResolvedVariant {
 }
 
 /**
- * Theme-driven buttons. NativeWind cssInterop is disabled on Pressable (see wrap-jsx).
- * Primary fill is painted on an inner View so green CTAs stay visible on all platforms.
+ * Replicate-style pill buttons (DESIGN.MD). Primary = `#00D95F` on ink.
  */
 export function Button({
   label,
   variant = 'primary',
   size = 'md',
   loading = false,
+  fullWidth = true,
   disabled,
   iconStart,
   iconEnd,
@@ -56,14 +53,15 @@ export function Button({
   const colors = useThemeColors();
   const resolved = resolveVariant(variant);
   const isDisabled = Boolean(disabled || loading);
-  const radius = size === 'lg' ? 16 : 8;
+  const radius = radii.pill;
+  const labelSize = size === 'lg' ? styles.labelLg : styles.labelMd;
 
   const palette = (pressed: boolean) => {
     if (isDisabled) {
       return {
         backgroundColor: colors.buttonDisabledBackground,
         borderColor: colors.buttonDisabledBackground,
-        borderWidth: resolved === 'secondary' ? 1 : 0,
+        borderWidth: 0,
         labelColor: colors.buttonDisabledText,
         spinnerColor: colors.buttonDisabledText,
       };
@@ -74,18 +72,28 @@ export function Button({
         backgroundColor: pressed ? colors.primaryPressed : colors.primary,
         borderColor: colors.primary,
         borderWidth: 0,
-        labelColor: brand.darkBackground,
-        spinnerColor: brand.darkBackground,
+        labelColor: colors.textOnPrimary,
+        spinnerColor: colors.textOnPrimary,
       };
     }
 
     if (resolved === 'secondary') {
       return {
-        backgroundColor: pressed ? colors.primaryMuted : colors.surface,
-        borderColor: colors.primary,
+        backgroundColor: pressed ? colors.surfaceMuted : colors.surface,
+        borderColor: colors.borderStrong,
         borderWidth: 1,
-        labelColor: colors.primary,
-        spinnerColor: colors.primary,
+        labelColor: colors.textPrimary,
+        spinnerColor: colors.textPrimary,
+      };
+    }
+
+    if (resolved === 'destructive') {
+      return {
+        backgroundColor: pressed ? colors.errorMuted : 'transparent',
+        borderColor: colors.error,
+        borderWidth: 1,
+        labelColor: colors.error,
+        spinnerColor: colors.error,
       };
     }
 
@@ -99,7 +107,7 @@ export function Button({
   };
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, fullWidth ? styles.wrapFull : styles.wrapInline]}>
       <Pressable
         {...props}
         cssInterop={false}
@@ -107,7 +115,11 @@ export function Button({
         accessibilityLabel={label}
         accessibilityState={{ disabled: isDisabled, busy: loading }}
         disabled={isDisabled}
-        style={[styles.base, size === 'lg' ? styles.lg : styles.md]}
+        style={[
+          styles.base,
+          fullWidth ? styles.baseFull : styles.baseInline,
+          size === 'lg' ? styles.lg : styles.md,
+        ]}
       >
         {({ pressed }) => {
           const p = palette(pressed);
@@ -130,7 +142,9 @@ export function Button({
               ) : (
                 <View style={styles.content}>
                   {iconStart?.(p.labelColor)}
-                  <RNText style={[styles.label, { color: p.labelColor }]}>{label}</RNText>
+                  <RNText style={[styles.label, labelSize, { color: p.labelColor }]}>
+                    {label}
+                  </RNText>
                   {iconEnd?.(p.labelColor)}
                 </View>
               )}
@@ -144,36 +158,54 @@ export function Button({
 
 const styles = StyleSheet.create({
   wrap: {
-    width: '100%',
     alignSelf: 'stretch',
   },
-  base: {
+  wrapFull: {
     width: '100%',
+  },
+  wrapInline: {
+    width: undefined,
+    alignSelf: 'center',
+  },
+  base: {
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     position: 'relative',
   },
+  baseFull: {
+    width: '100%',
+  },
+  baseInline: {
+    width: undefined,
+    paddingHorizontal: spacing[3],
+  },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing[2],
   },
   md: {
-    minHeight: 48,
-    borderRadius: 8,
-    paddingHorizontal: 16,
+    minHeight: layout.controlMinHeight,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing[6],
   },
   lg: {
-    minHeight: 56,
-    borderRadius: 16,
-    paddingHorizontal: 20,
+    minHeight: 52,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing[6],
   },
   label: {
-    fontFamily: fonts.ibmSemiBold,
-    fontSize: typography.button.size,
-    lineHeight: typography.button.lineHeight,
+    fontFamily: fonts.bodySemiBold,
     textAlign: 'center',
+  },
+  labelMd: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  labelLg: {
+    fontSize: 17,
+    lineHeight: 22,
   },
 });

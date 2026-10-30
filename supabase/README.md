@@ -35,3 +35,17 @@ When a user-owned table is added:
 Do not put the service-role key, database password, or other secrets in the mobile app or in this directory.
 
 `functions/` is for Edge Functions that must run with server-only credentials. `seed/` is for local development data.
+
+## Account deletion
+
+`functions/delete-account` deletes the authenticated Auth user (Postgres cascades wipe owned rows). Deploy with JWT verification enabled:
+
+```bash
+npx supabase functions deploy delete-account
+```
+
+The mobile app calls it with the user session; the function uses the service role only on the server.
+
+## Profile avatar
+
+Migration `20261029210000_profile_avatar.sql` adds `profiles.avatar_url` (HTTPS URL). Images are uploaded via the same unsigned Cloudinary preset as food photos (`calio/avatars` folder).
