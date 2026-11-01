@@ -1,5 +1,7 @@
-/** Max avatar file size (client gate). */
-export const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
+import { MAX_USER_IMAGE_SIZE_BYTES } from '@/lib/media/image-upload-limits';
+
+/** Max avatar file size (client gate) — aligned with food/custom exercise uploads. */
+export const MAX_AVATAR_SIZE_BYTES = MAX_USER_IMAGE_SIZE_BYTES;
 
 export const AVATAR_FOLDER = 'calio/avatars';
 

@@ -8,6 +8,8 @@ export type WorkoutCategory =
   | 'Sports'
   | 'Other';
 
+export type ExerciseDifficulty = 'beginner' | 'intermediate' | 'advanced';
+
 export type Exercise = {
   id: string;
   name: string;
@@ -16,8 +18,19 @@ export type Exercise = {
   secondary_muscles?: string[];
   equipment: string | null;
   exercise_type: ExerciseType;
+  movement_pattern?: string | null;
   instructions: string | null;
   description?: string | null;
+  tips?: string | null;
+  common_mistakes?: string | null;
+  safety_notes?: string | null;
+  difficulty?: ExerciseDifficulty | null;
+  image_key?: string | null;
+  image_storage_path?: string | null;
+  image_url?: string | null;
+  slug?: string | null;
+  content_version?: number | null;
+  library_paths?: string[];
   met_value: number | null;
   is_system: boolean;
   user_id: string | null;
@@ -40,6 +53,8 @@ export type WorkoutTemplate = {
   description: string | null;
   is_system: boolean;
   user_id: string | null;
+  /** Optional cover key resolved via template-assets local map */
+  image_key?: string | null;
 };
 
 export type WorkoutTemplateExercise = {
@@ -53,11 +68,19 @@ export type WorkoutTemplateExercise = {
   planned_reps: number | null;
   planned_weight_kg: number | null;
   notes: string | null;
+  image_storage_path?: string | null;
+  image_url?: string | null;
+  image_key?: string | null;
+  slug?: string | null;
 };
+
+export type ExerciseEstimateMethod = 'direct' | 'allocated';
 
 export type WorkoutDetail = WorkoutListItem & {
   notes: string | null;
   source_template_id: string | null;
+  calorie_calc_version?: number | null;
+  calorie_body_weight_kg?: number | null;
   exercises: {
     id: string;
     exercise_id: string | null;
@@ -65,6 +88,12 @@ export type WorkoutDetail = WorkoutListItem & {
     exercise_name: string;
     exercise_type: ExerciseType;
     notes: string | null;
+    estimated_calories?: number | null;
+    estimate_method?: ExerciseEstimateMethod | null;
+    estimate_calc_version?: number | null;
+    estimate_duration_sec?: number | null;
+    estimate_activity_key?: string | null;
+    estimate_body_weight_kg?: number | null;
     sets: {
       id: string;
       set_number: number;

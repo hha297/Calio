@@ -39,6 +39,13 @@ EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
 Never put the service-role key, database password, or Cloudinary API secret in the app.
 Food images and profile avatars use an **unsigned** Cloudinary upload preset only (no API secret on device).
 Avatars are stored under the Cloudinary folder `calio/avatars`; only the HTTPS URL is saved on `profiles.avatar_url`.
+Food, avatar, and custom-exercise uploads are gated to **1 MB** on the client.
+
+### System exercise images
+
+System exercises are backed by artwork under `assets/images/workout/exercises/` and served from the public Supabase Storage bucket `exercise-images` via `exercises.image_storage_path`. Custom exercises keep Cloudinary `image_url`.
+
+Apply migration `20261101120000_exercise_images_storage.sql` if the bucket/columns are missing.
 
 `.env.local` is gitignored and remains the default Cloud configuration. Expo reads
 environment variables already set in the terminal before values from `.env.local`,

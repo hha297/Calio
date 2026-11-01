@@ -113,7 +113,6 @@ export default function CreateTemplateScreen() {
         </Text>
         <Button
           label={t('workout.addExercise')}
-          variant="secondary"
           onPress={() => {
             if (!useActiveWorkoutStore.getState().startedAt) {
               useActiveWorkoutStore.getState().start({ name: name || t('workout.defaultName') });

@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { parseISO } from 'date-fns';
 
 import { useAuth } from '@/features/auth/auth-provider';
@@ -17,7 +22,8 @@ import {
   finishWorkoutSession,
   toggleExerciseFavorite,
 } from '@/features/workout/api';
-import { estimateExerciseCalories, totalVolumeKg } from '@/features/workout/calculations';
+import { totalVolumeKg } from '@/features/workout/calculations';
+import { estimateWorkoutCalories } from '@/features/workout/exercise-calorie-engine';
 import type { ExerciseType } from '@/features/workout/types';
 import type { DraftExercise } from '@/stores/active-workout-store';
 
@@ -28,6 +34,10 @@ export function useExercises(input: {
   category?: string | null;
   exerciseType?: ExerciseType | null;
   muscle?: string | null;
+  libraryPath?: string | null;
+  equipment?: string | null;
+  difficulty?: string | null;
+  enabled?: boolean;
 } = {}) {
   return useQuery({
     queryKey: [
@@ -36,14 +46,36 @@ export function useExercises(input: {
       input.category ?? '',
       input.exerciseType ?? '',
       input.muscle ?? '',
+      input.libraryPath ?? '',
+      input.equipment ?? '',
+      input.difficulty ?? '',
     ],
+    enabled: input.enabled ?? true,
     queryFn: () =>
       fetchExercises({
         search: input.search,
         category: input.category,
         exerciseType: input.exerciseType,
         muscle: input.muscle,
+        libraryPath: input.libraryPath,
+        equipment: input.equipment,
+        difficulty: input.difficulty,
       }),
+    // API catalog — keep warm while browsing filters / navigating nearby screens.
+    staleTime: 5 * 60_000,
+    // Keep prior list visible while a different key loads — avoids empty flash.
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useExerciseDetail(id: string | null) {
+  return useQuery({
+    queryKey: ['exercises', 'detail', id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const { fetchExerciseById } = await import('@/features/workout/api');
+      return fetchExerciseById(id!);
+    },
   });
 }
 
@@ -66,7 +98,24 @@ export function useToggleExerciseFavorite() {
       if (!userId) throw new Error('Sign in required.');
       await toggleExerciseFavorite({ userId, ...input });
     },
-    onSuccess: async () => {
+    onMutate: async (input) => {
+      const userId = session?.user.id;
+      if (!userId) return;
+      const key = ['exercise-favorites', userId] as const;
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<string[]>(key) ?? [];
+      const next = input.favorite
+        ? [...new Set([...previous, input.exerciseId])]
+        : previous.filter((id) => id !== input.exerciseId);
+      queryClient.setQueryData(key, next);
+      return { previous, key };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.key) {
+        queryClient.setQueryData(context.key, context.previous);
+      }
+    },
+    onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ['exercise-favorites'] });
     },
   });
@@ -84,6 +133,7 @@ export function useCreateCustomExercise() {
       equipment?: string | null;
       description?: string | null;
       instructions?: string | null;
+      imageUrl?: string | null;
     }) => {
       const userId = session?.user.id;
       if (!userId) throw new Error('Sign in required.');
@@ -226,26 +276,33 @@ export function useFinishWorkout() {
       const endedAt = new Date().toISOString();
       const durationMin = Math.max(1, Math.round(input.activeDurationSec / 60));
 
-      let estimated = 0;
-      for (const exercise of input.exercises) {
-        const durationFromSets = exercise.sets.reduce(
-          (sum, set) => sum + (Number(set.durationSec) || 0),
-          0,
-        );
-        const minutes =
-          exercise.exerciseType === 'cardio' || exercise.exerciseType === 'other'
-            ? Math.max(
-                1,
-                Math.round(durationFromSets / 60) ||
-                  durationMin / Math.max(input.exercises.length, 1),
-              )
-            : durationMin / Math.max(input.exercises.length, 1);
-        estimated += estimateExerciseCalories({
-          met: exercise.metValue ?? (exercise.exerciseType === 'cardio' ? 7 : 5),
-          bodyWeightKg: input.bodyWeightKg || 70,
-          durationMin: minutes,
-        });
+      if (!(input.bodyWeightKg > 0)) {
+        throw new Error('BODY_WEIGHT_REQUIRED');
       }
+
+      // Exercise-level estimates → session total = sum (no second full-session pass).
+      const workoutEstimate = estimateWorkoutCalories({
+        activeDurationSec: input.activeDurationSec,
+        bodyWeightKg: input.bodyWeightKg,
+        exercises: input.exercises.map((exercise) => ({
+          localId: exercise.localId,
+          name: exercise.name,
+          exerciseType: exercise.exerciseType,
+          metValue: exercise.metValue,
+          sets: exercise.sets.map((set) => ({
+            weightKg: set.weightKg ? Number(set.weightKg) : null,
+            reps: set.reps ? Number(set.reps) : null,
+            durationSec: set.durationSec ? Number(set.durationSec) : null,
+            distanceM: set.distanceM ? Number(set.distanceM) : null,
+            restSec: set.restSec ? Number(set.restSec) : null,
+            completed: set.completed,
+          })),
+        })),
+      });
+      const byLocalId = new Map(
+        workoutEstimate.exercises.map((row) => [row.localId, row] as const),
+      );
+      const estimated = workoutEstimate.totalEstimatedCalories;
 
       const { workoutId } = await finishWorkoutSession({
         userId,
@@ -256,22 +313,33 @@ export function useFinishWorkout() {
         notes: input.notes,
         sourceTemplateId: input.sourceTemplateId,
         estimatedCalories: estimated,
-        exercises: input.exercises.map((exercise) => ({
-          exerciseId: exercise.exerciseId,
-          name: exercise.name,
-          exerciseType: exercise.exerciseType,
-          notes: exercise.notes || null,
-          sets: exercise.sets.map((set) => ({
-            setNumber: set.setNumber,
-            weightKg: set.weightKg ? Number(set.weightKg) : null,
-            reps: set.reps ? Number(set.reps) : null,
-            durationSec: set.durationSec ? Number(set.durationSec) : null,
-            distanceM: set.distanceM ? Number(set.distanceM) : null,
-            restSec: set.restSec ? Number(set.restSec) : null,
-            completed: set.completed,
-            notes: set.notes || null,
-          })),
-        })),
+        calorieCalcVersion: workoutEstimate.calcVersion,
+        calorieBodyWeightKg: workoutEstimate.bodyWeightKg,
+        exercises: input.exercises.map((exercise) => {
+          const row = byLocalId.get(exercise.localId);
+          return {
+            exerciseId: exercise.exerciseId,
+            name: exercise.name,
+            exerciseType: exercise.exerciseType,
+            notes: exercise.notes || null,
+            estimatedCalories: row?.estimatedCalories ?? 0,
+            estimateMethod: row?.method ?? null,
+            estimateCalcVersion: row?.calcVersion ?? null,
+            estimateDurationSec: row?.durationSec ?? null,
+            estimateActivityKey: row?.activityKey ?? null,
+            estimateBodyWeightKg: row?.bodyWeightKg ?? null,
+            sets: exercise.sets.map((set) => ({
+              setNumber: set.setNumber,
+              weightKg: set.weightKg ? Number(set.weightKg) : null,
+              reps: set.reps ? Number(set.reps) : null,
+              durationSec: set.durationSec ? Number(set.durationSec) : null,
+              distanceM: set.distanceM ? Number(set.distanceM) : null,
+              restSec: set.restSec ? Number(set.restSec) : null,
+              completed: set.completed,
+              notes: set.notes || null,
+            })),
+          };
+        }),
       });
 
       const volume = totalVolumeKg(
@@ -290,6 +358,9 @@ export function useFinishWorkout() {
         estimated: Math.round(estimated),
         volume,
         durationMin,
+        intensity: workoutEstimate.intensity,
+        bodyWeightKg: workoutEstimate.bodyWeightKg,
+        exerciseEstimates: workoutEstimate.exercises,
         endedAt,
         startedAt: input.startedAt,
       };

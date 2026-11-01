@@ -8,9 +8,9 @@ import {
 } from './food-image';
 
 describe('food image validation', () => {
-  it('exposes a 10 MB size limit', () => {
-    expect(MAX_FOOD_IMAGE_SIZE_BYTES).toBe(10 * 1024 * 1024);
-    expect(formatFoodImageSizeLimit()).toBe('10 MB');
+  it('exposes a 1 MB size limit', () => {
+    expect(MAX_FOOD_IMAGE_SIZE_BYTES).toBe(1 * 1024 * 1024);
+    expect(formatFoodImageSizeLimit()).toBe('1 MB');
   });
 
   it('normalizes mime types from uri when missing', () => {
@@ -36,7 +36,7 @@ describe('food image validation', () => {
         mimeType: 'image/jpeg',
         fileSize: MAX_FOOD_IMAGE_SIZE_BYTES + 1,
       }),
-    ).toThrow(/10 MB/);
+    ).toThrow(/1 MB/);
   });
 
   it('rejects unsupported formats', () => {

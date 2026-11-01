@@ -32,8 +32,8 @@ describe('validateAvatarSelection', () => {
       validateAvatarSelection({
         uri: 'file:///big.jpg',
         mimeType: 'image/jpeg',
-        fileSize: 6 * 1024 * 1024,
+        fileSize: 2 * 1024 * 1024,
       }),
-    ).toThrow(/5 MB/);
+    ).toThrow(/1 MB/);
   });
 });

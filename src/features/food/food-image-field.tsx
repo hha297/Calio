@@ -24,7 +24,7 @@ type FoodImageFieldProps = {
 
 /**
  * Single food image picker for Create Food.
- * One image only · max 10 MB · library pick · local preview.
+ * One image only · max 1 MB · library pick · local preview.
  */
 export function FoodImageField({
   value,

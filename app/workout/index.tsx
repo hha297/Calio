@@ -1,23 +1,23 @@
 import { formatDistanceToNow } from 'date-fns';
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
-import { Image, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { Image, Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Screen } from '@/components/ui/screen';
-import { Text } from '@/components/ui/text';
 import { LoadingState } from '@/components/ui/states';
+import { Text } from '@/components/ui/text';
 import {
   WORKOUT_CATEGORY_IMAGES,
   WORKOUT_IMAGE_CATEGORIES,
 } from '@/features/workout/category-assets';
 import { formatElapsed, useWorkouts } from '@/features/workout/hooks';
+import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 import { radii, withAlpha } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
-import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 
 export default function WorkoutHomeScreen() {
   const { t } = useTranslation();
@@ -72,8 +72,8 @@ export default function WorkoutHomeScreen() {
                   accessibilityLabel={t(`workout.category.${item}`)}
                   onPress={() =>
                     router.push({
-                      pathname: '/workout/exercises',
-                      params: { category: item },
+                      pathname: '/workout/library',
+                      params: { top: item },
                     })
                   }
                   className="overflow-hidden"
