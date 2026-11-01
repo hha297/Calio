@@ -100,9 +100,10 @@ export function estimateWorkoutKcalPerDay(input: {
   if (input.exerciseType === 'none' || input.sessionsPerWeek <= 0 || input.sessionMinutes <= 0) {
     return 0;
   }
+  // ACSM net active kcal so lifestyle TDEE (already includes BMR) is not double-counted.
   const met = INTENSITY_MET[input.intensity];
-  const hours = input.sessionMinutes / 60;
-  const perSession = met * input.weightKg * hours;
+  const netMet = Math.max(0, met - 1);
+  const perSession = (netMet * 3.5 * input.weightKg * input.sessionMinutes) / 200;
   return Math.round((perSession * input.sessionsPerWeek) / 7);
 }
 

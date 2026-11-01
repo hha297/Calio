@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { Screen } from '@/components/ui/screen';
 import { ErrorState, LoadingState } from '@/components/ui/states';
 import type { MacroTotals } from '@/features/diary/balance';
@@ -58,6 +59,7 @@ export default function DiaryScreen() {
   const burnQuery = useDayWorkoutCalories(dateKey);
   const workoutsQuery = useDayWorkouts(dateKey);
   const deleteEntry = useDeleteFoodEntry();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const foodReady = foodQuery.isSuccess || foodQuery.isError;
   const workoutsReady = workoutsQuery.isSuccess || workoutsQuery.isError;
@@ -151,13 +153,29 @@ export default function DiaryScreen() {
               totals={viewTotals}
               burned={viewBurned}
               workouts={viewWorkouts}
-              onDeleteEntry={(id) => {
-                void deleteEntry.mutateAsync({ id, dateKey: viewDateKey });
-              }}
+              onDeleteEntry={(id) => setPendingDeleteId(id)}
             />
           </View>
         ) : null}
       </View>
+
+      <DeleteConfirmDialog
+        visible={pendingDeleteId != null}
+        title={t('diary.meals.deleteTitle')}
+        body={t('diary.meals.deleteBody')}
+        cancelLabel={t('diary.meals.deleteCancel')}
+        confirmLabel={t('diary.meals.deleteConfirm')}
+        loading={deleteEntry.isPending}
+        onCancel={() => {
+          if (!deleteEntry.isPending) setPendingDeleteId(null);
+        }}
+        onConfirm={() => {
+          if (!pendingDeleteId) return;
+          void deleteEntry
+            .mutateAsync({ id: pendingDeleteId, dateKey: viewDateKey })
+            .then(() => setPendingDeleteId(null));
+        }}
+      />
     </Screen>
   );
 }

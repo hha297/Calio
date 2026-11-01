@@ -2,9 +2,10 @@ import { router } from 'expo-router';
 import { Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useDeleteAccount } from '@/features/account/hooks';
@@ -18,28 +19,7 @@ export default function DeleteAccountScreen() {
   const colors = useThemeColors();
   const deleteAccount = useDeleteAccount();
   const [error, setError] = useState<string | null>(null);
-
-  function confirmDelete() {
-    setError(null);
-    Alert.alert(t('account.deleteConfirmTitle'), t('account.deleteConfirmBody'), [
-      { text: t('account.cancel'), style: 'cancel' },
-      {
-        text: t('account.deleteConfirmAction'),
-        style: 'destructive',
-        onPress: () => {
-          void (async () => {
-            try {
-              await deleteAccount.mutateAsync();
-              router.replace('/(auth)/sign-in');
-            } catch (err) {
-              reportError(err, { area: 'account', action: 'delete-account' });
-              setError(err instanceof Error ? err.message : toAuthErrorMessage(err));
-            }
-          })();
-        },
-      },
-    ]);
-  }
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <Screen scroll edges={['top', 'bottom', 'left', 'right']}>
@@ -70,7 +50,10 @@ export default function DeleteAccountScreen() {
             loading={deleteAccount.isPending}
             disabled={deleteAccount.isPending}
             iconStart={(color) => <Trash2 size={18} color={color} />}
-            onPress={confirmDelete}
+            onPress={() => {
+              setError(null);
+              setConfirmOpen(true);
+            }}
           />
           {error ? (
             <Text variant="bodySmall" tone="error">
@@ -79,6 +62,31 @@ export default function DeleteAccountScreen() {
           ) : null}
         </View>
       </View>
+
+      <DeleteConfirmDialog
+        visible={confirmOpen}
+        title={t('account.deleteConfirmTitle')}
+        body={t('account.deleteConfirmBody')}
+        cancelLabel={t('account.cancel')}
+        confirmLabel={t('account.deleteConfirmAction')}
+        loading={deleteAccount.isPending}
+        onCancel={() => {
+          if (!deleteAccount.isPending) setConfirmOpen(false);
+        }}
+        onConfirm={() => {
+          void (async () => {
+            try {
+              await deleteAccount.mutateAsync();
+              setConfirmOpen(false);
+              router.replace('/(auth)/sign-in');
+            } catch (err) {
+              reportError(err, { area: 'account', action: 'delete-account' });
+              setConfirmOpen(false);
+              setError(err instanceof Error ? err.message : toAuthErrorMessage(err));
+            }
+          })();
+        }}
+      />
     </Screen>
   );
 }

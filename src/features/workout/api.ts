@@ -1,3 +1,5 @@
+import { expandLibraryPaths } from '@/features/workout/catalog/library-path-aliases';
+import { dedupeMuscleList } from '@/features/workout/exercise-display';
 import { getSupabase } from '@/lib/supabase/client';
 
 import type {
@@ -10,22 +12,45 @@ import type {
 } from './types';
 
 const EXERCISE_SELECT =
-  'id, name, category, primary_muscles, secondary_muscles, equipment, exercise_type, instructions, description, met_value, is_system, user_id';
+  'id, name, category, primary_muscles, secondary_muscles, equipment, exercise_type, movement_pattern, instructions, description, tips, common_mistakes, safety_notes, difficulty, image_key, image_storage_path, image_url, slug, content_version, library_paths, met_value, is_system, user_id';
 
+function normalizeExerciseFields(exercise: Exercise): Exercise {
+  const primary = dedupeMuscleList(exercise.primary_muscles);
+  const secondary = dedupeMuscleList(exercise.secondary_muscles).filter(
+    (m) => !primary.includes(m),
+  );
+  return {
+    ...exercise,
+    primary_muscles: primary,
+    secondary_muscles: secondary,
+    library_paths: [...new Set(exercise.library_paths ?? [])],
+  };
+}
+
+function requireSupabase() {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase is not configured.');
+  return supabase;
+}
+
+/** Exercise catalog is API-only — no bundled local seed merge. */
 export async function fetchExercises(input: {
   search?: string;
   category?: string | null;
   exerciseType?: ExerciseType | null;
   muscle?: string | null;
+  libraryPath?: string | null;
+  equipment?: string | null;
+  difficulty?: string | null;
   limit?: number;
 }): Promise<Exercise[]> {
-  const supabase = getSupabase();
-  if (!supabase) return [];
+  const supabase = requireSupabase();
+
   let query = supabase
     .from('exercises')
     .select(EXERCISE_SELECT)
     .order('name')
-    .limit(input.limit ?? 80);
+    .limit(input.limit ?? 500);
   if (input.search?.trim()) {
     query = query.ilike('name', `%${input.search.trim()}%`);
   }
@@ -38,9 +63,36 @@ export async function fetchExercises(input: {
   if (input.muscle) {
     query = query.contains('primary_muscles', [input.muscle]);
   }
+  const libraryPathAliases = expandLibraryPaths(input.libraryPath);
+  if (libraryPathAliases.length === 1) {
+    query = query.contains('library_paths', [libraryPathAliases[0]!]);
+  } else if (libraryPathAliases.length > 1) {
+    query = query.or(
+      libraryPathAliases.map((path) => `library_paths.cs.{"${path}"}`).join(','),
+    );
+  }
+  if (input.equipment) {
+    query = query.eq('equipment', input.equipment);
+  }
+  if (input.difficulty) {
+    query = query.eq('difficulty', input.difficulty);
+  }
+
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []) as Exercise[];
+  return ((data ?? []) as Exercise[]).map(normalizeExerciseFields);
+}
+
+export async function fetchExerciseById(id: string): Promise<Exercise | null> {
+  if (!id || id.startsWith('local:')) return null;
+  const supabase = requireSupabase();
+  const { data, error } = await supabase
+    .from('exercises')
+    .select(EXERCISE_SELECT)
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? normalizeExerciseFields(data as Exercise) : null;
 }
 
 export async function createCustomExercise(input: {
@@ -54,6 +106,7 @@ export async function createCustomExercise(input: {
   description?: string | null;
   instructions?: string | null;
   metValue?: number | null;
+  imageUrl?: string | null;
 }): Promise<Exercise> {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase is not configured.');
@@ -70,6 +123,7 @@ export async function createCustomExercise(input: {
       description: input.description ?? null,
       instructions: input.instructions ?? null,
       met_value: input.metValue ?? null,
+      image_url: input.imageUrl ?? null,
       is_system: false,
     })
     .select(EXERCISE_SELECT)
@@ -132,8 +186,10 @@ export async function toggleExerciseFavorite(input: {
   exerciseId: string;
   favorite: boolean;
 }): Promise<void> {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error('Supabase is not configured.');
+  if (!input.exerciseId || input.exerciseId.startsWith('local:')) {
+    throw new Error('Favorites require a server exercise id.');
+  }
+  const supabase = requireSupabase();
   if (input.favorite) {
     const { error } = await supabase.from('exercise_favorites').upsert({
       user_id: input.userId,
@@ -155,10 +211,19 @@ export async function fetchWorkoutTemplates(): Promise<WorkoutTemplate[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('workout_templates')
-    .select('id, name, category, description, is_system, user_id')
+    .select('id, name, category, description, is_system, user_id, image_key')
     .order('is_system', { ascending: false })
     .order('name');
-  if (error) throw error;
+  if (error) {
+    // Older DBs without image_key — fall back so the UI still loads.
+    const legacy = await supabase
+      .from('workout_templates')
+      .select('id, name, category, description, is_system, user_id')
+      .order('is_system', { ascending: false })
+      .order('name');
+    if (legacy.error) throw legacy.error;
+    return (legacy.data ?? []) as WorkoutTemplate[];
+  }
   return (data ?? []) as WorkoutTemplate[];
 }
 
@@ -170,12 +235,35 @@ export async function fetchTemplateExercises(
   const { data, error } = await supabase
     .from('workout_template_exercises')
     .select(
-      'id, template_id, exercise_id, position, exercise_name, exercise_type, planned_sets, planned_reps, planned_weight_kg, notes',
+      `id, template_id, exercise_id, position, exercise_name, exercise_type, planned_sets, planned_reps, planned_weight_kg, notes,
+       exercise:exercises ( image_storage_path, image_url, image_key, slug )`,
     )
     .eq('template_id', templateId)
     .order('position');
   if (error) throw error;
-  return (data ?? []) as WorkoutTemplateExercise[];
+
+  const rows = (data ?? []) as Array<
+    WorkoutTemplateExercise & {
+      exercise?: {
+        image_storage_path?: string | null;
+        image_url?: string | null;
+        image_key?: string | null;
+        slug?: string | null;
+      } | null;
+    }
+  >;
+
+  return rows.map((row) => {
+    const joined = row.exercise;
+    const { exercise: _exercise, ...rest } = row;
+    return {
+      ...rest,
+      image_storage_path: joined?.image_storage_path ?? null,
+      image_url: joined?.image_url ?? null,
+      image_key: joined?.image_key ?? null,
+      slug: joined?.slug ?? null,
+    };
+  });
 }
 
 export async function createWorkoutTemplate(input: {
@@ -256,7 +344,7 @@ export async function fetchWorkoutDetail(id: string, userId: string): Promise<Wo
   const { data: workout, error } = await supabase
     .from('workouts')
     .select(
-      'id, name, started_at, ended_at, estimated_calories, status, active_duration_sec, notes, source_template_id',
+      'id, name, started_at, ended_at, estimated_calories, status, active_duration_sec, notes, source_template_id, calorie_calc_version, calorie_body_weight_kg',
     )
     .eq('id', id)
     .eq('user_id', userId)
@@ -266,7 +354,9 @@ export async function fetchWorkoutDetail(id: string, userId: string): Promise<Wo
 
   const { data: exercises, error: exercisesError } = await supabase
     .from('workout_exercises')
-    .select('id, exercise_id, position, exercise_name, exercise_type, notes')
+    .select(
+      'id, exercise_id, position, exercise_name, exercise_type, notes, estimated_calories, estimate_method, estimate_calc_version, estimate_duration_sec, estimate_activity_key, estimate_body_weight_kg',
+    )
     .eq('workout_id', id)
     .order('position');
   if (exercisesError) throw exercisesError;
@@ -300,10 +390,7 @@ export async function fetchWorkoutDetail(id: string, userId: string): Promise<Wo
   }
 
   return {
-    ...(workout as WorkoutListItem & {
-      notes: string | null;
-      source_template_id: string | null;
-    }),
+    ...(workout as WorkoutDetail),
     exercises: (exercises ?? []).map((exercise) => ({
       id: exercise.id,
       exercise_id: exercise.exercise_id,
@@ -311,6 +398,12 @@ export async function fetchWorkoutDetail(id: string, userId: string): Promise<Wo
       exercise_name: exercise.exercise_name,
       exercise_type: exercise.exercise_type,
       notes: exercise.notes,
+      estimated_calories: Number(exercise.estimated_calories ?? 0),
+      estimate_method: exercise.estimate_method ?? null,
+      estimate_calc_version: exercise.estimate_calc_version ?? null,
+      estimate_duration_sec: exercise.estimate_duration_sec ?? null,
+      estimate_activity_key: exercise.estimate_activity_key ?? null,
+      estimate_body_weight_kg: exercise.estimate_body_weight_kg ?? null,
       sets: setsByExercise.get(exercise.id) ?? [],
     })),
   };
@@ -325,11 +418,19 @@ export type FinishWorkoutPayload = {
   notes?: string | null;
   sourceTemplateId?: string | null;
   estimatedCalories: number;
+  calorieCalcVersion?: number;
+  calorieBodyWeightKg?: number;
   exercises: {
     exerciseId: string | null;
     name: string;
     exerciseType: ExerciseType;
     notes?: string | null;
+    estimatedCalories?: number;
+    estimateMethod?: 'direct' | 'allocated' | null;
+    estimateCalcVersion?: number | null;
+    estimateDurationSec?: number | null;
+    estimateActivityKey?: string | null;
+    estimateBodyWeightKg?: number | null;
     sets: {
       setNumber: number;
       weightKg: number | null;
@@ -361,6 +462,8 @@ export async function finishWorkoutSession(
       source_template_id: input.sourceTemplateId ?? null,
       status: 'completed',
       active_duration_sec: input.activeDurationSec,
+      calorie_calc_version: input.calorieCalcVersion ?? null,
+      calorie_body_weight_kg: input.calorieBodyWeightKg ?? null,
     })
     .select('id')
     .single();
@@ -376,6 +479,12 @@ export async function finishWorkoutSession(
         exercise_name: exercise.name,
         exercise_type: exercise.exerciseType,
         notes: exercise.notes ?? null,
+        estimated_calories: exercise.estimatedCalories ?? 0,
+        estimate_method: exercise.estimateMethod ?? null,
+        estimate_calc_version: exercise.estimateCalcVersion ?? null,
+        estimate_duration_sec: exercise.estimateDurationSec ?? null,
+        estimate_activity_key: exercise.estimateActivityKey ?? null,
+        estimate_body_weight_kg: exercise.estimateBodyWeightKg ?? null,
       })
       .select('id')
       .single();

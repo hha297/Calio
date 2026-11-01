@@ -3,7 +3,8 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import { useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
+import { Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import '../global.css';
@@ -17,9 +18,14 @@ import { BootstrapScreen } from '@/features/bootstrap/bootstrap-screen';
 import { reportError } from '@/lib/errors/report-error';
 import { queryClient } from '@/lib/query/query-client';
 import { useAppFonts } from '@/theme/fonts';
-import { ThemeProvider, useTheme } from '@/theme/theme-provider';
+import { ThemeProvider, useTheme, useThemeColors } from '@/theme/theme-provider';
 
 SplashScreen.preventAutoHideAsync();
+
+function RootShell({ children }: { children: ReactNode }) {
+  const colors = useThemeColors();
+  return <View style={{ flex: 1, backgroundColor: colors.background }}>{children}</View>;
+}
 
 export default function RootLayout() {
   const fontsLoaded = useAppFonts();
@@ -31,15 +37,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <ScanImageProvider>
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <BootstrapProvider>
-                <RootNavigator />
-              </BootstrapProvider>
-            </AuthProvider>
-          </QueryClientProvider>
-        </ScanImageProvider>
+        <RootShell>
+          <ScanImageProvider>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <BootstrapProvider>
+                  <RootNavigator />
+                </BootstrapProvider>
+              </AuthProvider>
+            </QueryClientProvider>
+          </ScanImageProvider>
+        </RootShell>
       </ThemeProvider>
     </GestureHandlerRootView>
   );
@@ -97,7 +105,13 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style={statusStyle} />
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
         <Stack.Protected guard={showOnboarding}>
           <Stack.Screen name="(onboarding)" />
         </Stack.Protected>
@@ -110,7 +124,18 @@ function RootNavigator() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="diary" />
           <Stack.Screen name="food" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="workout" />
+          <Stack.Screen
+            name="workout"
+            options={{
+              animation: Platform.OS === 'ios' ? 'default' : 'ios_from_right',
+              // iOS keeps native edge-swipe. Android uses AndroidEdgeSwipeBack
+              // inside the workout layout (Expo Router disables native swipe there).
+              gestureEnabled: true,
+              animationMatchesGesture: true,
+              contentStyle: { backgroundColor: colors.background },
+              freezeOnBlur: false,
+            }}
+          />
           <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
           <Stack.Screen name="measurements" options={{ presentation: 'modal' }} />
           <Stack.Screen name="account" options={{ presentation: 'modal' }} />

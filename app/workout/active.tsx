@@ -7,11 +7,12 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CompactInput } from '@/components/ui/compact-input';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useLatestWeight } from '@/features/measurements/hooks';
 import { totalVolumeKg } from '@/features/workout/calculations';
+import { estimateWorkoutCalories } from '@/features/workout/exercise-calorie-engine';
 import { formatElapsed, useFinishWorkout } from '@/features/workout/hooks';
 import { radii } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
@@ -49,6 +50,31 @@ export default function ActiveWorkoutScreen() {
     store.clearRest();
   }
 
+  const liveEstimate =
+    weight.weightKg && weight.weightKg > 0
+      ? estimateWorkoutCalories({
+          activeDurationSec: elapsed,
+          bodyWeightKg: weight.weightKg,
+          exercises: store.exercises.map((exercise) => ({
+            localId: exercise.localId,
+            name: exercise.name,
+            exerciseType: exercise.exerciseType,
+            metValue: exercise.metValue,
+            sets: exercise.sets.map((set) => ({
+              weightKg: set.weightKg ? Number(set.weightKg) : null,
+              reps: set.reps ? Number(set.reps) : null,
+              durationSec: set.durationSec ? Number(set.durationSec) : null,
+              distanceM: set.distanceM ? Number(set.distanceM) : null,
+              restSec: set.restSec ? Number(set.restSec) : null,
+              completed: set.completed,
+            })),
+          })),
+        })
+      : null;
+  const liveById = new Map(
+    (liveEstimate?.exercises ?? []).map((row) => [row.localId, row] as const),
+  );
+
   const volume = totalVolumeKg(
     store.exercises.flatMap((exercise) =>
       exercise.sets
@@ -58,6 +84,10 @@ export default function ActiveWorkoutScreen() {
   );
 
   async function onFinish() {
+    if (!(weight.weightKg && weight.weightKg > 0)) {
+      Alert.alert(t('workout.weightRequiredTitle'), t('workout.weightRequiredBody'));
+      return;
+    }
     try {
       const result = await finish.mutateAsync({
         name: store.name,
@@ -66,7 +96,7 @@ export default function ActiveWorkoutScreen() {
         notes: store.notes,
         sourceTemplateId: store.sourceTemplateId,
         exercises: store.exercises,
-        bodyWeightKg: weight.weightKg ?? 70,
+        bodyWeightKg: weight.weightKg,
       });
       store.reset();
       router.replace({
@@ -76,13 +106,17 @@ export default function ActiveWorkoutScreen() {
           estimated: String(result.estimated),
           volume: String(result.volume),
           durationMin: String(result.durationMin),
+          intensity: result.intensity,
         },
       });
     } catch (error) {
-      Alert.alert(
-        t('workout.saveFailed'),
-        error instanceof Error ? error.message : t('workout.retry'),
-      );
+      const message =
+        error instanceof Error && error.message === 'BODY_WEIGHT_REQUIRED'
+          ? t('workout.weightRequiredBody')
+          : error instanceof Error
+            ? error.message
+            : t('workout.retry');
+      Alert.alert(t('workout.saveFailed'), message);
     }
   }
 
@@ -125,13 +159,12 @@ export default function ActiveWorkoutScreen() {
           </View>
         </View>
 
-        <ConfirmDialog
+        <DeleteConfirmDialog
           visible={discardOpen}
           title={t('workout.discardTitle')}
           body={t('workout.discardBody')}
           cancelLabel={t('workout.keep')}
           confirmLabel={t('workout.discard')}
-          confirmVariant="destructive"
           onCancel={() => setDiscardOpen(false)}
           onConfirm={() => {
             setDiscardOpen(false);
@@ -173,7 +206,6 @@ export default function ActiveWorkoutScreen() {
 
         <Button
           label={t('workout.addExercise')}
-          variant="secondary"
           onPress={() => router.push('/workout/exercises')}
         />
 
@@ -192,7 +224,17 @@ export default function ActiveWorkoutScreen() {
                 </Text>
                 <Text variant="caption" tone="secondary">
                   {t(`workout.type.${exercise.exerciseType}`)}
+                  {liveById.get(exercise.localId)?.estimatedCalories
+                    ? ` · ${t('workout.summaryCalories', {
+                        value: liveById.get(exercise.localId)!.estimatedCalories,
+                      })}`
+                    : ''}
                 </Text>
+                {liveById.get(exercise.localId)?.method === 'allocated' ? (
+                  <Text variant="caption" tone="muted">
+                    {t('workout.estimateMethodAllocated')}
+                  </Text>
+                ) : null}
               </View>
               <Pressable onPress={() => store.reorderExercise(exercise.localId, 'up')}>
                 <Text variant="caption" tone="secondary">
