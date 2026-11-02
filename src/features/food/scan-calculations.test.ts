@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { scaleNutritionForAmount, suggestedMealForDate } from './scan-calculations';
+import {
+  rescaleLoggedNutrition,
+  scaleNutritionForAmount,
+  suggestedMealForDate,
+} from './scan-calculations';
 
-const nutrition = { calories: 200, proteinG: 10, carbsG: null, fatG: 4 };
+const nutrition = { calories: 200, proteinG: 10, carbsG: null, fatG: 4, fiberG: 5 };
 
 describe('scaleNutritionForAmount', () => {
   it('scales per-100 g without replacing missing values', () => {
@@ -11,6 +15,10 @@ describe('scaleNutritionForAmount', () => {
       proteinG: 3.5,
       carbsG: null,
       fatG: 1.4,
+      fiberG: 1.75,
+      sugarsG: null,
+      saturatedFatG: null,
+      sodiumMg: null,
     });
   });
 
@@ -22,7 +30,16 @@ describe('scaleNutritionForAmount', () => {
         2,
         'serving',
       ),
-    ).toEqual({ calories: 400, proteinG: 20, carbsG: null, fatG: 8 });
+    ).toEqual({
+      calories: 400,
+      proteinG: 20,
+      carbsG: null,
+      fatG: 8,
+      fiberG: 10,
+      sugarsG: null,
+      saturatedFatG: null,
+      sodiumMg: null,
+    });
   });
 
   it('uses a trusted serving conversion with per-100 nutrition', () => {
@@ -31,7 +48,16 @@ describe('scaleNutritionForAmount', () => {
         amount: 30,
         unit: 'g',
       }),
-    ).toEqual({ calories: 120, proteinG: 6, carbsG: null, fatG: 2.4 });
+    ).toEqual({
+      calories: 120,
+      proteinG: 6,
+      carbsG: null,
+      fatG: 2.4,
+      fiberG: 3,
+      sugarsG: null,
+      saturatedFatG: null,
+      sodiumMg: null,
+    });
   });
 
   it('does not invent a gram conversion for an unknown serving', () => {
@@ -43,6 +69,27 @@ describe('scaleNutritionForAmount', () => {
         'g',
       ),
     ).toThrow();
+  });
+});
+
+describe('rescaleLoggedNutrition', () => {
+  it('recalculates proportionally when amount changes', () => {
+    expect(
+      rescaleLoggedNutrition(
+        { calories: 160, proteinG: 27, carbsG: 10, fatG: 0.5, fiberG: null },
+        250,
+        125,
+      ),
+    ).toEqual({
+      calories: 80,
+      proteinG: 13.5,
+      carbsG: 5,
+      fatG: 0.25,
+      fiberG: null,
+      sugarsG: null,
+      saturatedFatG: null,
+      sodiumMg: null,
+    });
   });
 });
 

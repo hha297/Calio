@@ -149,6 +149,7 @@ export default function ScanScreen() {
       amountUnit: input.amountUnit,
       nutritionBasis: input.nutritionBasis,
       basisAmount: input.basisAmount ?? undefined,
+      basisUnit: input.basisUnit,
       nutritionUserEdited: input.nutritionUserEdited,
       food: {
         id: foodId,
@@ -159,6 +160,11 @@ export default function ScanScreen() {
         proteinG: input.totals.proteinG,
         carbsG: input.totals.carbsG,
         fatG: input.totals.fatG,
+        imageUrl: input.imageUrl,
+        fiberG: input.totals.fiberG,
+        sugarsG: input.totals.sugarsG,
+        saturatedFatG: input.totals.saturatedFatG,
+        sodiumMg: input.totals.sodiumMg,
       },
     });
 

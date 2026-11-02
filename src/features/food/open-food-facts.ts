@@ -14,6 +14,8 @@ export type CalioFood = {
   fatG: number | null;
   fiberG: number | null;
   sugarsG: number | null;
+  saturatedFatG: number | null;
+  sodiumMg: number | null;
   saltG: number | null;
   imageUrl: string | null;
   source: 'open_food_facts';
@@ -146,6 +148,8 @@ export function normalizeOpenFoodFactsProduct(
     fatG: nutrient(product.nutriments, 'fat', suffix),
     fiberG: nutrient(product.nutriments, 'fiber', suffix),
     sugarsG: nutrient(product.nutriments, 'sugars', suffix),
+    saturatedFatG: nutrient(product.nutriments, 'saturated-fat', suffix),
+    sodiumMg: nutrient(product.nutriments, 'sodium', suffix),
     saltG: nutrient(product.nutriments, 'salt', suffix),
     imageUrl: product.image_front_small_url || product.image_front_url || product.image_url || null,
     source: 'open_food_facts',

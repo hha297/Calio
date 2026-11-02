@@ -95,11 +95,13 @@ function SubcategoryPicker({ top }: { top: LibraryTopCategory }) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const templates = useWorkoutTemplates();
+  const [templateDifficulty, setTemplateDifficulty] = useState<string | null>(null);
   const subs = LIBRARY_TAXONOMY[top];
-  const categoryTemplates = useMemo(
-    () => (templates.data ?? []).filter((item) => item.category === top),
-    [templates.data, top],
-  );
+  const categoryTemplates = useMemo(() => {
+    const list = (templates.data ?? []).filter((item) => item.category === top);
+    if (!templateDifficulty) return list;
+    return list.filter((item) => item.difficulty === templateDifficulty);
+  }, [templates.data, top, templateDifficulty]);
 
   return (
     <Screen scroll edges={['top', 'bottom', 'left', 'right']}>
@@ -226,7 +228,29 @@ function SubcategoryPicker({ top }: { top: LibraryTopCategory }) {
               </Text>
             </Pressable>
           </View>
+          <View className="flex-row flex-wrap gap-2">
+            <FilterChip
+              label={t('workout.filterAll')}
+              selected={templateDifficulty == null}
+              onPress={() => setTemplateDifficulty(null)}
+            />
+            {DIFFICULTY_FILTERS.map((level) => (
+              <FilterChip
+                key={level}
+                label={t(`workout.difficulty.${level}`)}
+                selected={templateDifficulty === level}
+                onPress={() =>
+                  setTemplateDifficulty((current) => (current === level ? null : level))
+                }
+              />
+            ))}
+          </View>
           {templates.isPending && !templates.data ? <LoadingState /> : null}
+          {!templates.isPending && categoryTemplates.length === 0 ? (
+            <Text variant="bodySmall" tone="muted">
+              {t('workout.templatesEmptyFilter')}
+            </Text>
+          ) : null}
           <View className="flex-row flex-wrap" style={{ marginHorizontal: -6 }}>
             {categoryTemplates.map((template) => (
               <View key={template.id} style={{ width: '50%', padding: 6 }}>

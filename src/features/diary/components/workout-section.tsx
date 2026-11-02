@@ -81,7 +81,7 @@ export function WorkoutSection({ workouts, locale, onAdd }: WorkoutSectionProps)
               </View>
             </Pressable>
           ))}
-          <Button label={t('diary.workout.add')} variant="secondary" onPress={onAdd} />
+          <Button label={t('diary.workout.add')} onPress={onAdd} />
         </>
       )}
     </Card>

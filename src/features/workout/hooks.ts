@@ -16,11 +16,14 @@ import {
   fetchExercises,
   fetchFavoriteExerciseIds,
   fetchTemplateExercises,
+  fetchTemplateVariations,
   fetchWorkoutDetail,
   fetchWorkoutTemplates,
   fetchWorkouts,
   finishWorkoutSession,
   toggleExerciseFavorite,
+  updateWorkoutTemplate,
+  type WorkoutTemplateWriteInput,
 } from '@/features/workout/api';
 import { totalVolumeKg } from '@/features/workout/calculations';
 import { estimateWorkoutCalories } from '@/features/workout/exercise-calorie-engine';
@@ -176,29 +179,49 @@ export function useTemplateExercises(templateId: string | null) {
   });
 }
 
+export function useTemplateVariations(templateId: string | null) {
+  return useQuery({
+    queryKey: ['workout-templates', templateId, 'variations'],
+    enabled: Boolean(templateId),
+    queryFn: () => fetchTemplateVariations(templateId!),
+  });
+}
+
+type TemplateMutationInput = Omit<WorkoutTemplateWriteInput, 'userId'>;
+
 export function useCreateWorkoutTemplate() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
-      name: string;
-      category: string;
-      description?: string | null;
-      exercises: {
-        exerciseId: string | null;
-        exerciseName: string;
-        exerciseType: ExerciseType;
-        plannedSets?: number | null;
-        plannedReps?: number | null;
-        notes?: string | null;
-      }[];
-    }) => {
+    mutationFn: async (input: TemplateMutationInput) => {
       const userId = session?.user.id;
       if (!userId) throw new Error('Sign in required.');
       return createWorkoutTemplate({ userId, ...input });
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['workout-templates'] });
+    },
+  });
+}
+
+export function useUpdateWorkoutTemplate() {
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: TemplateMutationInput & { id: string }) => {
+      const userId = session?.user.id;
+      if (!userId) throw new Error('Sign in required.');
+      const { id, ...rest } = input;
+      await updateWorkoutTemplate(id, { userId, ...rest });
+    },
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['workout-templates'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['workout-templates', variables.id, 'exercises'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['workout-templates', variables.id, 'variations'],
+      });
     },
   });
 }

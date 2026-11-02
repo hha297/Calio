@@ -71,7 +71,16 @@ export type ScanSaveInput = {
   nutritionUserEdited: boolean;
   servingLabel: string;
   servingGrams: number | null;
-  totals: { calories: number; proteinG: number; carbsG: number; fatG: number };
+  totals: {
+    calories: number;
+    proteinG: number;
+    carbsG: number;
+    fatG: number;
+    fiberG: number | null;
+    sugarsG: number | null;
+    saturatedFatG: number | null;
+    sodiumMg: number | null;
+  };
 };
 
 type Props = {
@@ -129,6 +138,10 @@ export function ScanResultModal({
     proteinG: parseNonNegative(protein),
     carbsG: parseNonNegative(carbs),
     fatG: parseNonNegative(fat),
+    fiberG: manual ? null : (food?.fiberG ?? null),
+    sugarsG: manual ? null : (food?.sugarsG ?? null),
+    saturatedFatG: manual ? null : (food?.saturatedFatG ?? null),
+    sodiumMg: manual ? null : (food?.sodiumMg ?? null),
   };
   const parsedAmount = parsePositiveAmount(amount);
   const totals = (() => {
@@ -145,7 +158,9 @@ export function ScanResultModal({
       return null;
     }
   })();
-  const nutritionComplete = Object.values(parsedNutrition).every((value) => value !== null);
+  const nutritionComplete = [parsedNutrition.calories, parsedNutrition.proteinG, parsedNutrition.carbsG, parsedNutrition.fatG].every(
+    (value) => value !== null,
+  );
   const nutritionUserEdited = manual;
   const canSave = Boolean(
     name.trim() && mealType && parsedAmount && totals && nutritionComplete && !saving,
@@ -193,6 +208,10 @@ export function ScanResultModal({
           proteinG: totals.proteinG!,
           carbsG: totals.carbsG!,
           fatG: totals.fatG!,
+          fiberG: totals.fiberG ?? null,
+          sugarsG: totals.sugarsG ?? null,
+          saturatedFatG: totals.saturatedFatG ?? null,
+          sodiumMg: totals.sodiumMg ?? null,
         },
       });
     } catch (error) {

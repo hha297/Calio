@@ -89,11 +89,11 @@ export function Button({
 
     if (resolved === 'destructive') {
       return {
-        backgroundColor: pressed ? colors.errorMuted : 'transparent',
+        backgroundColor: colors.error,
         borderColor: colors.error,
-        borderWidth: 1,
-        labelColor: colors.error,
-        spinnerColor: colors.error,
+        borderWidth: 0,
+        labelColor: colors.textOnOverlay,
+        spinnerColor: colors.textOnOverlay,
       };
     }
 

@@ -18,6 +18,18 @@ export function TemplateCard({ template, onPress, wide = false }: TemplateCardPr
   const colors = useThemeColors();
   const cover = getTemplateCover(template);
 
+  const metaParts: string[] = [];
+  if (template.difficulty) {
+    metaParts.push(t(`workout.difficulty.${template.difficulty}`));
+  }
+  if (template.estimated_minutes) {
+    metaParts.push(t('workout.templateMinutes', { count: template.estimated_minutes }));
+  }
+  if (template.goal) {
+    metaParts.push(t(`workout.templateGoal.${template.goal}`, { defaultValue: template.goal }));
+  }
+  const meta = metaParts.join(' · ');
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -26,7 +38,7 @@ export function TemplateCard({ template, onPress, wide = false }: TemplateCardPr
       className="overflow-hidden"
       style={{
         width: wide ? '100%' : undefined,
-        height: wide ? 148 : 160,
+        height: wide ? 156 : 172,
         borderRadius: radii.lg,
         borderWidth: 1,
         borderColor: colors.border,
@@ -53,20 +65,37 @@ export function TemplateCard({ template, onPress, wide = false }: TemplateCardPr
               right: 0,
               top: 0,
               bottom: 0,
-              backgroundColor: withAlpha('#000000', pressed ? 0.48 : 0.34),
+              backgroundColor: withAlpha('#000000', pressed ? 0.5 : 0.36),
             }}
           />
-          <View className="flex-1 justify-end gap-1 px-3" style={{ paddingBottom: 14, paddingTop: 20 }}>
+          <View
+            className="flex-1 justify-end gap-1 px-3"
+            style={{ paddingBottom: 12, paddingTop: 18 }}
+          >
             <Text variant="caption" style={{ color: withAlpha('#FFFFFF', 0.85) }} numberOfLines={1}>
               {template.is_system ? t('workout.systemTemplate') : t('workout.custom')}
+              {template.category ? ` · ${template.category}` : ''}
             </Text>
             <Text variant="headingSmall" style={{ color: '#FFFFFF' }} numberOfLines={2}>
               {template.name}
             </Text>
-            {template.description ? (
+            {meta ? (
+              <Text variant="caption" style={{ color: colors.primary }} numberOfLines={1}>
+                {meta}
+              </Text>
+            ) : null}
+            {template.equipment_summary ? (
               <Text
                 variant="caption"
-                style={{ color: withAlpha('#FFFFFF', 0.82) }}
+                style={{ color: withAlpha('#FFFFFF', 0.78) }}
+                numberOfLines={1}
+              >
+                {template.equipment_summary}
+              </Text>
+            ) : template.description ? (
+              <Text
+                variant="caption"
+                style={{ color: withAlpha('#FFFFFF', 0.78) }}
                 numberOfLines={2}
               >
                 {template.description}

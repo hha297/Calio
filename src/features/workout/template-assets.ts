@@ -33,6 +33,16 @@ const TEMPLATE_COVERS: Record<string, ImageSourcePropType> = {
   'mobility-flow': require('../../../assets/images/workout/exercises/flexibility/mobility/world-greatest-stretch.webp'),
   'yoga-essentials': require('../../../assets/images/workout/exercises/flexibility/yoga/downward-facing-dog.jpeg'),
   'desk-reset': require('../../../assets/images/workout/exercises/flexibility/stretching/neck-side-stretch.webp'),
+
+  // Quality-refresh additions — stills not used as muscle/subcategory hub tiles
+  'push-hypertrophy': require('../../../assets/images/workout/exercises/strength/chest/dumbbell-bench-press.jpg'),
+  'pull-hypertrophy': require('../../../assets/images/workout/exercises/strength/back/seated-cable-row.png'),
+  'posterior-chain': require('../../../assets/images/workout/exercises/strength/back/conventional-deadlift.jpg'),
+  'quads-builder': require('../../../assets/images/workout/exercises/strength/glutes/bulgarian-split-squat.jpg'),
+  'home-dumbbell': require('../../../assets/images/workout/exercises/strength/shoulders/seated-dumbbell-shoulder-press.jpg'),
+  'fat-loss-circuit': require('../../../assets/images/workout/exercises/cardio/hiit/burpees.webp'),
+  'advanced-calisthenics': require('../../../assets/images/workout/exercises/bodyweight/arms/dips.webp'),
+  'athletic-conditioning': require('../../../assets/images/workout/exercises/cardio/hiit/battle-ropes.webp'),
 };
 
 /** Stable name → cover key (1:1). */
@@ -59,6 +69,14 @@ const TEMPLATE_COVER_KEYS: Record<string, string> = {
   'Mobility Flow': 'mobility-flow',
   'Yoga Essentials': 'yoga-essentials',
   'Desk Reset': 'desk-reset',
+  'Push Hypertrophy': 'push-hypertrophy',
+  'Pull Hypertrophy': 'pull-hypertrophy',
+  'Posterior Chain': 'posterior-chain',
+  'Quads Builder': 'quads-builder',
+  'Home Dumbbell': 'home-dumbbell',
+  'Fat-Loss Circuit': 'fat-loss-circuit',
+  'Advanced Calisthenics': 'advanced-calisthenics',
+  'Athletic Conditioning': 'athletic-conditioning',
 };
 
 export function getTemplateCover(

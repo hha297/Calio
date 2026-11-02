@@ -3,7 +3,22 @@ import { getSupabase } from '@/lib/supabase/client';
 import type { FoodEntry } from './types';
 
 const ENTRY_COLUMNS =
-  'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g';
+  'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit, nutrition_basis, basis_amount, basis_unit, image_url, fiber_g, sugars_g, saturated_fat_g, sodium_mg, food:foods ( image_url )';
+
+const ENTRY_COLUMNS_BASIC =
+  'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit, nutrition_basis, basis_amount, image_url';
+
+type JoinedEntryRow = FoodEntry & {
+  food?: { image_url?: string | null } | null;
+};
+
+function mapFoodEntry(row: JoinedEntryRow): FoodEntry {
+  const { food, ...entry } = row;
+  return {
+    ...entry,
+    image_url: entry.image_url ?? food?.image_url ?? null,
+  };
+}
 
 export async function fetchFoodEntries(userId: string, dateKey: string): Promise<FoodEntry[]> {
   const supabase = getSupabase();
@@ -11,16 +26,17 @@ export async function fetchFoodEntries(userId: string, dateKey: string): Promise
     return [];
   }
 
-  const { data, error } = await supabase
-    .from('food_entries')
-    .select(ENTRY_COLUMNS)
-    .eq('user_id', userId)
-    .eq('logged_on', dateKey)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    throw error;
+  for (const columns of [ENTRY_COLUMNS, ENTRY_COLUMNS_BASIC]) {
+    const { data, error } = await supabase
+      .from('food_entries')
+      .select(columns)
+      .eq('user_id', userId)
+      .eq('logged_on', dateKey)
+      .order('created_at', { ascending: true });
+    if (!error) {
+      return ((data ?? []) as unknown as JoinedEntryRow[]).map(mapFoodEntry);
+    }
   }
 
-  return data ?? [];
+  throw new Error('Could not load food entries.');
 }
