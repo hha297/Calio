@@ -45,12 +45,12 @@ import { useThemeColors } from '@/theme/theme-provider';
 import { formatDiaryHeading, parseDiaryDateKey, toDiaryDateKey } from '@/utils/date';
 
 import type { MealType } from './types';
-import type { CalioFood, FoodLookupError, NutritionBasis } from './open-food-facts';
+import type { TrackwiseFood, FoodLookupError, NutritionBasis } from './open-food-facts';
 import { parsePositiveAmount, scaleNutritionForAmount } from './scan-calculations';
 
 export type ScanModalResult =
   | { kind: 'loading'; barcode: string }
-  | { kind: 'found'; barcode: string; food: CalioFood }
+  | { kind: 'found'; barcode: string; food: TrackwiseFood }
   | { kind: 'not_found'; barcode: string }
   | { kind: 'error'; barcode: string; error: FoodLookupError }
   | { kind: 'unsupported'; barcode: string };
@@ -412,7 +412,7 @@ function ProductHeader({
   onImageError,
   t,
 }: {
-  food: CalioFood;
+  food: TrackwiseFood;
   imageFailed: boolean;
   onImageError: () => void;
   t: T;
@@ -537,7 +537,7 @@ function NutritionEditor({
   );
 }
 
-function NutritionDisplay({ t, food }: { t: T; food: CalioFood }) {
+function NutritionDisplay({ t, food }: { t: T; food: TrackwiseFood }) {
   const colors = useThemeColors();
   const fields = [
     {

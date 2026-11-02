@@ -15,7 +15,7 @@ const topics = [
   },
   {
     title: 'Calorie estimates',
-    body: 'Food labels and exercise burn are estimates. Calio helps you notice patterns, not medical precision.',
+    body: 'Food labels and exercise burn are estimates. Trackwise helps you notice patterns, not medical precision.',
   },
   {
     title: 'Workouts',

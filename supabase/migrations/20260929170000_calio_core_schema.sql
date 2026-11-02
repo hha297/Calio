@@ -1,4 +1,4 @@
--- Calio foundation schema: profiles, goals, foods, diary, exercises, workouts, measurements.
+-- Trackwise foundation schema: profiles, goals, foods, diary, exercises, workouts, measurements.
 -- Apply with: npx supabase db push   OR run this SQL in the Supabase SQL Editor.
 
 create extension if not exists "pgcrypto";
@@ -48,7 +48,7 @@ set search_path = public
 as $$
 begin
   insert into public.profiles (id, display_name)
-  values (new.id, split_part(coalesce(new.email, 'Calio'), '@', 1))
+  values (new.id, split_part(coalesce(new.email, 'Trackwise'), '@', 1))
   on conflict (id) do nothing;
   return new;
 end;

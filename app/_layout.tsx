@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { router, Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
@@ -13,12 +13,60 @@ import '@/i18n';
 
 import { ScanImageProvider } from '@/components/navigation/scan-image';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { BootstrapProvider, useBootstrap } from '@/features/bootstrap/bootstrap-provider';
+import {
+  BootstrapProvider,
+  useBootstrap,
+  type AppDestination,
+} from '@/features/bootstrap/bootstrap-provider';
 import { BootstrapScreen } from '@/features/bootstrap/bootstrap-screen';
 import { reportError } from '@/lib/errors/report-error';
 import { queryClient } from '@/lib/query/query-client';
 import { useAppFonts } from '@/theme/fonts';
 import { ThemeProvider, useTheme, useThemeColors } from '@/theme/theme-provider';
+
+function isAuthPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return (
+    pathname.includes('sign-in') ||
+    pathname.includes('sign-up') ||
+    pathname.includes('forgot-password') ||
+    pathname.includes('check-email') ||
+    pathname.includes('verify-email') ||
+    pathname.includes('reset-password') ||
+    pathname.includes('update-password') ||
+    pathname.includes('verify-recovery') ||
+    pathname.includes('auth/callback')
+  );
+}
+
+/**
+ * When Stack.Protected flips main → auth (logout / session clear), the URL can
+ * remain on a main-only path and Expo Router shows Unmatched Route (`trackwise:///`).
+ * Move onto an auth screen that is actually mounted.
+ */
+function AuthDestinationSync({ destination }: { destination: AppDestination }) {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (destination === 'auth' && !isAuthPath(pathname)) {
+      router.replace('/(auth)/sign-in');
+      return;
+    }
+    if (
+      destination === 'update-password' &&
+      !pathname.includes('reset-password') &&
+      !pathname.includes('update-password')
+    ) {
+      router.replace('/(auth)/reset-password');
+      return;
+    }
+    if (destination === 'verify-email' && !pathname.includes('verify-email')) {
+      router.replace('/(auth)/verify-email');
+    }
+  }, [destination, pathname]);
+
+  return null;
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -105,6 +153,7 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style={statusStyle} />
+      {showAuth ? <AuthDestinationSync destination={destination} /> : null}
       <Stack
         screenOptions={{
           headerShown: false,

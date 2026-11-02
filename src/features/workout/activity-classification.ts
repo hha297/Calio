@@ -39,7 +39,7 @@ export type ActivityClass = {
     | 'mixed';
 };
 
-/** Documented Compendium anchors used by Calio. */
+/** Documented Compendium anchors used by Trackwise. */
 export const COMPENDIUM = {
   /** 02054 — resistance, multiple exercises, 8–15 reps */
   resistanceGeneral: {

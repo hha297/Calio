@@ -5,9 +5,9 @@ import { getSupabase } from '@/lib/supabase/client';
 import type { Profile } from '@/features/goals/types';
 
 import {
-  CALIO_BACKUP_FORMAT,
-  CALIO_BACKUP_VERSION,
-  type CalioBackup,
+  TRACKWISE_BACKUP_FORMAT,
+  TRACKWISE_BACKUP_VERSION,
+  type TrackwiseBackup,
 } from './backup';
 
 const PROFILE_COLUMNS =
@@ -52,19 +52,19 @@ export async function updateProfile(userId: string, patch: ProfileUpdate): Promi
   throw error;
 }
 
-/** @deprecated Prefer CalioBackup from exportUserData. Kept for type consumers during transition. */
-export type UserDataExport = CalioBackup;
+/** @deprecated Prefer TrackwiseBackup from exportUserData. Kept for type consumers during transition. */
+export type UserDataExport = TrackwiseBackup;
 
 function appVersion(): string {
   return Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '1.0.0';
 }
 
 /**
- * Export the authenticated user's own rows (RLS-scoped) as a Calio backup.
+ * Export the authenticated user's own rows (RLS-scoped) as a Trackwise backup.
  * Excludes auth secrets/tokens. System catalog foods/exercises/templates are not copied
  * except via favorites / FK references the user already owns.
  */
-export async function exportUserData(userId: string, _email?: string | null): Promise<CalioBackup> {
+export async function exportUserData(userId: string, _email?: string | null): Promise<TrackwiseBackup> {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase is not configured.');
 
@@ -183,8 +183,8 @@ export async function exportUserData(userId: string, _email?: string | null): Pr
     : null;
 
   return {
-    format: CALIO_BACKUP_FORMAT,
-    version: CALIO_BACKUP_VERSION,
+    format: TRACKWISE_BACKUP_FORMAT,
+    version: TRACKWISE_BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     appVersion: appVersion(),
     data: {
@@ -207,7 +207,7 @@ export async function exportUserData(userId: string, _email?: string | null): Pr
   };
 }
 
-/** Wipe all Calio data for the signed-in user; keep Auth session. Uses auth.uid() server-side. */
+/** Wipe all Trackwise data for the signed-in user; keep Auth session. Uses auth.uid() server-side. */
 export async function wipeOwnUserData(): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase is not configured.');

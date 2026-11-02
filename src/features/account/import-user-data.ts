@@ -1,6 +1,6 @@
 import { getSupabase } from '@/lib/supabase/client';
 
-import type { CalioBackup, CalioBackupData } from './backup';
+import type { TrackwiseBackup, TrackwiseBackupData } from './backup';
 import { wipeOwnUserData } from './api';
 
 export type ImportMode = 'merge' | 'replace';
@@ -153,13 +153,13 @@ function prepareOwnedRows(
 }
 
 /**
- * Import a validated Calio backup for the signed-in user.
+ * Import a validated Trackwise backup for the signed-in user.
  * Ownership is always remapped to `userId`. Backup user ids are ignored.
  * Replace wipes via RPC first; merge skips conflicting primary keys.
  */
 export async function importUserData(
   userId: string,
-  backup: CalioBackup,
+  backup: TrackwiseBackup,
   mode: ImportMode,
 ): Promise<ImportUserDataResult> {
   const supabase = getSupabase();
@@ -169,7 +169,7 @@ export async function importUserData(
     await wipeOwnUserData();
   }
 
-  const data: CalioBackupData = backup.data;
+  const data: TrackwiseBackupData = backup.data;
   const inserted: Record<string, number> = {};
   const skipped: Record<string, number> = {};
   const bump = (key: string, kind: 'inserted' | 'skipped', n: number) => {

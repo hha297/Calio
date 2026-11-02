@@ -1,17 +1,18 @@
 import { StyleSheet, View } from 'react-native';
 
+import { BrandMark } from '@/components/brand-mark';
 import { LanguageDropdown } from '@/features/auth/language-dropdown';
 import { ThemeToggle } from '@/features/auth/theme-toggle';
 
-/**
- * Shared auth header controls: language dropdown + animated theme toggle
- * on one horizontal row. No “Language” / “Theme” text labels.
- */
+/** Auth header: brand lockup left; theme + language icon controls right. */
 export function AuthTopBar() {
   return (
     <View style={styles.row}>
-      <LanguageDropdown />
-      <ThemeToggle />
+      <BrandMark size="md" />
+      <View style={styles.actions}>
+        <ThemeToggle />
+        <LanguageDropdown />
+      </View>
     </View>
   );
 }
@@ -22,6 +23,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    minHeight: 44,
+    minHeight: 48,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });
+

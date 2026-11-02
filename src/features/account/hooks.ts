@@ -1,8 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-provider';
 import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 
+import { fetchIsAdmin, getAdminDashboardUrl } from './admin-access';
 import {
   deleteOwnAccount,
   exportUserData,
@@ -10,8 +11,31 @@ import {
   wipeOwnUserData,
   type ProfileUpdate,
 } from './api';
-import type { CalioBackup } from './backup';
+import type { TrackwiseBackup } from './backup';
 import { importUserData, type ImportMode } from './import-user-data';
+
+/** True when the signed-in user has the admin role and an Admin URL is configured. */
+export function useAdminDashboardEntry() {
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  const adminUrl = getAdminDashboardUrl();
+
+  const rolesQuery = useQuery({
+    queryKey: ['user-roles', userId, 'admin'],
+    enabled: Boolean(userId) && Boolean(adminUrl),
+    queryFn: async () => {
+      if (!userId) return false;
+      return fetchIsAdmin(userId);
+    },
+    staleTime: 60_000,
+  });
+
+  return {
+    visible: Boolean(adminUrl) && rolesQuery.data === true,
+    url: adminUrl,
+    isLoading: Boolean(userId) && Boolean(adminUrl) && rolesQuery.isLoading,
+  };
+}
 
 export function useUpdateProfile() {
   const { session } = useAuth();
@@ -74,7 +98,7 @@ export function useImportUserData() {
   const userId = session?.user.id;
 
   return useMutation({
-    mutationFn: async (input: { backup: CalioBackup; mode: ImportMode }) => {
+    mutationFn: async (input: { backup: TrackwiseBackup; mode: ImportMode }) => {
       if (!userId) throw new Error('Sign in required.');
       return importUserData(userId, input.backup, input.mode);
     },

@@ -2,7 +2,7 @@ export type NutritionBasis =
   | { kind: 'per100'; unit: 'g' | 'ml' }
   | { kind: 'serving'; label: string; amount: number | null; unit: 'g' | 'ml' | null };
 
-export type CalioFood = {
+export type TrackwiseFood = {
   name: string;
   brand: string | null;
   barcode: string;
@@ -57,7 +57,7 @@ export class FoodLookupError extends Error {
 }
 
 export type FoodLookupResult =
-  { status: 'found'; food: CalioFood } | { status: 'not_found'; barcode: string };
+  { status: 'found'; food: TrackwiseFood } | { status: 'not_found'; barcode: string };
 
 const OFF_FIELDS = [
   'code',
@@ -112,7 +112,7 @@ function nutrient(nutriments: OffProduct['nutriments'], key: string, suffix: '10
 export function normalizeOpenFoodFactsProduct(
   product: OffProduct,
   requestedBarcode = '',
-): CalioFood {
+): TrackwiseFood {
   const name = product.product_name?.trim() ?? '';
 
   const serving = parseServing(product.serving_size);
@@ -177,7 +177,7 @@ export async function fetchOpenFoodFactsByBarcode(
         `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=${encodeURIComponent(OFF_FIELDS)}`,
         {
           signal: controller.signal,
-          headers: { 'User-Agent': 'Calio/1.0 (mobile food scanner)' },
+          headers: { 'User-Agent': 'Trackwise/1.0 (mobile food scanner)' },
         },
       );
     } catch (error) {

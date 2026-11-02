@@ -11,7 +11,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-
 import { analytics } from '@/lib/analytics/analytics';
 import { reportError } from '@/lib/errors/report-error';
 import { queryClient } from '@/lib/query/query-client';
@@ -19,8 +18,9 @@ import { getSupabase } from '@/lib/supabase/client';
 import { isSupabaseConfigured } from '@/lib/supabase/env';
 import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 
+import { collectOAuthCallbackUrl } from './await-oauth-callback';
 import { isEmailConfirmed } from './email-confirmed';
-import { getAuthRedirectUri } from './redirect';
+import { getAuthRedirectUri, isExpoGoRuntime } from './redirect';
 import { getRememberMe, setRememberMe } from './remember-me';
 import {
   createSessionFromUrl,
@@ -210,6 +210,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!supabase) throw new Error('Supabase is not configured.');
 
       const redirectTo = getAuthRedirectUri();
+
+      if (isExpoGoRuntime() && redirectTo.startsWith('trackwise://')) {
+        reportError(new Error('Expo Go OAuth missing Metro exp:// redirect'), {
+          area: 'auth',
+          action: 'google-oauth-redirect',
+          redirectTo,
+        });
+        throw new Error('Google sign-in could not be started.');
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -218,33 +228,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           scopes: 'openid email profile',
         },
       });
-      if (error) throw error;
-      if (!data.url) throw new Error('Google sign-in could not be started.');
+      if (error) {
+        reportError(error, {
+          area: 'auth',
+          action: 'google-oauth-start',
+          redirectTo,
+        });
+        throw error;
+      }
+      if (!data.url) {
+        throw new Error('Google sign-in could not be started.');
+      }
 
-      const browserResult = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      if (browserResult.type === 'cancel' || browserResult.type === 'dismiss') {
+      const collected = await collectOAuthCallbackUrl({
+        authUrl: data.url,
+        redirectTo,
+      });
+
+      const callbackUrl = collected.url;
+
+      // Global Linking listener may already have exchanged the session.
+      if (!callbackUrl) {
+        const { data: existing } = await supabase.auth.getSession();
+        if (existing.session) {
+          analytics.track('auth_google_sign_in_succeeded');
+          return 'success';
+        }
+        if (collected.reason === 'timeout') {
+          reportError(new Error('Google OAuth timed out waiting for callback'), {
+            area: 'auth',
+            action: 'google-oauth-timeout',
+            browserType: collected.browserType,
+          });
+        }
         return 'cancelled';
       }
-      if (browserResult.type !== 'success') {
-        throw new Error('Google sign-in did not complete.');
-      }
 
-      const result = await handleAuthCallback(browserResult.url);
-      if (!result?.session) throw new Error('Google sign-in did not create a session.');
+      const result = await handleAuthCallback(callbackUrl);
+      if (!result?.session) {
+        throw new Error('Google sign-in did not create a session.');
+      }
 
       analytics.track('auth_google_sign_in_succeeded');
       return 'success';
     })();
 
     googleSignInInFlight.current = request;
-    void request.then(
-      () => {
-        googleSignInInFlight.current = null;
-      },
-      () => {
-        googleSignInInFlight.current = null;
-      },
-    );
+    void request.finally(() => {
+      googleSignInInFlight.current = null;
+    });
     return request;
   }, [handleAuthCallback]);
 

@@ -17,7 +17,7 @@ type ConfirmDialogProps = {
   onConfirm: () => void;
 };
 
-/** Centered confirmation dialog using Calio surface tokens (not system Alert). */
+/** Centered confirmation dialog using Trackwise surface tokens (not system Alert). */
 export function ConfirmDialog({
   visible,
   title,

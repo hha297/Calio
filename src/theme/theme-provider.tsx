@@ -14,7 +14,7 @@ import { Appearance, View, useColorScheme as useSystemColorScheme } from 'react-
 import { themeToCssVars } from './color-utils';
 import { lightColors, darkColors, type ThemeColors } from './themes';
 
-const THEME_KEY = 'calio.theme.preference';
+const THEME_KEY = 'trackwise.theme.preference';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type ResolvedScheme = 'light' | 'dark';

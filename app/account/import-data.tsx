@@ -10,9 +10,9 @@ import { DeleteConfirmDialog } from '@/components/ui/delete-confirm-dialog';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import {
-  parseCalioBackupJson,
+  parseTrackwiseBackupJson,
   type BackupSummary,
-  type CalioBackup,
+  type TrackwiseBackup,
 } from '@/features/account/backup';
 import { HeaderDoneButton } from '@/features/account/header-done-button';
 import { useImportUserData } from '@/features/account/hooks';
@@ -29,7 +29,7 @@ export default function ImportDataScreen() {
   const colors = useThemeColors();
   const importData = useImportUserData();
   const [error, setError] = useState<string | null>(null);
-  const [backup, setBackup] = useState<CalioBackup | null>(null);
+  const [backup, setBackup] = useState<TrackwiseBackup | null>(null);
   const [summary, setSummary] = useState<BackupSummary | null>(null);
   const [pickedName, setPickedName] = useState<string | null>(null);
   const [mode, setMode] = useState<ImportMode>('merge');
@@ -67,7 +67,7 @@ export default function ImportDataScreen() {
       setPickedName(asset.name ?? 'backup.json');
       const file = new File(asset.uri);
       const text = await file.text();
-      const validated = parseCalioBackupJson(text);
+      const validated = parseTrackwiseBackupJson(text);
       if (!validated.ok) {
         setError(validated.error);
         return;

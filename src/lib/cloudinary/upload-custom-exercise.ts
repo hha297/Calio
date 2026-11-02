@@ -5,7 +5,7 @@ import {
 
 import { getCloudinaryEnv } from './env';
 
-export const CUSTOM_EXERCISE_IMAGE_FOLDER = 'calio/custom-exercises';
+export const CUSTOM_EXERCISE_IMAGE_FOLDER = 'trackwise/custom-exercises';
 
 export type CloudinaryUploadResult = {
   secureUrl: string;

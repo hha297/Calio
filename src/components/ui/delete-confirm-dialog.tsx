@@ -24,7 +24,7 @@ type DeleteConfirmDialogProps = {
 };
 
 /**
- * Calio-styled confirmation for irreversible delete actions.
+ * Trackwise-styled confirmation for irreversible delete actions.
  * Prefer this over system `Alert.alert` for any delete flow.
  */
 export function DeleteConfirmDialog({

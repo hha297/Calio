@@ -39,7 +39,7 @@ export function DietaryStep() {
   return (
     <SetupShell
       title="Dietary preferences"
-      subtitle="Optional — skip anytime. We only ask what Calio can use today."
+      subtitle="Optional — skip anytime. We only ask what Trackwise can use today."
       stepIndex={progress.index}
       stepTotal={progress.total}
       onBack={() => void goBack()}

@@ -14,7 +14,7 @@ export { brand, darkColors, lightColors, type ThemeColors } from './themes';
 export { borders, colors, elevation, iconSizes, layout, motion, radii, spacing, typography };
 
 /**
- * Replicate-inspired warm bone/ink UI with locked Calio primary `#00D95F`.
+ * Replicate-inspired warm bone/ink UI with locked Trackwise primary `#00D95F`.
  * Type: Bricolage Grotesque (display) + Geist (body) + JetBrains Mono (metrics).
  * Runtime paint: prefer `useThemeColors()`. Static `colors` is the light palette.
  */

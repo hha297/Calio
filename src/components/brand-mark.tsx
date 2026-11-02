@@ -1,33 +1,54 @@
 import { Image } from 'expo-image';
-import { View } from 'react-native';
+import { Text as RNText, View } from 'react-native';
 
+import { fonts } from '@/theme/fonts';
+import { useThemeColors } from '@/theme/theme-provider';
 import { cx } from '@/utils/cx';
 
 type BrandMarkProps = {
-  /** Visual size of the transparent wordmark. */
+  /** Visual size of the logo + wordmark lockup. */
   size?: 'md' | 'lg' | 'xl' | 'hero';
   className?: string;
 };
 
 const sizes = {
-  md: { width: 200, height: 64 },
-  lg: { width: 260, height: 84 },
-  xl: { width: 300, height: 96 },
-  hero: { width: 360, height: 120 },
+  md: { logo: 40, fontSize: 28, gap: 8, letterSpacing: -0.8 },
+  lg: { logo: 52, fontSize: 36, gap: 10, letterSpacing: -1 },
+  xl: { logo: 60, fontSize: 42, gap: 12, letterSpacing: -1.2 },
+  hero: { logo: 72, fontSize: 48, gap: 14, letterSpacing: -1.4 },
 } as const;
 
-/** Calio wordmark — uses assets/images/branding/translogo.png. */
+/** Trackwise lockup — mark + “Track” + primary “wise”. */
 export function BrandMark({ size = 'lg', className }: BrandMarkProps) {
+  const colors = useThemeColors();
   const dims = sizes[size];
 
   return (
-    <View accessibilityRole="header" className={cx('items-center', className)}>
+    <View
+      accessibilityRole="header"
+      accessibilityLabel="Trackwise"
+      className={cx('flex-row items-center', className)}
+      style={{ gap: dims.gap }}
+    >
       <Image
         source={require('../../assets/images/branding/translogo.png')}
-        style={{ width: dims.width, height: dims.height }}
+        style={{ width: dims.logo, height: dims.logo }}
         contentFit="contain"
-        accessibilityLabel="Calio"
+        accessibilityElementsHidden
+        importantForAccessibility="no"
       />
+      <RNText
+        style={{
+          fontFamily: fonts.displayExtraBold,
+          fontSize: dims.fontSize,
+          lineHeight: dims.fontSize * 1.05,
+          letterSpacing: dims.letterSpacing,
+          color: colors.textPrimary,
+        }}
+      >
+        Track
+        <RNText style={{ color: colors.primary }}>wise</RNText>
+      </RNText>
     </View>
   );
 }

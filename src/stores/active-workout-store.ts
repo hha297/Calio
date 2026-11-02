@@ -274,7 +274,7 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
       },
     }),
     {
-      name: 'calio-active-workout',
+      name: 'trackwise-active-workout',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         startedAt: state.startedAt,

@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
-export const CALIO_BACKUP_FORMAT = 'calio-backup' as const;
-export const CALIO_BACKUP_VERSION = 1 as const;
+export const TRACKWISE_BACKUP_FORMAT = 'trackwise-backup' as const;
+export const TRACKWISE_BACKUP_VERSION = 1 as const;
 
 const recordList = z.array(z.record(z.string(), z.unknown()));
 
-export const calioBackupDataSchema = z.object({
+export const trackwiseBackupDataSchema = z.object({
   profile: z.record(z.string(), z.unknown()).nullable().optional(),
   goals: recordList.default([]),
   body_measurements: recordList.default([]),
@@ -23,16 +23,19 @@ export const calioBackupDataSchema = z.object({
   onboarding_progress: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
-export const calioBackupSchema = z.object({
-  format: z.literal(CALIO_BACKUP_FORMAT),
-  version: z.literal(CALIO_BACKUP_VERSION),
+/** Accept legacy Calio exports so old backup files still import. */
+const LEGACY_BACKUP_FORMAT = 'calio-backup' as const;
+
+export const trackwiseBackupSchema = z.object({
+  format: z.union([z.literal(TRACKWISE_BACKUP_FORMAT), z.literal(LEGACY_BACKUP_FORMAT)]),
+  version: z.literal(TRACKWISE_BACKUP_VERSION),
   exportedAt: z.string().min(1),
   appVersion: z.string().min(1),
-  data: calioBackupDataSchema,
+  data: trackwiseBackupDataSchema,
 });
 
-export type CalioBackupData = z.infer<typeof calioBackupDataSchema>;
-export type CalioBackup = z.infer<typeof calioBackupSchema>;
+export type TrackwiseBackupData = z.infer<typeof trackwiseBackupDataSchema>;
+export type TrackwiseBackup = z.infer<typeof trackwiseBackupSchema>;
 
 export type BackupSummary = {
   goals: number;
@@ -53,10 +56,10 @@ export type BackupSummary = {
 };
 
 export type BackupValidationResult =
-  | { ok: true; backup: CalioBackup; summary: BackupSummary }
+  | { ok: true; backup: TrackwiseBackup; summary: BackupSummary }
   | { ok: false; error: string };
 
-export function summarizeBackup(data: CalioBackupData): BackupSummary {
+export function summarizeBackup(data: TrackwiseBackupData): BackupSummary {
   return {
     goals: data.goals.length,
     bodyMeasurements: data.body_measurements.length,
@@ -76,8 +79,8 @@ export function summarizeBackup(data: CalioBackupData): BackupSummary {
   };
 }
 
-export function validateCalioBackup(raw: unknown): BackupValidationResult {
-  const parsed = calioBackupSchema.safeParse(raw);
+export function validateTrackwiseBackup(raw: unknown): BackupValidationResult {
+  const parsed = trackwiseBackupSchema.safeParse(raw);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const path = issue?.path?.length ? issue.path.join('.') : 'root';
@@ -116,12 +119,12 @@ export function validateCalioBackup(raw: unknown): BackupValidationResult {
   };
 }
 
-export function parseCalioBackupJson(text: string): BackupValidationResult {
+export function parseTrackwiseBackupJson(text: string): BackupValidationResult {
   let raw: unknown;
   try {
     raw = JSON.parse(text) as unknown;
   } catch {
     return { ok: false, error: 'File is not valid JSON.' };
   }
-  return validateCalioBackup(raw);
+  return validateTrackwiseBackup(raw);
 }

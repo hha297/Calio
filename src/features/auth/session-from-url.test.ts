@@ -4,18 +4,20 @@ import { isAuthCallbackUrl } from './auth-callback-url';
 
 describe('isAuthCallbackUrl', () => {
   it.each([
-    'calio://auth/callback?code=abc',
-    'calio://auth/callback/#access_token=abc',
+    'trackwise://auth/callback?code=abc',
+    'trackwise://auth/callback/#access_token=abc',
     'exp://192.0.2.1:8081/--/auth/callback?code=abc',
+    'exp://abc-anonymous-8081.exp.direct/--/auth/callback?code=abc',
+    'exp://abc-anonymous-8081.exp.direct/--/auth/callback#access_token=abc',
   ])('accepts the configured auth callback destination: %s', (url) => {
     expect(isAuthCallbackUrl(url)).toBe(true);
   });
 
   it.each([
     null,
-    'calio://other/callback?code=abc',
+    'trackwise://other/callback?code=abc',
     'https://example.com/?code=abc',
-    'calio://auth/callback-evil?code=abc',
+    'trackwise://auth/callback-evil?code=abc',
   ])('rejects unrelated destinations: %s', (url) => {
     expect(isAuthCallbackUrl(url)).toBe(false);
   });

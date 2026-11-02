@@ -26,11 +26,11 @@ describe('cloudinary env', () => {
   });
 
   it('reads cloud name and unsigned upload preset', () => {
-    vi.stubEnv('EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME', 'calio-demo');
-    vi.stubEnv('EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET', 'calio_foods_unsigned');
+    vi.stubEnv('EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME', 'Trackwise-demo');
+    vi.stubEnv('EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET', 'Trackwise_foods_unsigned');
     expect(getCloudinaryEnv()).toEqual({
-      cloudName: 'calio-demo',
-      uploadPreset: 'calio_foods_unsigned',
+      cloudName: 'Trackwise-demo',
+      uploadPreset: 'Trackwise_foods_unsigned',
     });
     expect(isCloudinaryConfigured()).toBe(true);
   });

@@ -5,7 +5,7 @@ import { hexToRgbChannels, withAlpha } from './color-utils';
 import { brand, darkColors, lightColors } from './themes';
 
 describe('brand colors', () => {
-  it('locks Calio primary on Replicate bone foundations', () => {
+  it('locks Trackwise primary on Replicate bone foundations', () => {
     expect(colors.primary).toBe('#00D95F');
     expect(colors.primary).toBe(brand.primary);
     expect(colors.background).toBe(brand.canvas);

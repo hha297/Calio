@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const REMEMBER_KEY = 'calio.auth.remember_me';
+const REMEMBER_KEY = 'trackwise.auth.remember_me';
 
 /** When false, the next cold start clears the persisted Supabase session. */
 export async function getRememberMe(): Promise<boolean> {

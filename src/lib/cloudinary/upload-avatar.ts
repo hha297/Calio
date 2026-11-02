@@ -52,7 +52,7 @@ export async function uploadAvatarToCloudinary(
     }
     if (message?.toLowerCase().includes('folder')) {
       throw new Error(
-        'Cloudinary folder is not allowed by the upload preset. Allow folder calio/avatars (or remove folder restriction).',
+        'Cloudinary folder is not allowed by the upload preset. Allow folder trackwise/avatars (or remove folder restriction).',
       );
     }
     throw new Error(message || 'Could not upload the avatar.');

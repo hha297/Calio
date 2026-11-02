@@ -53,7 +53,7 @@ export default function AboutScreen() {
             gap: spacing[2],
           }}
         >
-          <Text variant="headingSmall">Calio</Text>
+          <Text variant="headingSmall">Trackwise</Text>
           <Text variant="caption" tone="muted">
             {t('account.version', { version })}
           </Text>

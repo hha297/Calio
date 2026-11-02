@@ -116,7 +116,7 @@ export function SummaryStep() {
       stepIndex={progress.index}
       stepTotal={progress.total}
       onBack={() => void goBack()}
-      continueLabel="Start using Calio"
+      continueLabel="Start using Trackwise"
       continueDisabled={completing || busy || !plan || calories < 1200}
       continueLoading={completing || busy}
       onContinue={() => {
@@ -188,7 +188,7 @@ export function SummaryStep() {
         ) : null}
 
         <Text variant="caption" tone="muted">
-          Targets are locked to Calio’s estimate for a consistent start. You can adjust goals later
+          Targets are locked to Trackwise’s estimate for a consistent start. You can adjust goals later
           from Account once you’re in the app.
         </Text>
 

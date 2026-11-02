@@ -12,7 +12,7 @@ import {
 /** Max food image size: 1 MB (client-side gate; also configure on Cloudinary preset). */
 export const MAX_FOOD_IMAGE_SIZE_BYTES = MAX_USER_IMAGE_SIZE_BYTES;
 
-export const FOOD_IMAGE_FOLDER = 'calio/foods';
+export const FOOD_IMAGE_FOLDER = 'trackwise/foods';
 
 export type SelectedFoodImage = SelectedUserImage;
 
