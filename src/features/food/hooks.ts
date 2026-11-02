@@ -68,16 +68,33 @@ export function useRecentFoods() {
     queryFn: async (): Promise<FoodEntry[]> => {
       const supabase = getSupabase();
       if (!supabase || !userId) return [];
-      const { data, error } = await supabase
-        .from('food_entries')
-        .select(
-          'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit, image_url, fiber_g, sugars_g, saturated_fat_g, sodium_mg',
-        )
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return data ?? [];
+
+      const withJoin =
+        'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit, image_url, fiber_g, sugars_g, saturated_fat_g, sodium_mg, food:foods ( image_url )';
+      const basic =
+        'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit, image_url, fiber_g, sugars_g, saturated_fat_g, sodium_mg';
+
+      for (const columns of [withJoin, basic]) {
+        const { data, error } = await supabase
+          .from('food_entries')
+          .select(columns)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (error) continue;
+        return (
+          (data ?? []) as unknown as Array<
+            FoodEntry & { food?: { image_url?: string | null } | null }
+          >
+        ).map((row) => {
+          const { food, ...entry } = row;
+          return {
+            ...entry,
+            image_url: entry.image_url ?? food?.image_url ?? null,
+          };
+        });
+      }
+      return [];
     },
   });
 }

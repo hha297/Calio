@@ -297,7 +297,6 @@ export default function ExerciseDetailScreen() {
                 <ExerciseListCard
                   key={item.id}
                   exercise={item}
-                  showImage={false}
                   favorite={fav}
                   estimatedKcal={
                     weight.weightKg && weight.weightKg > 0

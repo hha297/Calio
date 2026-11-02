@@ -1,10 +1,13 @@
 import { Trash2 } from 'lucide-react-native';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
+
+import { getFieldCursorProps, getFieldTypography } from './field-styles';
 
 type DeleteConfirmDialogProps = {
   visible: boolean;
@@ -13,6 +16,9 @@ type DeleteConfirmDialogProps = {
   cancelLabel: string;
   confirmLabel: string;
   loading?: boolean;
+  /** When set, confirm stays disabled until the user types this exact phrase. */
+  confirmPhrase?: string;
+  confirmPhraseLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -28,6 +34,8 @@ export function DeleteConfirmDialog({
   cancelLabel,
   confirmLabel,
   loading = false,
+  confirmPhrase,
+  confirmPhraseLabel,
   onCancel,
   onConfirm,
 }: DeleteConfirmDialogProps) {
@@ -41,59 +49,130 @@ export function DeleteConfirmDialog({
       onRequestClose={loading ? undefined : onCancel}
       statusBarTranslucent
     >
-      <View style={styles.root}>
-        <Pressable
-          style={[styles.backdrop, { backgroundColor: colors.overlay }]}
-          accessibilityRole="button"
-          accessibilityLabel={cancelLabel}
-          disabled={loading}
-          onPress={loading ? undefined : onCancel}
+      {/* Remount body when opened so typed confirm phrases reset without an effect. */}
+      {visible ? (
+        <DeleteConfirmDialogBody
+          key="open"
+          title={title}
+          body={body}
+          cancelLabel={cancelLabel}
+          confirmLabel={confirmLabel}
+          loading={loading}
+          confirmPhrase={confirmPhrase}
+          confirmPhraseLabel={confirmPhraseLabel}
+          onCancel={onCancel}
+          onConfirm={onConfirm}
+          colors={colors}
         />
-        <View
-          accessibilityRole="summary"
-          style={[
-            styles.panel,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radii.lg,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.iconWrap,
-              { backgroundColor: colors.errorMuted },
-            ]}
-          >
-            <Trash2 size={22} color={colors.error} strokeWidth={1.75} />
-          </View>
-          <Text variant="headingSmall">{title}</Text>
-          {body ? (
-            <Text variant="bodySmall" tone="secondary" className="mt-2">
-              {body}
+      ) : null}
+    </Modal>
+  );
+}
+
+function DeleteConfirmDialogBody({
+  title,
+  body,
+  cancelLabel,
+  confirmLabel,
+  loading,
+  confirmPhrase,
+  confirmPhraseLabel,
+  onCancel,
+  onConfirm,
+  colors,
+}: {
+  title: string;
+  body?: string;
+  cancelLabel: string;
+  confirmLabel: string;
+  loading: boolean;
+  confirmPhrase?: string;
+  confirmPhraseLabel?: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+  colors: ReturnType<typeof useThemeColors>;
+}) {
+  const [phrase, setPhrase] = useState('');
+  const phraseOk = !confirmPhrase || phrase.trim() === confirmPhrase;
+  const confirmDisabled = loading || !phraseOk;
+
+  return (
+    <View style={styles.root}>
+      <Pressable
+        style={[styles.backdrop, { backgroundColor: colors.overlay }]}
+        accessibilityRole="button"
+        accessibilityLabel={cancelLabel}
+        disabled={loading}
+        onPress={loading ? undefined : onCancel}
+      />
+      <View
+        accessibilityRole="summary"
+        style={[
+          styles.panel,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderRadius: radii.lg,
+          },
+        ]}
+      >
+        <View style={[styles.iconWrap, { backgroundColor: colors.errorMuted }]}>
+          <Trash2 size={22} color={colors.error} strokeWidth={1.75} />
+        </View>
+        <Text variant="headingSmall">{title}</Text>
+        {body ? (
+          <Text variant="bodySmall" tone="secondary" className="mt-2">
+            {body}
+          </Text>
+        ) : null}
+        {confirmPhrase ? (
+          <View className="mt-4 gap-2">
+            <Text variant="label" tone="secondary">
+              {confirmPhraseLabel ?? confirmPhrase}
             </Text>
-          ) : null}
-          <View className="mt-5 gap-2">
-            <Button
-              label={confirmLabel}
-              variant="destructive"
-              loading={loading}
-              disabled={loading}
-              onPress={onConfirm}
-              fullWidth
-            />
-            <Button
-              label={cancelLabel}
-              variant="secondary"
-              disabled={loading}
-              onPress={onCancel}
-              fullWidth
+            <TextInput
+              value={phrase}
+              onChangeText={setPhrase}
+              editable={!loading}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              accessibilityLabel={confirmPhraseLabel ?? confirmPhrase}
+              placeholder={confirmPhrase}
+              placeholderTextColor={colors.textMuted}
+              {...getFieldCursorProps(colors)}
+              style={[
+                {
+                  ...getFieldTypography(colors),
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: radii.md,
+                  paddingHorizontal: spacing[3],
+                  paddingVertical: spacing[2],
+                  backgroundColor: colors.background,
+                },
+              ]}
             />
           </View>
+        ) : null}
+        <View className="mt-5 gap-2">
+          <Button
+            label={confirmLabel}
+            variant="destructive"
+            loading={loading}
+            disabled={confirmDisabled}
+            onPress={onConfirm}
+            fullWidth
+          />
+          <Button
+            label={cancelLabel}
+            variant="secondary"
+            disabled={loading}
+            onPress={onCancel}
+            fullWidth
+          />
         </View>
       </View>
-    </Modal>
+    </View>
   );
 }
 

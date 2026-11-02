@@ -1,5 +1,3 @@
-import type { ImageSourcePropType } from 'react-native';
-
 import type { ExerciseType, WorkoutCategory } from './types';
 
 /** Visual hub categories that have local artwork under `assets/images/workout/categories/`. */
@@ -11,8 +9,9 @@ export type ImageWorkoutCategory = Extract<
 /**
  * Exact local assets (verified as `.jpg` in `assets/images/workout/categories/`).
  * Static require() only — do not build paths dynamically.
+ * Typed as `number` (Metro asset id) for expo-image compatibility.
  */
-export const WORKOUT_CATEGORY_IMAGES: Record<ImageWorkoutCategory, ImageSourcePropType> = {
+export const WORKOUT_CATEGORY_IMAGES: Record<ImageWorkoutCategory, number> = {
   Strength: require('../../../assets/images/workout/categories/strength.jpg'),
   Cardio: require('../../../assets/images/workout/categories/cardio.jpg'),
   Flexibility: require('../../../assets/images/workout/categories/flexibility.jpg'),

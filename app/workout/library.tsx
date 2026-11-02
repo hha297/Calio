@@ -78,7 +78,7 @@ export default function WorkoutLibraryScreen() {
         <ErrorState
           title={t('workout.libraryError')}
           body={t('workout.retry')}
-          onRetry={() => router.replace('/workout')}
+          onRetry={() => router.replace('/(tabs)/workout')}
         />
       </Screen>
     );
@@ -228,22 +228,27 @@ function SubcategoryPicker({ top }: { top: LibraryTopCategory }) {
               </Text>
             </Pressable>
           </View>
-          <View className="flex-row flex-wrap gap-2">
-            <FilterChip
-              label={t('workout.filterAll')}
-              selected={templateDifficulty == null}
-              onPress={() => setTemplateDifficulty(null)}
-            />
-            {DIFFICULTY_FILTERS.map((level) => (
+          <View className="gap-2">
+            <Text variant="label" tone="secondary">
+              {t('workout.difficultyLabel')}
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
               <FilterChip
-                key={level}
-                label={t(`workout.difficulty.${level}`)}
-                selected={templateDifficulty === level}
-                onPress={() =>
-                  setTemplateDifficulty((current) => (current === level ? null : level))
-                }
+                label={t('workout.filterAll')}
+                selected={templateDifficulty == null}
+                onPress={() => setTemplateDifficulty(null)}
               />
-            ))}
+              {DIFFICULTY_FILTERS.map((level) => (
+                <FilterChip
+                  key={level}
+                  label={t(`workout.difficulty.${level}`)}
+                  selected={templateDifficulty === level}
+                  onPress={() =>
+                    setTemplateDifficulty((current) => (current === level ? null : level))
+                  }
+                />
+              ))}
+            </View>
           </View>
           {templates.isPending && !templates.data ? <LoadingState /> : null}
           {!templates.isPending && categoryTemplates.length === 0 ? (
@@ -349,31 +354,48 @@ function ExerciseLibrary({ top, sub }: { top: LibraryTopCategory; sub: string })
           autoCapitalize="none"
         />
 
-        <View className="flex-row flex-wrap gap-2">
-          <FilterChip
-            label={t('workout.filterAll')}
-            selected={!equipment && !difficulty}
-            onPress={() => {
-              setEquipment(null);
-              setDifficulty(null);
-            }}
-          />
-          {EQUIPMENT_FILTERS.map((item) => (
-            <FilterChip
-              key={item}
-              label={t(`workout.equipment.${item}`, { defaultValue: item })}
-              selected={equipment === item}
-              onPress={() => setEquipment(equipment === item ? null : item)}
-            />
-          ))}
-          {DIFFICULTY_FILTERS.map((item) => (
-            <FilterChip
-              key={item}
-              label={t(`workout.difficulty.${item}`)}
-              selected={difficulty === item}
-              onPress={() => setDifficulty(difficulty === item ? null : item)}
-            />
-          ))}
+        <View className="gap-3.5">
+          <View className="gap-2">
+            <Text variant="label" tone="secondary">
+              {t('workout.equipmentLabel')}
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              <FilterChip
+                label={t('workout.filterAll')}
+                selected={equipment == null}
+                onPress={() => setEquipment(null)}
+              />
+              {EQUIPMENT_FILTERS.map((item) => (
+                <FilterChip
+                  key={item}
+                  label={t(`workout.equipment.${item}`, { defaultValue: item })}
+                  selected={equipment === item}
+                  onPress={() => setEquipment(equipment === item ? null : item)}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View className="gap-2">
+            <Text variant="label" tone="secondary">
+              {t('workout.difficultyLabel')}
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              <FilterChip
+                label={t('workout.filterAll')}
+                selected={difficulty == null}
+                onPress={() => setDifficulty(null)}
+              />
+              {DIFFICULTY_FILTERS.map((item) => (
+                <FilterChip
+                  key={item}
+                  label={t(`workout.difficulty.${item}`)}
+                  selected={difficulty === item}
+                  onPress={() => setDifficulty(difficulty === item ? null : item)}
+                />
+              ))}
+            </View>
+          </View>
         </View>
 
         <Button

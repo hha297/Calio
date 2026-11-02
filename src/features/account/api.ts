@@ -1,6 +1,14 @@
+import Constants from 'expo-constants';
+
 import { getSupabase } from '@/lib/supabase/client';
 
 import type { Profile } from '@/features/goals/types';
+
+import {
+  CALIO_BACKUP_FORMAT,
+  CALIO_BACKUP_VERSION,
+  type CalioBackup,
+} from './backup';
 
 const PROFILE_COLUMNS =
   'id, display_name, height_cm, sex, birth_date, units, activity_level, onboarding_completed_at, avatar_url';
@@ -44,23 +52,35 @@ export async function updateProfile(userId: string, patch: ProfileUpdate): Promi
   throw error;
 }
 
-export type UserDataExport = {
-  exportedAt: string;
-  userId: string;
-  email: string | null;
-  profile: unknown;
-  goals: unknown[];
-  bodyMeasurements: unknown[];
-  foodEntries: unknown[];
-  workouts: unknown[];
-};
+/** @deprecated Prefer CalioBackup from exportUserData. Kept for type consumers during transition. */
+export type UserDataExport = CalioBackup;
 
-/** Export the authenticated user's own rows (RLS-scoped). */
-export async function exportUserData(userId: string, email: string | null): Promise<UserDataExport> {
+function appVersion(): string {
+  return Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '1.0.0';
+}
+
+/**
+ * Export the authenticated user's own rows (RLS-scoped) as a Calio backup.
+ * Excludes auth secrets/tokens. System catalog foods/exercises/templates are not copied
+ * except via favorites / FK references the user already owns.
+ */
+export async function exportUserData(userId: string, _email?: string | null): Promise<CalioBackup> {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase is not configured.');
 
-  const [profile, goals, measurements, foodEntries, workouts] = await Promise.all([
+  const [
+    profile,
+    goals,
+    measurements,
+    foodEntries,
+    foods,
+    foodFavorites,
+    workouts,
+    customExercises,
+    exerciseFavorites,
+    templates,
+    onboarding,
+  ] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
     supabase.from('goals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
     supabase
@@ -73,29 +93,129 @@ export async function exportUserData(userId: string, email: string | null): Prom
       .select('*')
       .eq('user_id', userId)
       .order('logged_on', { ascending: false })
-      .limit(5000),
+      .limit(10000),
+    supabase.from('foods').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+    supabase.from('food_favorites').select('*').eq('user_id', userId),
     supabase
       .from('workouts')
       .select('*')
       .eq('user_id', userId)
       .order('started_at', { ascending: false })
-      .limit(1000),
+      .limit(2000),
+    supabase
+      .from('exercises')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_system', false)
+      .order('created_at', { ascending: false }),
+    supabase.from('exercise_favorites').select('*').eq('user_id', userId),
+    supabase
+      .from('workout_templates')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_system', false)
+      .order('updated_at', { ascending: false }),
+    supabase.from('onboarding_progress').select('*').eq('user_id', userId).maybeSingle(),
   ]);
 
-  for (const result of [profile, goals, measurements, foodEntries, workouts]) {
+  for (const result of [
+    profile,
+    goals,
+    measurements,
+    foodEntries,
+    foods,
+    foodFavorites,
+    workouts,
+    customExercises,
+    exerciseFavorites,
+    templates,
+    onboarding,
+  ]) {
     if (result.error) throw result.error;
   }
 
+  const workoutIds = (workouts.data ?? []).map((w) => w.id as string).filter(Boolean);
+  const templateIds = (templates.data ?? []).map((t) => t.id as string).filter(Boolean);
+
+  let workoutExercises: Record<string, unknown>[] = [];
+  let workoutSets: Record<string, unknown>[] = [];
+  let templateVariations: Record<string, unknown>[] = [];
+  let templateExercises: Record<string, unknown>[] = [];
+
+  if (workoutIds.length > 0) {
+    const we = await supabase.from('workout_exercises').select('*').in('workout_id', workoutIds);
+    if (we.error) throw we.error;
+    workoutExercises = (we.data ?? []) as Record<string, unknown>[];
+
+    const weIds = workoutExercises.map((row) => row.id as string).filter(Boolean);
+    if (weIds.length > 0) {
+      const ws = await supabase.from('workout_sets').select('*').in('workout_exercise_id', weIds);
+      if (ws.error) throw ws.error;
+      workoutSets = (ws.data ?? []) as Record<string, unknown>[];
+    }
+  }
+
+  if (templateIds.length > 0) {
+    const tv = await supabase
+      .from('workout_template_variations')
+      .select('*')
+      .in('template_id', templateIds);
+    if (tv.error) throw tv.error;
+    templateVariations = (tv.data ?? []) as Record<string, unknown>[];
+
+    const te = await supabase
+      .from('workout_template_exercises')
+      .select('*')
+      .in('template_id', templateIds);
+    if (te.error) throw te.error;
+    templateExercises = (te.data ?? []) as Record<string, unknown>[];
+  }
+
+  // Strip anything that could look like a secret if a future column appears.
+  const safeProfile = profile.data
+    ? (() => {
+        const copy = { ...(profile.data as Record<string, unknown>) };
+        delete copy.access_token;
+        delete copy.refresh_token;
+        delete copy.password;
+        return copy;
+      })()
+    : null;
+
   return {
+    format: CALIO_BACKUP_FORMAT,
+    version: CALIO_BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    userId,
-    email,
-    profile: profile.data,
-    goals: goals.data ?? [],
-    bodyMeasurements: measurements.data ?? [],
-    foodEntries: foodEntries.data ?? [],
-    workouts: workouts.data ?? [],
+    appVersion: appVersion(),
+    data: {
+      profile: safeProfile,
+      goals: (goals.data ?? []) as Record<string, unknown>[],
+      body_measurements: (measurements.data ?? []) as Record<string, unknown>[],
+      food_entries: (foodEntries.data ?? []) as Record<string, unknown>[],
+      foods: (foods.data ?? []) as Record<string, unknown>[],
+      food_favorites: (foodFavorites.data ?? []) as Record<string, unknown>[],
+      workouts: (workouts.data ?? []) as Record<string, unknown>[],
+      workout_exercises: workoutExercises,
+      workout_sets: workoutSets,
+      workout_templates: (templates.data ?? []) as Record<string, unknown>[],
+      workout_template_variations: templateVariations,
+      workout_template_exercises: templateExercises,
+      custom_exercises: (customExercises.data ?? []) as Record<string, unknown>[],
+      exercise_favorites: (exerciseFavorites.data ?? []) as Record<string, unknown>[],
+      onboarding_progress: (onboarding.data as Record<string, unknown> | null) ?? null,
+    },
   };
+}
+
+/** Wipe all Calio data for the signed-in user; keep Auth session. Uses auth.uid() server-side. */
+export async function wipeOwnUserData(): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase is not configured.');
+
+  const { error } = await supabase.rpc('wipe_own_user_data');
+  if (error) {
+    throw new Error(error.message || 'Could not delete account data.');
+  }
 }
 
 /** Calls the delete-account Edge Function with the user JWT. */

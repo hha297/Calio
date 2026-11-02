@@ -1,11 +1,12 @@
 import { Download } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Share, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { backupFilenameForDate, shareJsonFile } from '@/features/account/export-file';
 import { HeaderDoneButton } from '@/features/account/header-done-button';
 import { useExportUserData } from '@/features/account/hooks';
 import { toAuthErrorMessage } from '@/features/auth/auth-errors';
@@ -19,17 +20,20 @@ export default function ExportDataScreen() {
   const exportData = useExportUserData();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [filename, setFilename] = useState<string | null>(null);
 
   async function onExport() {
     setError(null);
     setDone(false);
+    setFilename(null);
     try {
       const payload = await exportData.mutateAsync();
+      const name = backupFilenameForDate(
+        payload.exportedAt ? new Date(payload.exportedAt) : new Date(),
+      );
       const json = JSON.stringify(payload, null, 2);
-      await Share.share({
-        message: json,
-        title: `calio-export-${payload.exportedAt.slice(0, 10)}.json`,
-      });
+      await shareJsonFile(name, json);
+      setFilename(name);
       setDone(true);
     } catch (err) {
       reportError(err, { area: 'account', action: 'export-data' });
@@ -56,8 +60,11 @@ export default function ExportDataScreen() {
           <Text variant="body" tone="secondary">
             {t('account.exportDataSubtitle')}
           </Text>
+          <Text variant="bodySmall" tone="secondary">
+            {t('account.exportDataIncludes')}
+          </Text>
           <Button
-            label={t('account.exportData')}
+            label={t('account.exportDataAction')}
             loading={exportData.isPending}
             disabled={exportData.isPending}
             iconStart={(color) => <Download size={18} color={color} />}
@@ -65,7 +72,9 @@ export default function ExportDataScreen() {
           />
           {done ? (
             <Text variant="bodySmall" tone="success">
-              {t('account.exportReadyBody')}
+              {filename
+                ? t('account.exportReadyFile', { filename })
+                : t('account.exportReadyBody')}
             </Text>
           ) : null}
           {error ? (

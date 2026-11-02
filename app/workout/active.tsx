@@ -206,7 +206,9 @@ export default function ActiveWorkoutScreen() {
 
         <Button
           label={t('workout.addExercise')}
-          onPress={() => router.push('/workout/exercises')}
+          onPress={() =>
+            router.push({ pathname: '/workout/exercises', params: { mode: 'pick' } })
+          }
         />
 
         {store.exercises.length === 0 ? (

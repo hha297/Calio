@@ -86,7 +86,7 @@ export function DiaryDayView({
           <WorkoutSection
             workouts={workouts}
             locale={locale}
-            onAdd={() => router.push('/workout')}
+            onAdd={() => router.push('/(tabs)/workout')}
           />
         </>
       )}

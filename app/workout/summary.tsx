@@ -109,7 +109,7 @@ export default function WorkoutSummaryScreen() {
             if (params.id) {
               router.replace({ pathname: '/workout/[id]', params: { id: params.id } });
             } else {
-              router.replace('/workout');
+              router.replace('/workout/history');
             }
           }}
         />

@@ -37,6 +37,7 @@ export const LOCAL_EXERCISE_NAME_ALIASES: Record<string, string> = {
   'Stead State Row': 'Steady-State Row',
   'Standing Squad Stretch': 'Standing Quad Stretch',
   'Tower Pull Up Hold': 'Towel Pull-Up Hold',
+  'Trap Bar Deadlift': 'Trapbar Deadlift',
   'Tricep Kickback': 'Triceps Kickback',
   'Tricep Pushdown': 'Triceps Pushdown',
   'Wide Grip Pushup': 'Wide-Grip Push-Up',
