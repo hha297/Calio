@@ -75,6 +75,7 @@ export function DiaryDayView({
             <MealSection
               key={meal}
               meal={meal}
+              dateKey={dateKey}
               entries={entries.filter((entry) => entry.meal_type === meal)}
               onAdd={() =>
                 router.push({ pathname: '/food/add', params: { date: dateKey, meal } })
@@ -85,7 +86,7 @@ export function DiaryDayView({
           <WorkoutSection
             workouts={workouts}
             locale={locale}
-            onAdd={() => router.push('/workout')}
+            onAdd={() => router.push('/(tabs)/workout')}
           />
         </>
       )}

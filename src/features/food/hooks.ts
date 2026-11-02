@@ -68,16 +68,33 @@ export function useRecentFoods() {
     queryFn: async (): Promise<FoodEntry[]> => {
       const supabase = getSupabase();
       if (!supabase || !userId) return [];
-      const { data, error } = await supabase
-        .from('food_entries')
-        .select(
-          'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g',
-        )
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return data ?? [];
+
+      const withJoin =
+        'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit, image_url, fiber_g, sugars_g, saturated_fat_g, sodium_mg, food:foods ( image_url )';
+      const basic =
+        'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit, image_url, fiber_g, sugars_g, saturated_fat_g, sodium_mg';
+
+      for (const columns of [withJoin, basic]) {
+        const { data, error } = await supabase
+          .from('food_entries')
+          .select(columns)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (error) continue;
+        return (
+          (data ?? []) as unknown as Array<
+            FoodEntry & { food?: { image_url?: string | null } | null }
+          >
+        ).map((row) => {
+          const { food, ...entry } = row;
+          return {
+            ...entry,
+            image_url: entry.image_url ?? food?.image_url ?? null,
+          };
+        });
+      }
+      return [];
     },
   });
 }
@@ -88,6 +105,7 @@ type LogFoodInput = {
   amountUnit?: 'g' | 'ml' | 'serving';
   nutritionBasis?: 'per100' | 'serving';
   basisAmount?: number;
+  basisUnit?: 'g' | 'ml' | 'serving';
   nutritionUserEdited?: boolean;
   dateKey: string;
   mealType: MealType;
@@ -101,6 +119,11 @@ type LogFoodInput = {
     proteinG: number;
     carbsG: number;
     fatG: number;
+    imageUrl?: string | null;
+    fiberG?: number | null;
+    sugarsG?: number | null;
+    saturatedFatG?: number | null;
+    sodiumMg?: number | null;
   };
 };
 
@@ -123,6 +146,8 @@ export function useLogFoodEntry() {
         },
         input.quantity,
       );
+      const scaleOptional = (value: number | null | undefined) =>
+        value == null ? null : value * input.quantity;
 
       const row = {
         user_id: userId,
@@ -142,13 +167,72 @@ export function useLogFoodEntry() {
         amount_unit: input.amountUnit ?? null,
         nutrition_basis: input.nutritionBasis ?? null,
         basis_amount: input.basisAmount ?? null,
+        basis_unit: input.basisUnit ?? null,
         nutrition_user_edited: input.nutritionUserEdited ?? false,
+        image_url: input.food.imageUrl ?? null,
+        fiber_g: scaleOptional(input.food.fiberG),
+        sugars_g: scaleOptional(input.food.sugarsG),
+        saturated_fat_g: scaleOptional(input.food.saturatedFatG),
+        sodium_mg: scaleOptional(input.food.sodiumMg),
       };
       const { error } = input.clientRequestId
         ? await supabase
             .from('food_entries')
             .upsert(row, { onConflict: 'user_id,client_request_id', ignoreDuplicates: true })
         : await supabase.from('food_entries').insert(row);
+      if (error) throw error;
+    },
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['food-entries', session?.user.id, variables.dateKey],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['food-entries', 'range', session?.user.id],
+      });
+      await queryClient.invalidateQueries({ queryKey: ['foods', 'recent', session?.user.id] });
+    },
+  });
+}
+
+export function useUpdateFoodEntryAmount() {
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      dateKey: string;
+      amount: number;
+      amountUnit: 'g' | 'ml' | 'serving';
+      servingLabel: string;
+      calories: number;
+      proteinG: number;
+      carbsG: number;
+      fatG: number;
+      fiberG?: number | null;
+      sugarsG?: number | null;
+      saturatedFatG?: number | null;
+      sodiumMg?: number | null;
+    }) => {
+      const supabase = getSupabase();
+      if (!supabase) throw new Error('Supabase is not configured.');
+      const { error } = await supabase
+        .from('food_entries')
+        .update({
+          amount: input.amount,
+          amount_unit: input.amountUnit,
+          serving_label: input.servingLabel,
+          calories: input.calories,
+          protein_g: input.proteinG,
+          carbs_g: input.carbsG,
+          fat_g: input.fatG,
+          fiber_g: input.fiberG ?? null,
+          sugars_g: input.sugarsG ?? null,
+          saturated_fat_g: input.saturatedFatG ?? null,
+          sodium_mg: input.sodiumMg ?? null,
+          quantity: 1,
+        })
+        .eq('id', input.id);
       if (error) throw error;
     },
     onSuccess: async (_data, variables) => {

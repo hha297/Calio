@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -8,10 +9,12 @@ import { ErrorState, LoadingState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { TemplateExerciseRow } from '@/features/workout/components/template-exercise-row';
 import {
-  useTemplateExercises,
+  useTemplateVariations,
   useWorkoutTemplates,
 } from '@/features/workout/hooks';
 import { getTemplateCover } from '@/features/workout/template-assets';
+import type { ExerciseDifficulty, WorkoutTemplateVariation } from '@/features/workout/types';
+import { TEMPLATE_TRAINING_LEVELS } from '@/features/workout/types';
 import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 import { radii, withAlpha } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
@@ -21,12 +24,50 @@ export default function WorkoutTemplateDetailScreen() {
   const colors = useThemeColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const templates = useWorkoutTemplates();
-  const exercises = useTemplateExercises(id ?? null);
+  const variationsQuery = useTemplateVariations(id ?? null);
   const start = useActiveWorkoutStore((state) => state.start);
 
   const template = (templates.data ?? []).find((item) => item.id === id) ?? null;
+  const variations = useMemo(
+    () =>
+      (variationsQuery.data ?? []).filter(
+        (item) => (item.exercises?.length ?? item.exercise_count ?? 0) > 0,
+      ),
+    [variationsQuery.data],
+  );
 
-  if (templates.isLoading || (id && exercises.isLoading && !exercises.data)) {
+  const [selectedLevel, setSelectedLevel] = useState<ExerciseDifficulty | null>(null);
+
+  useEffect(() => {
+    if (!variations.length) {
+      setSelectedLevel(null);
+      return;
+    }
+    setSelectedLevel((current) => {
+      if (current && variations.some((item) => item.training_level === current)) {
+        return current;
+      }
+      const preferred =
+        (template?.difficulty as ExerciseDifficulty | undefined) ??
+        TEMPLATE_TRAINING_LEVELS.find((level) =>
+          variations.some((item) => item.training_level === level),
+        ) ??
+        variations[0]?.training_level ??
+        null;
+      return preferred;
+    });
+  }, [template?.difficulty, variations]);
+
+  const selectedVariation: WorkoutTemplateVariation | null =
+    variations.find((item) => item.training_level === selectedLevel) ?? variations[0] ?? null;
+  const list = selectedVariation?.exercises ?? [];
+  const totalSets = list.reduce((sum, row) => sum + (row.planned_sets ?? 0), 0);
+  const minutes = selectedVariation?.estimated_minutes ?? null;
+
+  if (
+    templates.isLoading ||
+    (id && variationsQuery.isLoading && !variationsQuery.data)
+  ) {
     return (
       <Screen>
         <LoadingState />
@@ -47,7 +88,16 @@ export default function WorkoutTemplateDetailScreen() {
   }
 
   const cover = getTemplateCover(template);
-  const list = exercises.data ?? [];
+  const overviewParts: string[] = [];
+  if (template.goal) {
+    overviewParts.push(
+      t(`workout.templateGoal.${template.goal}`, { defaultValue: String(template.goal) }),
+    );
+  }
+  overviewParts.push(template.is_system ? t('workout.systemTemplate') : t('workout.custom'));
+  if (variations.length) {
+    overviewParts.push(t('workout.templateLevelCount', { count: variations.length }));
+  }
 
   return (
     <Screen scroll edges={['top', 'bottom', 'left', 'right']}>
@@ -58,21 +108,36 @@ export default function WorkoutTemplateDetailScreen() {
               {template.name}
             </Text>
             <Text variant="caption" tone="secondary">
-              {template.is_system ? t('workout.systemTemplate') : t('workout.custom')}
-              {list.length ? ` · ${t('workout.templateExerciseCount', { count: list.length })}` : ''}
+              {overviewParts.join(' · ')}
             </Text>
           </View>
-          <Pressable onPress={() => router.back()}>
-            <Text variant="bodyStrong" tone="brand">
-              {t('workout.close')}
-            </Text>
-          </Pressable>
+          <View className="flex-row items-center gap-3">
+            {!template.is_system ? (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: '/workout/templates/create',
+                    params: { id: template.id },
+                  })
+                }
+              >
+                <Text variant="bodyStrong" tone="brand">
+                  {t('workout.editTemplate')}
+                </Text>
+              </Pressable>
+            ) : null}
+            <Pressable onPress={() => router.back()}>
+              <Text variant="bodyStrong" tone="secondary">
+                {t('workout.close')}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         <View
           style={{
             width: '100%',
-            height: 180,
+            height: 188,
             borderRadius: radii.lg,
             overflow: 'hidden',
             borderWidth: 1,
@@ -95,7 +160,7 @@ export default function WorkoutTemplateDetailScreen() {
               bottom: 0,
               paddingHorizontal: 14,
               paddingVertical: 12,
-              backgroundColor: withAlpha('#000000', 0.42),
+              backgroundColor: withAlpha('#000000', 0.45),
             }}
           >
             {template.description ? (
@@ -106,38 +171,148 @@ export default function WorkoutTemplateDetailScreen() {
           </View>
         </View>
 
+        <View className="gap-1">
+          <Text variant="label" tone="secondary">
+            {t('workout.templateOverview')}
+          </Text>
+          <Text variant="bodySmall" tone="secondary">
+            {template.description || t('workout.templateOverviewFallback')}
+          </Text>
+        </View>
+
+        {template.equipment_summary ? (
+          <View className="gap-1">
+            <Text variant="label" tone="secondary">
+              {t('workout.equipmentLabel')}
+            </Text>
+            <Text variant="bodySmall" tone="secondary">
+              {template.equipment_summary}
+            </Text>
+          </View>
+        ) : null}
+
         <Text variant="label" tone="secondary">
-          {t('workout.templateExercises')}
+          {t('workout.templateTrainingLevels')}
         </Text>
 
-        {exercises.error ? (
+        {variationsQuery.error ? (
           <ErrorState
             title={t('workout.templatesError')}
             body={
-              exercises.error instanceof Error ? exercises.error.message : t('workout.retry')
+              variationsQuery.error instanceof Error
+                ? variationsQuery.error.message
+                : t('workout.retry')
             }
-            onRetry={() => void exercises.refetch()}
+            onRetry={() => void variationsQuery.refetch()}
           />
         ) : null}
 
-        {list.length === 0 && !exercises.isLoading ? (
+        {!variations.length && !variationsQuery.isLoading ? (
           <Text variant="bodySmall" tone="muted">
             {t('workout.templateEmptyExercises')}
           </Text>
         ) : null}
 
         <View className="gap-2">
-          {list.map((row) => (
-            <TemplateExerciseRow key={row.id} exercise={row} showImage={false} />
-          ))}
+          {variations.map((variation) => {
+            const selected = selectedVariation?.id === variation.id;
+            const count = variation.exercise_count ?? variation.exercises?.length ?? 0;
+            const sets =
+              variation.total_sets ??
+              (variation.exercises ?? []).reduce((sum, row) => sum + (row.planned_sets ?? 0), 0);
+            return (
+              <Pressable
+                key={variation.id}
+                onPress={() => setSelectedLevel(variation.training_level)}
+                style={{
+                  borderWidth: selected ? 1.5 : 1,
+                  borderColor: selected ? colors.primary : colors.border,
+                  backgroundColor: selected
+                    ? withAlpha(colors.primary, 0.12)
+                    : colors.surface,
+                  borderRadius: radii.md,
+                  padding: 12,
+                  gap: 4,
+                }}
+              >
+                <View className="flex-row items-center justify-between gap-2">
+                  <Text variant="bodyStrong">
+                    {t(`workout.difficulty.${variation.training_level}`)}
+                  </Text>
+                  {variation.estimated_minutes ? (
+                    <Text variant="caption" tone="brand">
+                      {t('workout.templateMinutes', { count: variation.estimated_minutes })}
+                    </Text>
+                  ) : null}
+                </View>
+                {variation.description ? (
+                  <Text variant="caption" tone="secondary" numberOfLines={2}>
+                    {variation.description}
+                  </Text>
+                ) : (
+                  <Text variant="caption" tone="muted">
+                    {t(`workout.templateLevelBlurb.${variation.training_level}`)}
+                  </Text>
+                )}
+                <Text variant="caption" tone="secondary">
+                  {t('workout.templateLevelSummary', {
+                    count,
+                    minutes: variation.estimated_minutes ?? '—',
+                  })}
+                  {sets ? ` · ${t('workout.templateTotalSets', { count: sets })}` : ''}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
+
+        {selectedVariation ? (
+          <>
+            <View className="flex-row flex-wrap gap-2">
+              <MetaChip label={t(`workout.difficulty.${selectedVariation.training_level}`)} emphasize />
+              {minutes ? (
+                <MetaChip label={t('workout.templateMinutes', { count: minutes })} />
+              ) : null}
+              <MetaChip label={t('workout.templateExerciseCount', { count: list.length })} />
+              {totalSets ? (
+                <MetaChip label={t('workout.templateTotalSets', { count: totalSets })} />
+              ) : null}
+            </View>
+
+            <Text variant="label" tone="secondary">
+              {t('workout.templateExercises')} ·{' '}
+              {t(`workout.difficulty.${selectedVariation.training_level}`)}
+            </Text>
+
+            <View className="gap-2">
+              {list.map((row, index) => (
+                <TemplateExerciseRow
+                  key={row.id}
+                  exercise={row}
+                  index={index}
+                  showImage
+                  onPress={
+                    row.exercise_id
+                      ? () =>
+                          router.push({
+                            pathname: '/workout/exercise/[id]',
+                            params: { id: row.exercise_id! },
+                          })
+                      : undefined
+                  }
+                />
+              ))}
+            </View>
+          </>
+        ) : null}
 
         <Button
           label={t('workout.startTemplate')}
-          disabled={!list.length || exercises.isLoading}
+          disabled={!list.length || variationsQuery.isLoading}
           onPress={() => {
+            if (!selectedVariation || !list.length) return;
             start({
-              name: template.name,
+              name: `${template.name} · ${t(`workout.difficulty.${selectedVariation.training_level}`)}`,
               sourceTemplateId: template.id,
               exercises: list.map((row) => ({
                 exerciseId: row.exercise_id,
@@ -153,5 +328,28 @@ export default function WorkoutTemplateDetailScreen() {
         />
       </View>
     </Screen>
+  );
+}
+
+function MetaChip({ label, emphasize = false }: { label: string; emphasize?: boolean }) {
+  const colors = useThemeColors();
+  return (
+    <View
+      style={{
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: radii.pill,
+        borderWidth: 1,
+        borderColor: emphasize ? colors.primary : colors.border,
+        backgroundColor: emphasize ? withAlpha(colors.primary, 0.12) : colors.surfaceMuted,
+      }}
+    >
+      <Text
+        variant="caption"
+        style={{ color: emphasize ? colors.primary : colors.textSecondary }}
+      >
+        {label}
+      </Text>
+    </View>
   );
 }

@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+
+:root,
+html[data-theme='light'] {
+  --canvas: #f9f7f3;
+  --bone: #f3f0e8;
+  --card: #ffffff;
+  --ink: #202020;
+  --body: #3a3a3a;
+  --mute: #646464;
+  --ash: #8d8d8d;
+  --hairline: #e4e0d8;
+  --primary: #00d95f;
+  --primary-pressed: #00b84f;
+  --primary-deep: #13873c;
+  --on-primary: #202020;
+  --success: #2b9a66;
+  --warning: #c47f1a;
+  --error: #d64545;
+  --info: #3b82f6;
+}
+
+html[data-theme='dark'],
+html.dark {
+  --canvas: #202020;
+  --bone: #2a2a2a;
+  --card: #2a2a2a;
+  --ink: #fcfcfc;
+  --body: #e8e8e8;
+  --mute: #b0b0b0;
+  --ash: #8d8d8d;
+  --hairline: #3f3f3f;
+  --primary: #00d95f;
+  --primary-pressed: #00b84f;
+  --primary-deep: #18d968;
+  --on-primary: #202020;
+  --success: #2b9a66;
+  --warning: #c47f1a;
+  --error: #d64545;
+  --info: #3b82f6;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-bone: var(--bone);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-mute: var(--mute);
+  --color-ash: var(--ash);
+  --color-hairline: var(--hairline);
+  --color-primary: var(--primary);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-deep: var(--primary-deep);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-geist);
+  --font-mono: var(--font-mono);
+}
+
+html,
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a,
+button,
+label,
+summary,
+[role='button'],
+input[type='checkbox'],
+input[type='radio'],
+input[type='submit'],
+input[type='button'],
+select {
+  cursor: pointer;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.font-display {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.font-mono-metric {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}

@@ -46,6 +46,16 @@ export type WorkoutListItem = {
   active_duration_sec?: number | null;
 };
 
+export type WorkoutTemplateGoal =
+  | 'hypertrophy'
+  | 'strength'
+  | 'fat_loss'
+  | 'conditioning'
+  | 'endurance'
+  | 'core'
+  | 'mobility'
+  | 'general';
+
 export type WorkoutTemplate = {
   id: string;
   name: string;
@@ -55,11 +65,52 @@ export type WorkoutTemplate = {
   user_id: string | null;
   /** Optional cover key resolved via template-assets local map */
   image_key?: string | null;
+  difficulty?: ExerciseDifficulty | null;
+  goal?: WorkoutTemplateGoal | string | null;
+  estimated_minutes?: number | null;
+  equipment_summary?: string | null;
+  target_muscles?: string[] | null;
 };
+
+/** Preset equipment labels stored in `equipment_summary`. */
+export const TEMPLATE_EQUIPMENT_PRESETS = [
+  'Full Gym',
+  'Home',
+  'Bodyweight',
+  'Minimal Equipment',
+] as const;
+
+export type TemplateEquipmentPreset = (typeof TEMPLATE_EQUIPMENT_PRESETS)[number];
+
+export const TEMPLATE_GOALS: WorkoutTemplateGoal[] = [
+  'hypertrophy',
+  'strength',
+  'fat_loss',
+  'conditioning',
+  'endurance',
+  'core',
+  'mobility',
+  'general',
+];
+
+/** Muscle chips used when building a template (subset of catalog muscles). */
+export const TEMPLATE_TARGET_MUSCLES = [
+  'chest',
+  'back',
+  'shoulders',
+  'biceps',
+  'triceps',
+  'core',
+  'quadriceps',
+  'hamstrings',
+  'glutes',
+  'full body',
+] as const;
 
 export type WorkoutTemplateExercise = {
   id: string;
   template_id: string;
+  variation_id?: string | null;
   exercise_id: string | null;
   position: number;
   exercise_name: string;
@@ -67,12 +118,34 @@ export type WorkoutTemplateExercise = {
   planned_sets: number | null;
   planned_reps: number | null;
   planned_weight_kg: number | null;
+  planned_rest_sec?: number | null;
   notes: string | null;
   image_storage_path?: string | null;
   image_url?: string | null;
   image_key?: string | null;
   slug?: string | null;
+  primary_muscles?: string[] | null;
+  secondary_muscles?: string[] | null;
+  equipment?: string | null;
 };
+
+export type WorkoutTemplateVariation = {
+  id: string;
+  template_id: string;
+  training_level: ExerciseDifficulty;
+  description: string | null;
+  estimated_minutes: number | null;
+  /** Populated by detail fetch when requested. */
+  exercises?: WorkoutTemplateExercise[];
+  exercise_count?: number;
+  total_sets?: number;
+};
+
+export const TEMPLATE_TRAINING_LEVELS: ExerciseDifficulty[] = [
+  'beginner',
+  'intermediate',
+  'advanced',
+];
 
 export type ExerciseEstimateMethod = 'direct' | 'allocated';
 

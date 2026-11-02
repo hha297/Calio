@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useDeferredValue, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, Platform, Pressable, View } from 'react-native';
 
@@ -15,6 +15,7 @@ import {
   WORKOUT_IMAGE_CATEGORIES,
   type ImageWorkoutCategory,
 } from '@/features/workout/category-assets';
+import { DIFFICULTY_FILTERS } from '@/features/workout/catalog/library-taxonomy';
 import { useLatestWeight } from '@/features/measurements/hooks';
 import {
   EXERCISE_PREVIEW_DURATION_MIN,
@@ -29,7 +30,7 @@ import {
 import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 import { radii } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
-import type { Exercise, ExerciseType } from '@/features/workout/types';
+import type { Exercise, ExerciseDifficulty, ExerciseType } from '@/features/workout/types';
 
 const IMAGE_CATEGORY_IDS = new Set<string>(WORKOUT_IMAGE_CATEGORIES);
 const FILTERS: Array<'all' | ImageWorkoutCategory> = ['all', ...WORKOUT_IMAGE_CATEGORIES];
@@ -37,6 +38,52 @@ type CategoryFilter = 'all' | ImageWorkoutCategory;
 
 function ItemSeparator() {
   return <View style={{ height: 8 }} />;
+}
+
+function FilterChip({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const colors = useThemeColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: radii.pill,
+        backgroundColor: selected ? colors.surface : colors.surfaceMuted,
+        borderWidth: selected ? 1.5 : 1,
+        borderColor: selected ? colors.borderStrong : colors.border,
+      }}
+    >
+      <Text variant="caption" tone={selected ? 'primary' : 'secondary'}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function FilterSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <View style={{ gap: 8 }}>
+      <Text variant="label" tone="secondary">
+        {title}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{children}</View>
+    </View>
+  );
 }
 
 function parseCategory(value: string | undefined): CategoryFilter {
@@ -53,12 +100,14 @@ function typeForFilter(filter: CategoryFilter): ExerciseType | null {
 
 export default function ExercisePickerScreen() {
   const { t } = useTranslation();
-  const colors = useThemeColors();
-  const params = useLocalSearchParams<{ category?: string }>();
+  const params = useLocalSearchParams<{ category?: string; mode?: string }>();
+  /** Browse = open details only. Pick = add into the active workout (from Active). */
+  const browseMode = params.mode !== 'pick';
   const [term, setTerm] = useState('');
   const deferredTerm = useDeferredValue(term);
   const [pickedCategory, setPickedCategory] = useState<CategoryFilter | null>(null);
   const [tag, setTag] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<ExerciseDifficulty | null>(null);
 
   const category = pickedCategory ?? parseCategory(
     typeof params.category === 'string' ? params.category : undefined,
@@ -97,6 +146,9 @@ export default function ExercisePickerScreen() {
           (exercise.secondary_muscles ?? []).includes(tag),
       );
     }
+    if (difficulty) {
+      list = list.filter((exercise) => exercise.difficulty === difficulty);
+    }
     // Favorites first without re-sorting the whole name list every time when possible.
     const fav: Exercise[] = [];
     const rest: Exercise[] = [];
@@ -104,12 +156,19 @@ export default function ExercisePickerScreen() {
       (favoriteIds.has(item.id) ? fav : rest).push(item);
     }
     return fav.length ? fav.concat(rest) : list;
-  }, [exercises.data, favoriteIds, categoryTags, tag, deferredTerm]);
+  }, [exercises.data, favoriteIds, categoryTags, tag, difficulty, deferredTerm]);
 
   const selectCategory = useCallback((next: CategoryFilter) => {
     setPickedCategory(next);
     setTag(null);
     router.setParams({ category: next });
+  }, []);
+
+  const openExercise = useCallback((exercise: Exercise) => {
+    router.push({
+      pathname: '/workout/exercise/[id]',
+      params: { id: exercise.id },
+    });
   }, []);
 
   const pickExercise = useCallback(
@@ -164,6 +223,10 @@ export default function ExercisePickerScreen() {
           }
           onToggleFavorite={() => onToggleFavorite(item, fav)}
           onPress={() => {
+            if (browseMode) {
+              openExercise(item);
+              return;
+            }
             try {
               pickExercise(item);
             } catch (error) {
@@ -176,7 +239,7 @@ export default function ExercisePickerScreen() {
         />
       );
     },
-    [favoriteIds, onToggleFavorite, pickExercise, t, weight.weightKg],
+    [browseMode, favoriteIds, onToggleFavorite, openExercise, pickExercise, t, weight.weightKg],
   );
 
   const listHeader = useMemo(
@@ -185,10 +248,10 @@ export default function ExercisePickerScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
             <Text variant="headingLarge" tone="brand">
-              {t('workout.addExercise')}
+              {browseMode ? t('workout.exerciseLibrary') : t('workout.addExercise')}
             </Text>
             <Text variant="bodySmall" tone="secondary">
-              {t('workout.addExerciseHint')}
+              {browseMode ? t('workout.exerciseLibraryBody') : t('workout.addExerciseHint')}
             </Text>
           </View>
           <Pressable onPress={() => router.back()} hitSlop={8}>
@@ -205,76 +268,70 @@ export default function ExercisePickerScreen() {
           autoCapitalize="none"
         />
 
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {FILTERS.map((item) => {
-            const selected = category === item;
-            const label =
-              item === 'all' ? t('workout.filterAll') : t(`workout.category.${item}`);
-            return (
-              <Pressable
-                key={item}
-                onPress={() => selectCategory(item)}
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderRadius: radii.pill,
-                  backgroundColor: selected ? colors.surface : colors.surfaceMuted,
-                  borderWidth: selected ? 1.5 : 1,
-                  borderColor: selected ? colors.borderStrong : colors.border,
-                }}
-              >
-                <Text variant="caption" tone={selected ? 'primary' : 'secondary'}>
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {categoryTags ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <Pressable
-              onPress={() => setTag(null)}
-              style={{
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: radii.pill,
-                backgroundColor: tag == null ? colors.surface : colors.surfaceMuted,
-                borderWidth: tag == null ? 1.5 : 1,
-                borderColor: tag == null ? colors.borderStrong : colors.border,
-              }}
-            >
-              <Text variant="caption" tone={tag == null ? 'primary' : 'secondary'}>
-                {t('workout.filterAll')}
-              </Text>
-            </Pressable>
-            {categoryTags.values.map((value) => {
-              const selected = tag === value;
+        <View style={{ gap: 14 }}>
+          <FilterSection title={t('workout.categoryLabel')}>
+            {FILTERS.map((item) => {
+              const selected = category === item;
               const label =
-                categoryTags.kind === 'muscle'
-                  ? t(`workout.muscle.${value}`, { defaultValue: value })
-                  : t(`workout.equipment.${value}`, { defaultValue: value });
+                item === 'all' ? t('workout.filterAll') : t(`workout.category.${item}`);
               return (
-                <Pressable
-                  key={value}
-                  onPress={() => setTag(selected ? null : value)}
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: radii.pill,
-                    backgroundColor: selected ? colors.surface : colors.surfaceMuted,
-                    borderWidth: selected ? 1.5 : 1,
-                    borderColor: selected ? colors.borderStrong : colors.border,
-                  }}
-                >
-                  <Text variant="caption" tone={selected ? 'primary' : 'secondary'}>
-                    {label}
-                  </Text>
-                </Pressable>
+                <FilterChip
+                  key={item}
+                  label={label}
+                  selected={selected}
+                  onPress={() => selectCategory(item)}
+                />
               );
             })}
-          </View>
-        ) : null}
+          </FilterSection>
+
+          {categoryTags ? (
+            <FilterSection
+              title={
+                categoryTags.kind === 'muscle'
+                  ? t('workout.musclesLabel')
+                  : t('workout.equipmentLabel')
+              }
+            >
+              <FilterChip
+                label={t('workout.filterAll')}
+                selected={tag == null}
+                onPress={() => setTag(null)}
+              />
+              {categoryTags.values.map((value) => {
+                const selected = tag === value;
+                const label =
+                  categoryTags.kind === 'muscle'
+                    ? t(`workout.muscle.${value}`, { defaultValue: value })
+                    : t(`workout.equipment.${value}`, { defaultValue: value });
+                return (
+                  <FilterChip
+                    key={value}
+                    label={label}
+                    selected={selected}
+                    onPress={() => setTag(selected ? null : value)}
+                  />
+                );
+              })}
+            </FilterSection>
+          ) : null}
+
+          <FilterSection title={t('workout.difficultyLabel')}>
+            <FilterChip
+              label={t('workout.filterAll')}
+              selected={difficulty == null}
+              onPress={() => setDifficulty(null)}
+            />
+            {DIFFICULTY_FILTERS.map((level) => (
+              <FilterChip
+                key={level}
+                label={t(`workout.difficulty.${level}`)}
+                selected={difficulty === level}
+                onPress={() => setDifficulty(difficulty === level ? null : level)}
+              />
+            ))}
+          </FilterSection>
+        </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
           <Pressable onPress={() => router.push('/workout/exercises/create')}>
@@ -314,13 +371,11 @@ export default function ExercisePickerScreen() {
     [
       t,
       term,
+      browseMode,
       category,
       categoryTags,
       tag,
-      colors.surface,
-      colors.surfaceMuted,
-      colors.border,
-      colors.borderStrong,
+      difficulty,
       selectCategory,
       exercises.isPending,
       exercises.data,

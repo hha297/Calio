@@ -7497,29 +7497,29 @@
     "content_version": 4
   },
   {
-    "name": "Trap Bar Deadlift",
+    "name": "Trapbar Deadlift",
     "category": "Strength",
     "primary_muscles": [
-      "back"
+      "quadriceps"
     ],
     "secondary_muscles": [],
     "equipment": null,
     "exercise_type": "strength",
     "movement_pattern": null,
     "difficulty": "intermediate",
-    "instructions": "1) Set up for Trap Bar Deadlift with the working implement, feet hip-width, and a soft bend in the knees you can hold steady.\n2) Brace the trunk, unlock the hips first, and push them rearward while the torso leans as one piece—imagine closing a car door with your hips.\n3) Lower until you feel a strong hamstring load or reach the technique depth for this variation, keeping the bar/weight close to the legs if applicable.\n4) Drive the floor away and bring hips forward to stand tall. Exhale as the hips finish under the shoulders.",
+    "instructions": "1) Set up for Trapbar Deadlift with the working implement, feet hip-width, and a soft bend in the knees you can hold steady.\n2) Brace the trunk, unlock the hips first, and push them rearward while the torso leans as one piece—imagine closing a car door with your hips.\n3) Lower until you feel a strong hamstring load or reach the technique depth for this variation, keeping the bar/weight close to the legs if applicable.\n4) Drive the floor away and bring hips forward to stand tall. Exhale as the hips finish under the shoulders.",
     "tips": "- Soft knees stay fixed; the motion is hips back, not a deep squat.\n- Reduce range, support, or load when positions start to drift.\n- Progress by improving range quality first, then load or density.\n- Keep the load close to your center of mass—drifting away increases shear on the back.\n- Use a challenge you can repeat with the same quality on the last rep as the first.",
-    "description": "Trap Bar Deadlift is a hip-hinge pattern that loads the posterior chain while the knees stay relatively soft, not deeply bent like a squat. Primary emphasis is on back. It teaches you to move from the hips with a neutral spine—useful for picking things up, sprint mechanics, and resilient back/hip strength. Focus on smooth eccentrics throughout each rep of Trap Bar Deadlift.",
+    "description": "Trapbar Deadlift is a hip-hinge pattern that loads the posterior chain while the knees stay relatively soft, not deeply bent like a squat. Primary emphasis is on quadriceps. It teaches you to move from the hips with a neutral spine—useful for picking things up, sprint mechanics, and resilient back/hip strength. Focus on smooth eccentrics throughout each rep of Trapbar Deadlift.",
     "common_mistakes": "- Rounding the upper or lower back → shorten the range and re-brace before hinging.\n- Squatting the hinge (knees slide forward too much) → push hips back and keep shins more vertical.\n- Hyperextending at lockout → finish tall with glutes, not by dumping into the low back.\n- Yanking the weight with the arms → let the hips create the power.",
     "safety_notes": "- Avoid max loading if you cannot keep a long, braced spine through the whole set.\n- Sharp shooting pain down a leg or into the spine is a stop signal—regress to a shorter hinge.\n- Build hinge confidence with lighter loads and slower eccentrics before adding speed.",
     "met_value": 5,
     "library_paths": [
-      "strength/back"
+      "strength/quadriceps"
     ],
-    "image_key": "trap-bar-deadlift",
-    "image_storage_path": "exercises/shared/trap-bar-deadlift.webp",
-    "slug": "trap-bar-deadlift",
-    "content_version": 4
+    "image_key": "trapbar-deadlift",
+    "image_storage_path": "exercises/shared/trapbar-deadlift.webp",
+    "slug": "trapbar-deadlift",
+    "content_version": 5
   },
   {
     "name": "Treadmill Incline Interval",

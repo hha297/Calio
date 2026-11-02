@@ -4,12 +4,15 @@ import { getSupabase } from '@/lib/supabase/client';
 
 import type {
   Exercise,
+  ExerciseDifficulty,
   ExerciseType,
   WorkoutDetail,
   WorkoutListItem,
   WorkoutTemplate,
   WorkoutTemplateExercise,
+  WorkoutTemplateVariation,
 } from './types';
+import { TEMPLATE_TRAINING_LEVELS } from './types';
 
 const EXERCISE_SELECT =
   'id, name, category, primary_muscles, secondary_muscles, equipment, exercise_type, movement_pattern, instructions, description, tips, common_mistakes, safety_notes, difficulty, image_key, image_storage_path, image_url, slug, content_version, library_paths, met_value, is_system, user_id';
@@ -206,110 +209,379 @@ export async function toggleExerciseFavorite(input: {
   if (error) throw error;
 }
 
+const TEMPLATE_SELECT_FULL =
+  'id, name, category, description, is_system, user_id, image_key, difficulty, goal, estimated_minutes, equipment_summary, target_muscles';
+const TEMPLATE_SELECT_META =
+  'id, name, category, description, is_system, user_id, image_key, difficulty, goal, estimated_minutes, equipment_summary';
+const TEMPLATE_SELECT_MID = 'id, name, category, description, is_system, user_id, image_key';
+const TEMPLATE_SELECT_LEGACY = 'id, name, category, description, is_system, user_id';
+
 export async function fetchWorkoutTemplates(): Promise<WorkoutTemplate[]> {
   const supabase = getSupabase();
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('workout_templates')
-    .select('id, name, category, description, is_system, user_id, image_key')
-    .order('is_system', { ascending: false })
-    .order('name');
-  if (error) {
-    // Older DBs without image_key — fall back so the UI still loads.
-    const legacy = await supabase
+
+  for (const columns of [
+    TEMPLATE_SELECT_FULL,
+    TEMPLATE_SELECT_META,
+    TEMPLATE_SELECT_MID,
+    TEMPLATE_SELECT_LEGACY,
+  ]) {
+    const result = await supabase
       .from('workout_templates')
-      .select('id, name, category, description, is_system, user_id')
+      .select(columns)
       .order('is_system', { ascending: false })
       .order('name');
-    if (legacy.error) throw legacy.error;
-    return (legacy.data ?? []) as WorkoutTemplate[];
+    if (!result.error) return (result.data ?? []) as unknown as WorkoutTemplate[];
   }
-  return (data ?? []) as WorkoutTemplate[];
+  throw new Error('Could not load workout templates.');
 }
 
-export async function fetchTemplateExercises(
-  templateId: string,
-): Promise<WorkoutTemplateExercise[]> {
-  const supabase = getSupabase();
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('workout_template_exercises')
-    .select(
-      `id, template_id, exercise_id, position, exercise_name, exercise_type, planned_sets, planned_reps, planned_weight_kg, notes,
-       exercise:exercises ( image_storage_path, image_url, image_key, slug )`,
-    )
-    .eq('template_id', templateId)
-    .order('position');
-  if (error) throw error;
+export type WorkoutTemplateExerciseInput = {
+  exerciseId: string | null;
+  exerciseName: string;
+  exerciseType: ExerciseType;
+  plannedSets?: number | null;
+  plannedReps?: number | null;
+  plannedRestSec?: number | null;
+  notes?: string | null;
+};
 
-  const rows = (data ?? []) as Array<
-    WorkoutTemplateExercise & {
-      exercise?: {
-        image_storage_path?: string | null;
-        image_url?: string | null;
-        image_key?: string | null;
-        slug?: string | null;
-      } | null;
-    }
-  >;
+export type WorkoutTemplateVariationInput = {
+  trainingLevel: ExerciseDifficulty;
+  description?: string | null;
+  estimatedMinutes?: number | null;
+  exercises: WorkoutTemplateExerciseInput[];
+};
 
-  return rows.map((row) => {
-    const joined = row.exercise;
-    const { exercise: _exercise, ...rest } = row;
-    return {
-      ...rest,
-      image_storage_path: joined?.image_storage_path ?? null,
-      image_url: joined?.image_url ?? null,
-      image_key: joined?.image_key ?? null,
-      slug: joined?.slug ?? null,
-    };
-  });
-}
-
-export async function createWorkoutTemplate(input: {
+export type WorkoutTemplateWriteInput = {
   userId: string;
   name: string;
   category: string;
   description?: string | null;
-  exercises: {
-    exerciseId: string | null;
-    exerciseName: string;
-    exerciseType: ExerciseType;
-    plannedSets?: number | null;
-    plannedReps?: number | null;
-    notes?: string | null;
-  }[];
-}): Promise<string> {
+  /** Recommended / default level for cards (usually first configured variation). */
+  difficulty?: string | null;
+  goal?: string | null;
+  estimatedMinutes?: number | null;
+  equipmentSummary?: string | null;
+  targetMuscles?: string[] | null;
+  /** Independent level variations. Prefer this over legacy `exercises`. */
+  variations?: WorkoutTemplateVariationInput[];
+  /** @deprecated Prefer `variations`. Kept for older callers. */
+  exercises?: WorkoutTemplateExerciseInput[];
+};
+
+type JoinedExerciseRow = WorkoutTemplateExercise & {
+  exercise?: {
+    image_storage_path?: string | null;
+    image_url?: string | null;
+    image_key?: string | null;
+    slug?: string | null;
+    primary_muscles?: string[] | null;
+    secondary_muscles?: string[] | null;
+    equipment?: string | null;
+  } | null;
+};
+
+function mapJoinedExercise(row: JoinedExerciseRow): WorkoutTemplateExercise {
+  const joined = row.exercise;
+  const { exercise: _exercise, ...rest } = row;
+  return {
+    ...rest,
+    image_storage_path: joined?.image_storage_path ?? null,
+    image_url: joined?.image_url ?? null,
+    image_key: joined?.image_key ?? null,
+    slug: joined?.slug ?? null,
+    primary_muscles: joined?.primary_muscles ?? null,
+    secondary_muscles: joined?.secondary_muscles ?? null,
+    equipment: joined?.equipment ?? null,
+  };
+}
+
+const EXERCISE_SELECT_RICH = `id, template_id, variation_id, exercise_id, position, exercise_name, exercise_type, planned_sets, planned_reps, planned_weight_kg, planned_rest_sec, notes,
+       exercise:exercises ( image_storage_path, image_url, image_key, slug, primary_muscles, secondary_muscles, equipment )`;
+const EXERCISE_SELECT_BASIC = `id, template_id, variation_id, exercise_id, position, exercise_name, exercise_type, planned_sets, planned_reps, planned_weight_kg, notes,
+       exercise:exercises ( image_storage_path, image_url, image_key, slug, primary_muscles, secondary_muscles, equipment )`;
+const EXERCISE_SELECT_LEGACY = `id, template_id, exercise_id, position, exercise_name, exercise_type, planned_sets, planned_reps, planned_weight_kg, notes,
+       exercise:exercises ( image_storage_path, image_url, image_key, slug, primary_muscles, secondary_muscles, equipment )`;
+
+async function queryTemplateExercises(filter: {
+  templateId?: string;
+  variationId?: string;
+}): Promise<WorkoutTemplateExercise[]> {
+  const supabase = getSupabase();
+  if (!supabase) return [];
+
+  for (const columns of [EXERCISE_SELECT_RICH, EXERCISE_SELECT_BASIC, EXERCISE_SELECT_LEGACY]) {
+    let query = supabase.from('workout_template_exercises').select(columns).order('position');
+    if (filter.variationId) query = query.eq('variation_id', filter.variationId);
+    if (filter.templateId) query = query.eq('template_id', filter.templateId);
+    const result = await query;
+    if (!result.error) {
+      return ((result.data ?? []) as unknown as JoinedExerciseRow[]).map(mapJoinedExercise);
+    }
+  }
+  throw new Error('Could not load template exercises.');
+}
+
+export async function fetchTemplateVariations(
+  templateId: string,
+): Promise<WorkoutTemplateVariation[]> {
+  const supabase = getSupabase();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('workout_template_variations')
+    .select('id, template_id, training_level, description, estimated_minutes')
+    .eq('template_id', templateId)
+    .order('training_level');
+
+  if (error) {
+    // Pre-variation DBs: synthesize a single level from legacy template exercises.
+    const legacy = await queryTemplateExercises({ templateId });
+    if (!legacy.length) return [];
+    return [
+      {
+        id: `legacy:${templateId}`,
+        template_id: templateId,
+        training_level: 'intermediate',
+        description: null,
+        estimated_minutes: null,
+        exercises: legacy,
+        exercise_count: legacy.length,
+        total_sets: legacy.reduce((sum, row) => sum + (row.planned_sets ?? 0), 0),
+      },
+    ];
+  }
+
+  const variations = (data ?? []) as WorkoutTemplateVariation[];
+  const withExercises = await Promise.all(
+    variations.map(async (variation) => {
+      const exercises = await queryTemplateExercises({ variationId: variation.id });
+      return {
+        ...variation,
+        exercises,
+        exercise_count: exercises.length,
+        total_sets: exercises.reduce((sum, row) => sum + (row.planned_sets ?? 0), 0),
+      };
+    }),
+  );
+
+  // If variations table exists but is empty, fall back to legacy template-scoped rows.
+  if (!withExercises.length) {
+    const legacy = await queryTemplateExercises({ templateId });
+    if (!legacy.length) return [];
+    return [
+      {
+        id: `legacy:${templateId}`,
+        template_id: templateId,
+        training_level: 'intermediate',
+        description: null,
+        estimated_minutes: null,
+        exercises: legacy,
+        exercise_count: legacy.length,
+        total_sets: legacy.reduce((sum, row) => sum + (row.planned_sets ?? 0), 0),
+      },
+    ];
+  }
+
+  // Beginner → Intermediate → Advanced (not alphabetical).
+  const levelRank = new Map(
+    TEMPLATE_TRAINING_LEVELS.map((level, index) => [level, index]),
+  );
+  return withExercises.sort(
+    (a, b) =>
+      (levelRank.get(a.training_level) ?? 99) - (levelRank.get(b.training_level) ?? 99),
+  );
+}
+
+/** @deprecated Prefer fetchTemplateVariations — returns first/only variation exercises. */
+export async function fetchTemplateExercises(
+  templateId: string,
+): Promise<WorkoutTemplateExercise[]> {
+  const variations = await fetchTemplateVariations(templateId);
+  return variations[0]?.exercises ?? [];
+}
+
+function templateMetaPayload(input: WorkoutTemplateWriteInput) {
+  const variations = normalizeWriteVariations(input);
+  const primary = variations[0] ?? null;
+  return {
+    name: input.name.trim(),
+    category: input.category,
+    description: input.description ?? null,
+    difficulty: input.difficulty ?? primary?.trainingLevel ?? null,
+    goal: input.goal ?? null,
+    estimated_minutes: input.estimatedMinutes ?? primary?.estimatedMinutes ?? null,
+    equipment_summary: input.equipmentSummary ?? null,
+    target_muscles: input.targetMuscles ?? [],
+  };
+}
+
+function normalizeWriteVariations(
+  input: WorkoutTemplateWriteInput,
+): WorkoutTemplateVariationInput[] {
+  if (input.variations?.length) {
+    return input.variations.filter((item) => item.exercises.length > 0);
+  }
+  if (input.exercises?.length) {
+    return [
+      {
+        trainingLevel: (input.difficulty as ExerciseDifficulty) || 'intermediate',
+        description: input.description ?? null,
+        estimatedMinutes: input.estimatedMinutes ?? null,
+        exercises: input.exercises,
+      },
+    ];
+  }
+  return [];
+}
+
+async function replaceTemplateVariations(
+  templateId: string,
+  variations: WorkoutTemplateVariationInput[],
+) {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase is not configured.');
-  const { data: template, error } = await supabase
-    .from('workout_templates')
-    .insert({
-      user_id: input.userId,
-      name: input.name.trim(),
-      category: input.category,
-      description: input.description ?? null,
-      is_system: false,
-    })
-    .select('id')
-    .single();
-  if (error) throw error;
 
-  if (input.exercises.length) {
-    const rows = input.exercises.map((exercise, index) => ({
-      template_id: template.id,
+  // Wipe previous exercises + variations for this template, then rewrite.
+  const { error: deleteExercisesError } = await supabase
+    .from('workout_template_exercises')
+    .delete()
+    .eq('template_id', templateId);
+  if (deleteExercisesError) throw deleteExercisesError;
+
+  const { error: deleteVariationsError } = await supabase
+    .from('workout_template_variations')
+    .delete()
+    .eq('template_id', templateId);
+  // Older DBs without variations table: fall back to template-scoped exercise insert.
+  if (deleteVariationsError) {
+    const flat = variations.flatMap((item) => item.exercises);
+    if (!flat.length) return;
+    const rows = flat.map((exercise, index) => ({
+      template_id: templateId,
       exercise_id: exercise.exerciseId,
       position: index,
       exercise_name: exercise.exerciseName,
       exercise_type: exercise.exerciseType,
       planned_sets: exercise.plannedSets ?? null,
       planned_reps: exercise.plannedReps ?? null,
+      planned_rest_sec: exercise.plannedRestSec ?? null,
       notes: exercise.notes ?? null,
     }));
-    const { error: itemsError } = await supabase.from('workout_template_exercises').insert(rows);
-    if (itemsError) throw itemsError;
+    const withRest = await supabase.from('workout_template_exercises').insert(rows);
+    if (!withRest.error) return;
+    const stripped = rows.map(({ planned_rest_sec: _rest, ...rest }) => rest);
+    const { error } = await supabase.from('workout_template_exercises').insert(stripped);
+    if (error) throw error;
+    return;
   }
+
+  for (const variation of variations) {
+    const { data: created, error: variationError } = await supabase
+      .from('workout_template_variations')
+      .insert({
+        template_id: templateId,
+        training_level: variation.trainingLevel,
+        description: variation.description ?? null,
+        estimated_minutes: variation.estimatedMinutes ?? null,
+      })
+      .select('id')
+      .single();
+    if (variationError) throw variationError;
+
+    const rows = variation.exercises.map((exercise, index) => ({
+      template_id: templateId,
+      variation_id: created.id,
+      exercise_id: exercise.exerciseId,
+      position: index,
+      exercise_name: exercise.exerciseName,
+      exercise_type: exercise.exerciseType,
+      planned_sets: exercise.plannedSets ?? null,
+      planned_reps: exercise.plannedReps ?? null,
+      planned_rest_sec: exercise.plannedRestSec ?? null,
+      notes: exercise.notes ?? null,
+    }));
+    if (!rows.length) continue;
+    const withRest = await supabase.from('workout_template_exercises').insert(rows);
+    if (!withRest.error) continue;
+    const stripped = rows.map(({ planned_rest_sec: _rest, ...rest }) => rest);
+    const { error } = await supabase.from('workout_template_exercises').insert(stripped);
+    if (error) throw error;
+  }
+}
+
+export async function createWorkoutTemplate(input: WorkoutTemplateWriteInput): Promise<string> {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const meta = templateMetaPayload(input);
+  const variations = normalizeWriteVariations(input);
+  if (!variations.length) {
+    throw new Error('Add at least one exercise to a training level.');
+  }
+
+  let template: { id: string } | null = null;
+  const full = await supabase
+    .from('workout_templates')
+    .insert({
+      user_id: input.userId,
+      is_system: false,
+      ...meta,
+    })
+    .select('id')
+    .single();
+
+  if (!full.error && full.data) {
+    template = full.data;
+  } else {
+    const { target_muscles: _muscles, ...withoutMuscles } = meta;
+    const fallback = await supabase
+      .from('workout_templates')
+      .insert({
+        user_id: input.userId,
+        is_system: false,
+        ...withoutMuscles,
+      })
+      .select('id')
+      .single();
+    if (fallback.error) throw fallback.error;
+    template = fallback.data;
+  }
+
+  await replaceTemplateVariations(template.id, variations);
   return template.id as string;
+}
+
+export async function updateWorkoutTemplate(
+  id: string,
+  input: WorkoutTemplateWriteInput,
+): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const meta = templateMetaPayload(input);
+  const variations = normalizeWriteVariations(input);
+  if (!variations.length) {
+    throw new Error('Add at least one exercise to a training level.');
+  }
+
+  const full = await supabase
+    .from('workout_templates')
+    .update(meta)
+    .eq('id', id)
+    .eq('user_id', input.userId)
+    .eq('is_system', false);
+  if (full.error) {
+    const { target_muscles: _muscles, ...withoutMuscles } = meta;
+    const { error } = await supabase
+      .from('workout_templates')
+      .update(withoutMuscles)
+      .eq('id', id)
+      .eq('user_id', input.userId)
+      .eq('is_system', false);
+    if (error) throw error;
+  }
+
+  await replaceTemplateVariations(id, variations);
 }
 
 export async function deleteWorkoutTemplate(id: string, userId: string): Promise<void> {

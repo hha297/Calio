@@ -3,12 +3,27 @@ import type { WorkoutListItem } from '@/features/workout/hooks';
 import { getSupabase } from '@/lib/supabase/client';
 
 const ENTRY_COLUMNS =
-  'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit';
+  'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit, nutrition_basis, basis_amount, basis_unit, image_url, fiber_g, sugars_g, saturated_fat_g, sodium_mg, food:foods ( image_url )';
+
+const ENTRY_COLUMNS_BASIC =
+  'id, logged_on, meal_type, quantity, food_name, brand, serving_label, calories, protein_g, carbs_g, fat_g, amount, amount_unit, image_url';
 
 export type FoodEntryWithAmount = FoodEntry & {
   amount: number | null;
   amount_unit: string | null;
 };
+
+type JoinedEntryRow = FoodEntryWithAmount & {
+  food?: { image_url?: string | null } | null;
+};
+
+function mapFoodEntry(row: JoinedEntryRow): FoodEntryWithAmount {
+  const { food, ...entry } = row;
+  return {
+    ...entry,
+    image_url: entry.image_url ?? food?.image_url ?? null,
+  };
+}
 
 export async function fetchFoodEntriesInRange(
   userId: string,
@@ -18,17 +33,21 @@ export async function fetchFoodEntriesInRange(
   const supabase = getSupabase();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
-    .from('food_entries')
-    .select(ENTRY_COLUMNS)
-    .eq('user_id', userId)
-    .gte('logged_on', startKey)
-    .lte('logged_on', endKey)
-    .order('logged_on', { ascending: true })
-    .order('created_at', { ascending: true });
+  for (const columns of [ENTRY_COLUMNS, ENTRY_COLUMNS_BASIC]) {
+    const { data, error } = await supabase
+      .from('food_entries')
+      .select(columns)
+      .eq('user_id', userId)
+      .gte('logged_on', startKey)
+      .lte('logged_on', endKey)
+      .order('logged_on', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (!error) {
+      return ((data ?? []) as unknown as JoinedEntryRow[]).map(mapFoodEntry);
+    }
+  }
 
-  if (error) throw error;
-  return (data ?? []) as FoodEntryWithAmount[];
+  throw new Error('Could not load food entries.');
 }
 
 export async function fetchWorkoutsInRange(

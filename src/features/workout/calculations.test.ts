@@ -5,10 +5,49 @@ import {
   estimateExercisePreviewCalories,
   estimateGrossCalories,
   estimateNetActiveCalories,
+  estimateTemplateDurationMinutes,
   estimateWorkoutSessionCalories,
   setVolumeKg,
   totalVolumeKg,
 } from './calculations';
+
+describe('estimateTemplateDurationMinutes', () => {
+  it('returns null for empty lists', () => {
+    expect(estimateTemplateDurationMinutes([])).toBeNull();
+  });
+
+  it('scales with sets and rest, not a fixed exercise count', () => {
+    const short = estimateTemplateDurationMinutes([
+      { plannedSets: 3, plannedReps: 10, plannedRestSec: 60 },
+      { plannedSets: 2, plannedReps: 12, plannedRestSec: 45 },
+    ]);
+    const longer = estimateTemplateDurationMinutes([
+      { plannedSets: 4, plannedReps: 6, plannedRestSec: 150 },
+      { plannedSets: 4, plannedReps: 8, plannedRestSec: 120 },
+      { plannedSets: 3, plannedReps: 10, plannedRestSec: 90 },
+      { plannedSets: 3, plannedReps: 12, plannedRestSec: 60 },
+    ]);
+    expect(short).toBeGreaterThanOrEqual(10);
+    expect(longer).toBeGreaterThan(short!);
+  });
+
+  it('can make a compact advanced session shorter than a long beginner session', () => {
+    const beginner = estimateTemplateDurationMinutes([
+      { plannedSets: 3, plannedReps: 12, plannedRestSec: 90 },
+      { plannedSets: 3, plannedReps: 12, plannedRestSec: 90 },
+      { plannedSets: 3, plannedReps: 12, plannedRestSec: 75 },
+      { plannedSets: 3, plannedReps: 15, plannedRestSec: 60 },
+      { plannedSets: 3, plannedReps: null, plannedRestSec: 45 },
+    ]);
+    const advancedCompact = estimateTemplateDurationMinutes([
+      { plannedSets: 5, plannedReps: 3, plannedRestSec: 180 },
+      { plannedSets: 4, plannedReps: 5, plannedRestSec: 150 },
+      { plannedSets: 3, plannedReps: 6, plannedRestSec: 120 },
+    ]);
+    expect(beginner).toBeTruthy();
+    expect(advancedCompact).toBeTruthy();
+  });
+});
 
 describe('workout volume', () => {
   it('computes weight × reps', () => {

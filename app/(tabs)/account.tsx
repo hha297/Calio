@@ -2,6 +2,8 @@ import Constants from 'expo-constants';
 import { Link, router } from 'expo-router';
 import {
   CircleHelp,
+  Download,
+  Eraser,
   FileText,
   Flag,
   Info,
@@ -13,8 +15,8 @@ import {
   Shield,
   Sun,
   Trash2,
+  Upload,
   UserRound,
-  Download,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -292,6 +294,19 @@ export default function AccountScreen() {
             title={t('account.exportData')}
             subtitle={t('account.exportDataSubtitle')}
             onPress={() => router.push('/account/export-data')}
+          />
+          <SettingsRow
+            icon={Upload}
+            title={t('account.importData')}
+            subtitle={t('account.importDataSubtitle')}
+            onPress={() => router.push('/account/import-data')}
+          />
+          <SettingsRow
+            icon={Eraser}
+            title={t('account.deleteData')}
+            subtitle={t('account.deleteDataSubtitle')}
+            destructive
+            onPress={() => router.push('/account/delete-data')}
           />
           <SettingsRow
             icon={Trash2}

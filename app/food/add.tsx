@@ -114,6 +114,7 @@ export default function AddFoodScreen() {
       protein_g: number;
       carbs_g: number;
       fat_g: number;
+      image_url?: string | null;
     },
     rowKey: string,
   ) {
@@ -134,6 +135,7 @@ export default function AddFoodScreen() {
           proteinG: food.protein_g,
           carbsG: food.carbs_g,
           fatG: food.fat_g,
+          imageUrl: food.image_url ?? null,
         },
       });
       router.back();
@@ -461,6 +463,7 @@ export default function AddFoodScreen() {
                       protein_g: entry.protein_g / Math.max(entry.quantity, 1),
                       carbs_g: entry.carbs_g / Math.max(entry.quantity, 1),
                       fat_g: entry.fat_g / Math.max(entry.quantity, 1),
+                      image_url: entry.image_url ?? null,
                     },
                     entry.id,
                   )
@@ -716,6 +719,7 @@ type RecentEntry = {
   carbs_g: number;
   fat_g: number;
   quantity: number;
+  image_url?: string | null;
 };
 
 function RecentFoodsList({
@@ -761,6 +765,7 @@ function RecentFoodsList({
             key={entry.id}
             name={entry.food_name}
             brand={entry.brand}
+            imageUrl={entry.image_url}
             detail={formatFoodNutritionDetail({
               calories: entry.calories,
               servingLabel: entry.serving_label,

@@ -41,6 +41,30 @@ export type SessionCalorieEstimate = {
   calcVersion: number;
 };
 
+/**
+ * Estimate template variation duration from planned structure.
+ * Uses working time + rest + a small transition buffer per exercise.
+ * Not tied to training level — Advanced can be shorter than Beginner.
+ */
+export function estimateTemplateDurationMinutes(
+  exercises: {
+    plannedSets?: number | null;
+    plannedReps?: number | null;
+    plannedRestSec?: number | null;
+  }[],
+): number | null {
+  if (!exercises.length) return null;
+  const transitionSec = 45;
+  const totalSec = exercises.reduce((sum, item) => {
+    const sets = Math.max(1, item.plannedSets ?? 3);
+    const rest = Math.max(0, item.plannedRestSec ?? 60);
+    // Timed holds / cardio blocks often omit reps; give them a longer work window.
+    const workSec = item.plannedReps == null && rest <= 15 ? 75 : 40;
+    return sum + sets * (workSec + rest) + transitionSec;
+  }, 0);
+  return Math.max(10, Math.round(totalSec / 60));
+}
+
 /** Volume for a weighted set: weight × reps. */
 export function setVolumeKg(set: StrengthSetInput): number {
   if (set.weightKg <= 0 || set.reps <= 0) return 0;

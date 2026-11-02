@@ -1,5 +1,10 @@
 import { Tabs } from 'expo-router';
-import { ChartColumn, CircleQuestionMark, CircleUser, NotebookPen } from 'lucide-react-native';
+import {
+  ChartColumnIncreasing,
+  CircleUser,
+  Dumbbell,
+  NotebookPen,
+} from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { FloatingTabBar } from '@/components/navigation/floating-tab-bar';
@@ -39,12 +44,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="analytics"
+        name="workout"
         options={{
-          title: t('tabs.analytics'),
-          tabBarIcon: ({ color, size }) => (
-            <ChartColumn color={color} size={size} strokeWidth={2} />
-          ),
+          title: t('tabs.workout'),
+          tabBarIcon: ({ color, size }) => <Dumbbell color={color} size={size} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
@@ -54,11 +57,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="help"
+        name="progress"
         options={{
-          title: t('tabs.help'),
+          title: t('tabs.progress'),
           tabBarIcon: ({ color, size }) => (
-            <CircleQuestionMark color={color} size={size} strokeWidth={2} />
+            <ChartColumnIncreasing color={color} size={size} strokeWidth={2} />
           ),
         }}
       />
@@ -67,6 +70,14 @@ export default function TabLayout() {
         options={{
           title: t('tabs.account'),
           tabBarIcon: ({ color, size }) => <CircleUser color={color} size={size} strokeWidth={2} />,
+        }}
+      />
+      {/* Keep Help route reachable from Account; hide from the tab bar. */}
+      <Tabs.Screen
+        name="help"
+        options={{
+          href: null,
+          title: t('tabs.help'),
         }}
       />
     </Tabs>
