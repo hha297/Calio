@@ -7,6 +7,7 @@ import {
   FileText,
   Flag,
   Info,
+  LayoutDashboard,
   Lock,
   LogOut,
   Moon,
@@ -30,6 +31,7 @@ import {
   getPrivacyPolicyUrl,
   getTermsOfServiceUrl,
 } from '@/features/account/constants';
+import { useAdminDashboardEntry } from '@/features/account/hooks';
 import { ProfileAvatar } from '@/features/account/profile-avatar';
 import { SettingsRow, SettingsSection } from '@/features/account/settings-row';
 import { toAuthErrorMessage } from '@/features/auth/auth-errors';
@@ -79,6 +81,7 @@ export default function AccountScreen() {
   const goal = useActiveGoal();
   const language = useAppLanguage();
   const { scheme } = useTheme();
+  const adminEntry = useAdminDashboardEntry();
   const [error, setError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -90,6 +93,7 @@ export default function AccountScreen() {
     setSigningOut(true);
     try {
       await signOut();
+      router.replace('/(auth)/sign-in');
     } catch (signOutError) {
       reportError(signOutError, { area: 'auth', action: 'sign-out' });
       setError(toAuthErrorMessage(signOutError));
@@ -332,6 +336,19 @@ export default function AccountScreen() {
             }
           />
         </SettingsSection>
+
+        {adminEntry.visible && adminEntry.url ? (
+          <SettingsSection title={t('account.adminSection')}>
+            <SettingsRow
+              icon={LayoutDashboard}
+              title={t('account.openAdmin')}
+              subtitle={t('account.openAdminSubtitle')}
+              onPress={() =>
+                void openOptionalUrl(adminEntry.url, t('account.adminUnavailable'))
+              }
+            />
+          </SettingsSection>
+        ) : null}
 
         <SettingsSection title={t('account.helpAbout')}>
           <SettingsRow

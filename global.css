@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /**
- * Light defaults: Replicate warm bone + locked Calio `#00D95F`.
+ * Light defaults: Replicate warm bone + locked Trackwise `#00D95F`.
  * ThemeProvider overrides at runtime for light/dark.
  */
 :root {

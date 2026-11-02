@@ -1,22 +1,22 @@
 {
   "expo": {
-    "name": "Calio",
-    "slug": "calio",
+    "name": "Trackwise",
+    "slug": "trackwise",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/branding/logo.png",
-    "scheme": "calio",
+    "scheme": "trackwise",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.calio.app",
+      "bundleIdentifier": "com.trackwise.app",
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Calio uses the camera to scan food barcodes.",
-        "NSPhotoLibraryUsageDescription": "Calio needs photo access so you can add an image to a food you create."
+        "NSCameraUsageDescription": "Trackwise uses the camera to scan food barcodes.",
+        "NSPhotoLibraryUsageDescription": "Trackwise needs photo access so you can add an image to a food you create."
       }
     },
     "android": {
-      "package": "com.calio.app",
+      "package": "com.trackwise.app",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#00D95F",
@@ -39,14 +39,14 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#00D95F",
-          "image": "./assets/images/branding/translogo.png",
+          "image": "./assets/images/branding/logo.png",
           "imageWidth": 240
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Calio to use the camera for barcode scanning.",
+          "cameraPermission": "Allow Trackwise to use the camera for barcode scanning.",
           "recordAudioAndroid": false
         }
       ],
@@ -54,8 +54,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Calio to access your photos to add a food image.",
-          "cameraPermission": "Calio uses the camera to scan food barcodes."
+          "photosPermission": "Allow Trackwise to access your photos to add a food image.",
+          "cameraPermission": "Trackwise uses the camera to scan food barcodes."
         }
       ],
       "expo-web-browser",

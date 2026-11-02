@@ -1,8 +1,7 @@
 import { usePathname } from 'expo-router';
-import { Check, ChevronDown } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Dimensions, Modal, Pressable, StyleSheet, View, type ViewInstance } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
 import {
@@ -10,10 +9,10 @@ import {
   LANGUAGE_LABELS,
   SUPPORTED_LANGUAGES,
   changeAppLanguage,
-  useAppLanguage
+  useAppLanguage,
 } from '@/i18n';
-import { elevation, iconSizes, motion, radii, spacing } from '@/theme';
-import { useThemeColors } from '@/theme/theme-provider';
+import { elevation, iconSizes, radii, spacing } from '@/theme';
+import { useTheme, useThemeColors } from '@/theme/theme-provider';
 
 const MENU_MIN_WIDTH = 220;
 const MENU_MAX_WIDTH = 272;
@@ -25,19 +24,16 @@ type MenuPosition = {
   minWidth: number;
 };
 
-/** Animated language selector shared by the auth screens. */
+/** Icon-only language control (flag); menu lists full language names. */
 export function LanguageDropdown() {
   const colors = useThemeColors();
+  const { scheme } = useTheme();
+  const isDark = scheme === 'dark';
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<MenuPosition | null>(null);
   const triggerRef = useRef<ViewInstance>(null);
   const language = useAppLanguage();
-  const openProgress = useSharedValue(0);
-
-  useEffect(() => {
-    openProgress.value = withTiming(open ? 1 : 0, { duration: motion.fast + 30 });
-  }, [open, openProgress]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -46,10 +42,6 @@ export function LanguageDropdown() {
     }, 0);
     return () => clearTimeout(timer);
   }, [pathname]);
-
-  const chevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${openProgress.value * 180}deg` }],
-  }));
 
   function closeMenu() {
     setOpen(false);
@@ -60,7 +52,8 @@ export function LanguageDropdown() {
     triggerRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
       const screenWidth = Dimensions.get('window').width;
       const minWidth = Math.min(MENU_MAX_WIDTH, Math.max(MENU_MIN_WIDTH, width));
-      const left = Math.max(12, Math.min(x, screenWidth - minWidth - 12));
+      // Align menu to the right edge of the icon when near the trailing edge.
+      const left = Math.max(12, Math.min(x + width - minWidth, screenWidth - minWidth - 12));
       setMenuPos({ top: y + height + GAP_BELOW_TRIGGER, left, minWidth });
       setOpen(true);
     });
@@ -73,38 +66,24 @@ export function LanguageDropdown() {
 
   return (
     <>
-      <View ref={triggerRef} collapsable={false} style={styles.anchor}>
+      <View ref={triggerRef} collapsable={false}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={LANGUAGE_LABELS[language]}
           accessibilityState={{ expanded: open }}
-          hitSlop={6}
+          hitSlop={8}
           onPress={toggleMenu}
           cssInterop={false}
-          style={({ pressed }) => [
-            styles.trigger,
-            {
-              backgroundColor: open ? colors.primaryMuted : colors.surface,
-              borderColor: open ? colors.primary : colors.border,
-            },
-            pressed && styles.pressed,
-          ]}
+          style={({ pressed }) => [styles.hit, pressed && styles.pressed]}
         >
-          <View style={[styles.triggerFlagWrap, { backgroundColor: colors.surfaceMuted }]}>
+          <View
+            style={[
+              styles.trigger,
+              { backgroundColor: isDark ? colors.primary : '#FFFFFF' },
+            ]}
+          >
             <Text style={styles.flag}>{LANGUAGE_FLAGS[language]}</Text>
           </View>
-          <View style={styles.triggerCopy}>
-            <Text
-              variant="bodyStrong"
-              numberOfLines={1}
-              style={[styles.triggerLabel, { color: colors.textPrimary }]}
-            >
-              {LANGUAGE_LABELS[language]}
-            </Text>
-          </View>
-          <Animated.View style={chevronStyle}>
-            <ChevronDown size={iconSizes.sm} color={colors.textMuted} strokeWidth={2.2} />
-          </Animated.View>
         </Pressable>
       </View>
 
@@ -180,39 +159,23 @@ export function LanguageDropdown() {
 }
 
 const styles = StyleSheet.create({
-  anchor: { alignSelf: 'flex-start' },
+  hit: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressed: {
+    opacity: 0.88,
+  },
   trigger: {
-    minHeight: 50,
-    width: 158,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2] + 1,
-    paddingHorizontal: spacing[2] + 1,
-    paddingVertical: 6,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-  },
-  pressed: { opacity: 0.84, transform: [{ scale: 0.98 }] },
-  triggerFlagWrap: {
-    width: 34,
-    height: 34,
+    width: 44,
+    height: 44,
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  triggerCopy: {
-    flex: 1,
-    minWidth: 0,
-    height: 34,
-    justifyContent: 'center',
-  },
-  triggerLabel: {
-    fontSize: 16,
-    lineHeight: 22,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
-  },
-  flag: { fontSize: 16, lineHeight: 20 },
+  flag: { fontSize: 22, lineHeight: 26 },
   modalRoot: { flex: 1 },
   menu: {
     position: 'absolute',

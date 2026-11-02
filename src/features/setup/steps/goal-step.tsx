@@ -36,7 +36,7 @@ export function GoalStep() {
   return (
     <SetupShell
       title="What would you like to achieve?"
-      subtitle="Pick the primary goal for your Calio plan. You can change this later."
+      subtitle="Pick the primary goal for your Trackwise plan. You can change this later."
       stepIndex={progress.index}
       stepTotal={progress.total}
       onBack={progress.index > 0 ? () => void goBack() : undefined}

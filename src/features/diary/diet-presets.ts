@@ -4,7 +4,7 @@
  * Energy factors: carbs 4 kcal/g, protein 4 kcal/g, fat 9 kcal/g.
  * Fiber is NOT part of the 100% C/P/F distribution.
  *
- * Preset ratios are Calio application defaults / starting points.
+ * Preset ratios are Trackwise application defaults / starting points.
  * Paleo, Mediterranean, and DASH values are suggested configurations —
  * those patterns are not defined by a single official macro split.
  */

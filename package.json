@@ -1,5 +1,5 @@
 {
-  "name": "calio",
+  "name": "trackwise",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -16,7 +16,6 @@
     "@zxcvbn-ts/language-en": "^4.1.1",
     "date-fns": "^4.4.0",
     "expo": "^58.0.0",
-    "expo-auth-session": "~58.0.16",
     "expo-camera": "~58.0.14",
     "expo-constants": "~58.0.14",
     "expo-document-picker": "~58.0.4",
@@ -71,8 +70,8 @@
     "start": "expo start --tunnel",
     "start:lan": "expo start --lan",
     "start:clear": "expo start --tunnel --clear",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
@@ -81,7 +80,8 @@
     "format:check": "prettier --check .",
     "supabase:start": "npx --yes supabase start",
     "supabase:status": "npx --yes supabase status",
-    "supabase:stop": "npx --yes supabase stop"
+    "supabase:stop": "npx --yes supabase stop",
+    "sync:exercises": "node scripts/sync-system-exercises.mjs"
   },
   "private": true
 }

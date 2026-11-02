@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BrandMark } from '@/components/brand-mark';
 import { FloatingBackgroundDecor } from '@/components/floating-background-decor';
 import { SlideTransition, type SlideSide } from '@/components/ui/slide-transition';
 import { Text } from '@/components/ui/text';
@@ -66,7 +65,6 @@ export function AuthShell({
           automaticallyAdjustKeyboardInsets
         >
           <View style={styles.hero}>
-            <BrandMark size="hero" />
             <Text variant="display" style={[styles.title, { color: colors.textPrimary }]}>
               {title}
             </Text>
@@ -123,22 +121,22 @@ const styles = StyleSheet.create({
   },
   topBar: {
     paddingHorizontal: 20,
-    paddingTop: 4,
-    paddingBottom: 4,
+    paddingTop: 8,
+    paddingBottom: 12,
     zIndex: 10,
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 20,
     paddingBottom: 48,
   },
   hero: {
     position: 'relative',
     alignItems: 'center',
     gap: 10,
-    paddingTop: 4,
-    paddingBottom: 4,
+    paddingTop: 32,
+    paddingBottom: 8,
     width: '100%',
   },
   title: {
@@ -152,7 +150,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   card: {
-    marginTop: 18,
+    marginTop: 24,
     borderRadius: radii.md,
     borderWidth: 0,
     paddingHorizontal: spacing[5],

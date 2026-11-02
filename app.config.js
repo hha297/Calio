@@ -16,6 +16,7 @@ module.exports = () => {
         '',
       cloudinaryCloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME ?? '',
       cloudinaryUploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? '',
+      adminUrl: process.env.EXPO_PUBLIC_ADMIN_URL ?? '',
     },
   };
 };

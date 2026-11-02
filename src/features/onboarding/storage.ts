@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const ONBOARDING_KEY = 'calio.onboarding.completed';
+const ONBOARDING_KEY = 'trackwise.onboarding.completed';
 
 export async function getOnboardingCompleted(): Promise<boolean> {
   const value = await AsyncStorage.getItem(ONBOARDING_KEY);

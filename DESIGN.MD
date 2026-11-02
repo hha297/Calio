@@ -1,7 +1,7 @@
-﻿# Design System Inspired by Replicate — Calio Adaptation
+# Design System Inspired by Replicate — Trackwise Adaptation
 
 > Source: [getdesign.md/replicate/design-md](https://getdesign.md/replicate/design-md).  
-> **Primary (locked):** Calio Green **`#00D95F`** — never Replicate orange `#ea2804`.  
+> **Primary (locked):** Trackwise Green **`#00D95F`** — never Replicate orange `#ea2804`.  
 > **Rejected:** Sentry cool slate and PostHog cream/olive directions.  
 > **Platform:** Expo / React Native fitness & nutrition — typography-led, mobile-first.
 
@@ -9,7 +9,7 @@
 
 ## 1. Visual Theme & Atmosphere
 
-Warm bone/cream developer-notebook surfaces with dark ink type and a single scarce brand accent — Calio Green (`#00D95F`) on consequential CTAs only. Personality comes from **aggressive display type** (tight tracking, bold grotesque), pill CTAs, hairline borders, and near-zero decorative shadow.
+Warm bone/cream developer-notebook surfaces with dark ink type and a single scarce brand accent — Trackwise Green (`#00D95F`) on consequential CTAs only. Personality comes from **aggressive display type** (tight tracking, bold grotesque), pill CTAs, hairline borders, and near-zero decorative shadow.
 
 **Key Characteristics:**
 - Canvas `#f9f7f3` / bone `#f3f0e8` / white cards
@@ -23,7 +23,7 @@ Warm bone/cream developer-notebook surfaces with dark ink type and a single scar
 
 ## 2. Typography (highest priority)
 
-| Role | Reference | Calio substitute | Notes |
+| Role | Reference | Trackwise substitute | Notes |
 |------|-----------|------------------|-------|
 | Display | `rb-freigeist-neue` (proprietary) | **Bricolage Grotesque** | OFL via Google Fonts / Expo |
 | Body / UI | `basier-square` (proprietary) | **Geist** | OFL via Google Fonts / Expo |

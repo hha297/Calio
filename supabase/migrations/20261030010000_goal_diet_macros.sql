@@ -40,6 +40,6 @@ alter table public.goals
   );
 
 comment on column public.goals.diet_preset is
-  'Calio diet preset id (application starting point, not a medical prescription).';
+  'Trackwise diet preset id (application starting point, not a medical prescription).';
 comment on column public.goals.fiber_g is
   'Daily fiber target in grams; independent of carb/protein/fat percentages.';

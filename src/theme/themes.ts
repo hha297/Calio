@@ -3,7 +3,7 @@ import type { ColorName } from './colors';
 
 /**
  * Replicate-inspired warm bone / ink UI (DESIGN.MD).
- * Locked Calio primary `#00D95F` (never Replicate orange `#ea2804`, never legacy `#69b32b`).
+ * Locked Trackwise primary `#00D95F` (never Replicate orange `#ea2804`, never legacy `#69b32b`).
  */
 export const brand = {
   primary: '#00D95F',

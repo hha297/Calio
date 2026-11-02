@@ -1,5 +1,5 @@
 /**
- * Energy estimation for Calio setup.
+ * Energy estimation for Trackwise setup.
  *
  * Method: Mifflin–St Jeor BMR × lifestyle activity factor, then add an
  * estimated daily share of workout expenditure (sessions × duration × MET × weight / 7).

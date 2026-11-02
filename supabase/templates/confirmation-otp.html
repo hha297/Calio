@@ -1,9 +1,9 @@
 <!--
-  Calio — Supabase Auth email template: Confirm signup
+  Trackwise — Supabase Auth email template: Confirm signup
 
   MANUAL SETUP (Dashboard — not applied from this repo on hosted projects):
   1. Open Supabase → Authentication → Email Templates → Confirm signup
-  2. Subject: Your Calio verification code
+  2. Subject: Your Trackwise verification code
   3. Paste this entire HTML into the Body field
   4. Confirm Auth → Sign In / Providers → Email →
      - Confirm email: ON (required for signup OTP)
@@ -12,14 +12,14 @@
 
   Important: use {{ .Token }} only — do NOT include {{ .ConfirmationURL }}.
   A confirmation link would consume the OTP when mail scanners open it.
-  The user verifies inside the Calio app on the Verify Email screen.
+  The user verifies inside the Trackwise app on the Verify Email screen.
 -->
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Verify your Calio email</title>
+    <title>Verify your Trackwise email</title>
   </head>
   <body
     style="
@@ -62,7 +62,7 @@
                     color: #000000;
                   "
                 >
-                  Calio
+                  Trackwise
                 </p>
                 <p style="margin: 8px 0 0; font-size: 14px; color: rgba(0, 0, 0, 0.85)">
                   Email verification
@@ -72,10 +72,10 @@
             <tr>
               <td style="padding: 28px 24px 8px">
                 <p style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #121212">
-                  Your Calio verification code is
+                  Your Trackwise verification code is
                 </p>
                 <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: #6a6a6a">
-                  Enter this code in the Calio app to verify
+                  Enter this code in the Trackwise app to verify
                   <strong style="color: #121212">{{ .Email }}</strong>. This code will expire
                   shortly and can only be used once.
                 </p>
@@ -96,17 +96,17 @@
                   {{ .Token }}
                 </p>
                 <p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #6a6a6a">
-                  Open Calio → Verify your email → enter the code.
+                  Open Trackwise → Verify your email → enter the code.
                 </p>
                 <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #6a6a6a">
-                  If you didn’t create a Calio account, you can ignore this email.
+                  If you didn’t create a Trackwise account, you can ignore this email.
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding: 20px 24px 28px">
                 <p style="margin: 0; font-size: 12px; color: #b3b3b3; text-align: center">
-                  Sent by Calio · Meals, workouts, and progress in one place
+                  Sent by Trackwise · Meals, workouts, and progress in one place
                 </p>
               </td>
             </tr>

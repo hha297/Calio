@@ -1,4 +1,4 @@
--- Wipe the authenticated user's Calio data while keeping the Auth identity.
+-- Wipe the authenticated user's Trackwise data while keeping the Auth identity.
 -- Caller identity comes only from auth.uid(); never accept a client-supplied user id.
 
 create or replace function public.wipe_own_user_data()
@@ -39,7 +39,7 @@ begin
   -- Clear tracking / setup fields so the user can complete account setup again while signed in.
   update public.profiles
   set
-    display_name = split_part(coalesce((select email from auth.users where id = uid), 'Calio'), '@', 1),
+    display_name = split_part(coalesce((select email from auth.users where id = uid), 'Trackwise'), '@', 1),
     height_cm = null,
     sex = null,
     birth_date = null,
@@ -52,7 +52,7 @@ end;
 $$;
 
 comment on function public.wipe_own_user_data() is
-  'Deletes the caller''s Calio rows (food, workouts, goals, measurements, custom catalog) and resets setup fields. Keeps auth.users, units, and preferences. Uses auth.uid() only.';
+  'Deletes the caller''s Trackwise rows (food, workouts, goals, measurements, custom catalog) and resets setup fields. Keeps auth.users, units, and preferences. Uses auth.uid() only.';
 
 revoke all on function public.wipe_own_user_data() from public;
 grant execute on function public.wipe_own_user_data() to authenticated;

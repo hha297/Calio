@@ -1,6 +1,8 @@
-Calio — agent instructions
+Trackwise — agent instructions
 Purpose and scope
-Calio is a mobile-first nutrition and fitness app for food logging, calories, workouts, goals, body measurements, and progress. Treat calorie and activity values as estimates, not medical measurements.
+Trackwise is a mobile-first nutrition and fitness app for food logging, calories, workouts, goals, body measurements, and progress. Treat calorie and activity values as estimates, not medical measurements.
+
+The Admin web console lives in `admin/` (own package + lockfile). Read `admin/AGENTS.md` and `admin/README.md` before changing Admin auth, roles, catalog writes, or deployments.
 
 These instructions apply throughout the repository. Read any more specific AGENTS.md in the area being changed. Follow the user's current requirements; this file supplies project defaults, not permission to expand a task.
 Start every task with the actual checkout
@@ -16,7 +18,7 @@ Start every task with the actual checkout
 - Design implementation: src/theme/, src/components/ui/, and the relevant feature components.
 - Database history: supabase/migrations/. Local service settings: supabase/config.toml. Auth email templates: supabase/templates/.
 - Setup and operational guidance: README.md and supabase/README.md, checked against the actual code and configuration.
-- DESIGN.MD documents the current Calio visual system: Replicate-inspired typography-led UI with locked Calio primary `#00D95F` (not Replicate orange `#ea2804`, not legacy `#69b32b`). Display = Bricolage Grotesque; body = Geist; mono = JetBrains Mono. Follow DESIGN.MD together with `src/theme/` and `src/components/ui/`. Do not reintroduce Sentry slate, PostHog yellow branding, or proprietary Freigeist/Basier fonts without a license.
+- DESIGN.MD documents the current Trackwise visual system: Replicate-inspired typography-led UI with locked Trackwise primary `#00D95F` (not Replicate orange `#ea2804`, not legacy `#69b32b`). Display = Bricolage Grotesque; body = Geist; mono = JetBrains Mono. Follow DESIGN.MD together with `src/theme/` and `src/components/ui/`. Do not reintroduce Sentry slate, PostHog yellow branding, or proprietary Freigeist/Basier fonts without a license.
 - When documentation and implementation disagree, identify the discrepancy and update affected documentation within the task; do not silently change product behavior to match stale prose.
   Architecture and code placement
 - Use Expo, React Native, TypeScript, and Expo Router within the existing architecture. Preserve supported platform behavior when changing shared code.
@@ -64,9 +66,9 @@ Start every task with the actual checkout
 - Keep machine IPs, temporary URLs, network assumptions, and personal credentials out of permanent project rules. Document placeholders and reproducible setup instead.
 - Verify environment changes using a restarted development server/cache refresh when required. Report the actual backend used for a test without printing credentials.
   UI, design, accessibility, and localization
-- Reuse current Calio theme tokens, typography/font loading, spacing, radii, and shared primitives. Extend the shared system deliberately when necessary rather than introducing screen-specific replacements.
+- Reuse current Trackwise theme tokens, typography/font loading, spacing, radii, and shared primitives. Extend the shared system deliberately when necessary rather than introducing screen-specific replacements.
 - Support light, dark, and system theme behavior where implemented. Use semantic background/surface/text tokens; primary and secondary colors are for actions and emphasis, not generic card backgrounds.
-- Keep the Calio brand and existing assets consistent. Verify asset paths before using them; do not rely on outdated README asset names.
+- Keep the Trackwise brand and existing assets consistent. Verify asset paths before using them; do not rely on outdated README asset names.
 - Design for small screens, safe areas, keyboards, scrolling, long labels, and larger text. Provide accessible labels/roles, usable touch targets, visible focus where relevant, and sufficient contrast. Do not communicate status through color alone.
 - Put new or changed user-facing copy into the existing i18n system. Update supported locale resources with matching keys and preserve interpolation/pluralization. Derive the locale list from src/i18n/ rather than maintaining a second list here.
 - Use locale-aware formatting for display. Keep storage formats and unit conversions explicit; do not mix display units with database units.

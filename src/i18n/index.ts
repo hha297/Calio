@@ -28,7 +28,7 @@ export const LANGUAGE_FLAGS: Record<AppLanguage, string> = {
   vi: '\u{1F1FB}\u{1F1F3}',
 };
 
-const LANGUAGE_KEY = 'calio.language';
+const LANGUAGE_KEY = 'trackwise.language';
 
 function deviceLanguage(): AppLanguage {
   const code = Localization.getLocales()[0]?.languageCode?.toLowerCase() ?? 'en';

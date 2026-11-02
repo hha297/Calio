@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseCalioBackupJson, validateCalioBackup } from './backup';
+import { parseTrackwiseBackupJson, validateTrackwiseBackup } from './backup';
 
 const validBackup = {
-  format: 'calio-backup',
+  format: 'trackwise-backup',
   version: 1,
   exportedAt: '2026-11-02T12:00:00.000Z',
   appVersion: '1.0.0',
@@ -26,9 +26,9 @@ const validBackup = {
   },
 };
 
-describe('validateCalioBackup', () => {
-  it('accepts a v1 calio-backup payload', () => {
-    const result = validateCalioBackup(validBackup);
+describe('validateTrackwiseBackup', () => {
+  it('accepts a v1 trackwise-backup payload', () => {
+    const result = validateTrackwiseBackup(validBackup);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.summary.goals).toBe(1);
@@ -36,18 +36,23 @@ describe('validateCalioBackup', () => {
     }
   });
 
+  it('accepts legacy calio-backup format', () => {
+    const result = validateTrackwiseBackup({ ...validBackup, format: 'calio-backup' });
+    expect(result.ok).toBe(true);
+  });
+
   it('rejects wrong format or version', () => {
-    expect(validateCalioBackup({ ...validBackup, format: 'other' }).ok).toBe(false);
-    expect(validateCalioBackup({ ...validBackup, version: 2 }).ok).toBe(false);
+    expect(validateTrackwiseBackup({ ...validBackup, format: 'other' }).ok).toBe(false);
+    expect(validateTrackwiseBackup({ ...validBackup, version: 2 }).ok).toBe(false);
   });
 
   it('parses JSON text', () => {
-    const result = parseCalioBackupJson(JSON.stringify(validBackup));
+    const result = parseTrackwiseBackupJson(JSON.stringify(validBackup));
     expect(result.ok).toBe(true);
   });
 
   it('rejects invalid JSON', () => {
-    const result = parseCalioBackupJson('{nope');
+    const result = parseTrackwiseBackupJson('{nope');
     expect(result.ok).toBe(false);
   });
 });

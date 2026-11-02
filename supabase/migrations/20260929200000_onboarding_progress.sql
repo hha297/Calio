@@ -1,4 +1,4 @@
--- Post-signup setup progress + profile preference fields for Calio onboarding.
+-- Post-signup setup progress + profile preference fields for Trackwise onboarding.
 
 alter table public.profiles
   add column if not exists activity_level text

@@ -83,7 +83,7 @@ function SignInForm({ notice }: { notice?: string }) {
       footer={
         <View className="flex-row flex-wrap items-center justify-center gap-1.5">
           <Text variant="bodySmall" tone="muted">
-            {t('auth.newToCalio')}
+            {t('auth.newToTrackwise')}
           </Text>
           <AuthTextLink
             href="/(auth)/sign-up"

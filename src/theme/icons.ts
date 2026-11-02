@@ -1,4 +1,4 @@
-/** Lucide / vector icon sizes used across Calio. */
+/** Lucide / vector icon sizes used across Trackwise. */
 export const iconSizes = {
   xs: 14,
   sm: 16,

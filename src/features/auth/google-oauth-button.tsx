@@ -32,10 +32,11 @@ const GOOGLE_BUTTON = {
     stroke: '#747775',
     label: '#1F1F1F',
   },
+  // Keep a white chip in dark mode — near-black #131314 reads muddy on our canvas.
   dark: {
-    fill: '#131314',
-    stroke: '#8E918F',
-    label: '#E3E3E3',
+    fill: '#FFFFFF',
+    stroke: '#747775',
+    label: '#1F1F1F',
   },
 } as const;
 
@@ -55,7 +56,10 @@ export function GoogleOAuthButton({ disabled = false }: { disabled?: boolean }) 
     setLoading(true);
     setError(null);
     try {
-      await signInWithGoogle();
+      const outcome = await signInWithGoogle();
+      if (outcome === 'cancelled') {
+        setError(t('auth.errors.googleCancelled'));
+      }
     } catch (err) {
       reportError(err, { area: 'auth', action: 'google-sign-in' });
       setError(toAuthErrorMessage(err));

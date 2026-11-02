@@ -92,7 +92,8 @@ export function toAuthErrorMessage(error: unknown): string {
   if (
     message.includes('unsupported provider') ||
     message.includes('provider is not enabled') ||
-    message.includes('google sign-in')
+    message.includes('google sign-in') ||
+    message.includes('google redirect')
   ) {
     return t('auth.errors.googleSignIn');
   }

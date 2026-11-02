@@ -10,5 +10,5 @@ export function reportError(error: unknown, context?: Record<string, string>) {
   } else if (typeof error === 'string' && error.trim()) {
     message = error;
   }
-  console.error('[calio]', message, context ?? {});
+  console.error('[Trackwise]', message, context ?? {});
 }
