@@ -116,7 +116,7 @@ export const supportTopics: SupportTopic[] = [
       },
       {
         heading: 'Policies',
-        body: 'Read the Privacy Policy and Terms of Use on this website. Draft notices appear until legal review is complete.',
+        body: 'Read the Privacy Policy and Terms of Use on this website, or contact support by email or phone listed on the Contact section.',
       },
     ],
   },

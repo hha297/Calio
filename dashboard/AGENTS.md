@@ -6,8 +6,8 @@ Standalone Next.js App Router marketing site under `dashboard/`. This is the mai
 
 - Own `package.json` / lockfile; run independently on port 3001 by default (Admin uses 3000).
 - Follow root `DESIGN.MD` and Trackwise brand (`#00D95F`, bone canvas, Bricolage / Geist / JetBrains Mono).
-- Advertise only features that exist in the mobile app. Prefer Coming soon / TODO over invented claims.
-- Keep store URLs, support email, and social links config-driven; empty values must not create broken links.
+- Advertise only features that exist in the mobile app. Prefer Coming soon over invented claims. Do not leave visible TODO copy on public pages.
+- Public site constants live in `src/config/site.ts` (not Vercel env). Empty store URLs must not create broken links. Social links stay commented out until real profiles exist.
 
 ## Key paths
 
@@ -20,6 +20,6 @@ Standalone Next.js App Router marketing site under `dashboard/`. This is the mai
 ## Rules
 
 - Do not deploy, change DNS, or wire production backends without explicit approval.
-- Do not put secrets in `NEXT_PUBLIC_*`.
-- Legal pages remain drafts until owner review; keep visible draft notices and TODO placeholders.
+- Do not put secrets in client-side site config.
+- Legal pages use confirmed operator contact details; do not reintroduce visible TODO placeholders.
 - Feedback stays mock-first until a real endpoint exists — never claim delivery falsely.
