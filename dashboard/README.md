@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Public marketing site for trackwise.one</strong><br/>
-  <sub>Product story · Features · FAQ · Support · Legal drafts</sub><br/>
+  <sub>Product story · Features · FAQ · Support · Legal</sub><br/>
   <sub>Not the Admin console · No app backend required to run</sub>
 </p>
 
@@ -35,7 +35,7 @@
 
 ## What is this package?
 
-The **main public web** for Trackwise — product marketing, feature detail, FAQ, support, and legal drafts at [trackwise.one](https://trackwise.one).
+The **main public web** for Trackwise — product marketing, feature detail, FAQ, support, and legal pages at [trackwise.one](https://trackwise.one).
 
 |                                                                                                                                      |                                                                                                                                          |                                                                                                                                     |                                                                                                                                   |
 | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -62,8 +62,8 @@ It does **not** need the mobile app or Admin console running.
 | `/about` | Short about page |
 | `/support` | Support Center |
 | `/feedback` | Feedback form (**mock** submission until a backend exists) |
-| `/privacy` | Privacy Policy draft |
-| `/terms` | Terms of Use draft |
+| `/privacy` | Privacy Policy |
+| `/terms` | Terms of Use |
 
 **Product messaging defaults**
 
@@ -82,7 +82,7 @@ It does **not** need the mobile app or Admin console running.
 | **Fonts** | Bricolage Grotesque (display), Geist (body), JetBrains Mono (metrics) |
 | **i18n** | Client locale dictionaries — EN / FI / SV / VI |
 | **Theme** | Light / dark / system (CSS variables + `data-theme`) |
-| **Config** | `src/config/site.ts` + `NEXT_PUBLIC_*` env |
+| **Config** | `src/config/site.ts` (hard-coded public constants) |
 
 **Expand** `src/` layout
 
@@ -95,7 +95,7 @@ src/
 │   ├── navigation/          # Header, locale + theme controls
 │   ├── mockups/             # Phone frames & screen previews
 │   └── sections/            # Homepage sections
-├── config/site.ts           # Domain, store URLs, social
+├── config/site.ts           # Domain, store URLs, support contact
 ├── content/                 # FAQ, features, legal, support copy
 └── i18n/                    # Locale messages + provider
 ```
@@ -134,30 +134,14 @@ Port **3001** avoids colliding with Admin on **3000**.
 
 ## Configuration
 
-All env vars are **public** (`NEXT_PUBLIC_*`). Never put secrets here.
+Edit **`src/config/site.ts`** — no Vercel env required for contact/store/SEO:
 
-```env
-# ── Site ───────────────────────────────────────────────────────────
-NEXT_PUBLIC_SITE_URL=https://trackwise.one
-
-# ── Stores (empty → Coming soon / iOS later badges) ────────────────
-NEXT_PUBLIC_GOOGLE_PLAY_URL=
-NEXT_PUBLIC_APP_STORE_URL=
-
-# ── Contact & social (optional — footer only renders configured URLs)
-NEXT_PUBLIC_SUPPORT_EMAIL=
-NEXT_PUBLIC_TWITTER_URL=
-NEXT_PUBLIC_INSTAGRAM_URL=
-NEXT_PUBLIC_GITHUB_URL=
-```
-
-| Variable | Purpose |
+| Constant | Purpose |
 | -------- | ------- |
-| `NEXT_PUBLIC_SITE_URL` | Canonical origin (SEO, absolute links) |
-| `NEXT_PUBLIC_GOOGLE_PLAY_URL` | Android store link when live |
-| `NEXT_PUBLIC_APP_STORE_URL` | iOS store link when live (later) |
-| `NEXT_PUBLIC_SUPPORT_EMAIL` | Support contact |
-| `NEXT_PUBLIC_*_URL` social | Footer links only if set |
+| `SITE_URL` / `SITE_DOMAIN` | Canonical origin |
+| `SUPPORT_EMAIL` / `SUPPORT_PHONE` | Public support contact |
+| `GOOGLE_PLAY_URL` | Android store (empty → Coming soon) |
+| `APP_STORE_URL` | iOS store when live |
 
 Brand assets are mirrored from `../assets/images/branding/` into `public/images/branding/`.
 
@@ -166,10 +150,9 @@ Brand assets are mirrored from `../assets/images/branding/` into `public/images/
 ## Content & honesty rules
 
 - Advertise only features that exist in the **shipping mobile app**
-- Prefer **Coming soon** / draft notices over invented AI or unpaid store claims
-- Legal pages stay **drafts** until owner review
+- Prefer **Coming soon** over invented AI or unpaid store claims; do not leave visible TODO copy on pages
 - Feedback validates in-browser only — do not claim delivery until a real endpoint exists
-- Empty store / social env values must not create broken links
+- Empty store URLs in `site.ts` must not create broken links
 
 ---
 
@@ -178,7 +161,7 @@ Brand assets are mirrored from `../assets/images/branding/` into `public/images/
 Typical Vercel setup:
 
 1. **Root Directory** = `dashboard`
-2. Set `NEXT_PUBLIC_*` for production
+2. Confirm `src/config/site.ts` (especially store URLs when published)
 3. Do not wire DNS, store URLs, or production backends without owner approval
 
 ---

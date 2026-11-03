@@ -122,24 +122,26 @@ export function SupportCenter() {
         >
           <h2 className="font-display text-2xl font-bold text-ink">Contact support</h2>
           <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-body">
-            {siteConfig.supportEmail ? (
+            Email{' '}
+            <a
+              className="font-semibold text-ink underline underline-offset-2"
+              href={`mailto:${siteConfig.supportEmail}`}
+            >
+              {siteConfig.supportEmail}
+            </a>
+            {siteConfig.supportPhone ? (
               <>
-                Email{' '}
+                {' '}
+                or call{' '}
                 <a
                   className="font-semibold text-ink underline underline-offset-2"
-                  href={`mailto:${siteConfig.supportEmail}`}
+                  href={`tel:${siteConfig.supportPhone}`}
                 >
-                  {siteConfig.supportEmail}
+                  {siteConfig.supportPhone}
                 </a>
-                .
               </>
-            ) : (
-              <>
-                An official support email is not configured yet. Set{' '}
-                <code className="font-metric text-sm">NEXT_PUBLIC_SUPPORT_EMAIL</code> when ready,
-                or use the feedback form for a local preview submission.
-              </>
-            )}
+            ) : null}
+            .
           </p>
           <a
             href="/feedback"

@@ -9,11 +9,12 @@ import { useMessages } from '@/i18n/locale-provider';
 export function SiteFooter() {
   const t = useMessages();
   const year = new Date().getFullYear();
-  const social = [
-    { href: siteConfig.social.twitter, label: 'X / Twitter' },
-    { href: siteConfig.social.instagram, label: 'Instagram' },
-    { href: siteConfig.social.github, label: 'GitHub' },
-  ].filter((item) => item.href);
+  // Social links hidden until public profiles exist.
+  // const social = [
+  //   { href: siteConfig.social.twitter, label: 'X / Twitter' },
+  //   { href: siteConfig.social.instagram, label: 'Instagram' },
+  //   { href: siteConfig.social.github, label: 'GitHub' },
+  // ].filter((item) => item.href);
 
   const columns = [
     {
@@ -58,21 +59,15 @@ export function SiteFooter() {
             <BrandMark size="md" />
             <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-body">{t.footer.blurb}</p>
             <p className="mt-4 text-sm font-semibold text-ink">{siteConfig.domain}</p>
-            {social.length > 0 ? (
-              <ul className="mt-4 flex flex-wrap gap-3">
-                {social.map((item) => (
-                  <li key={item.label}>
-                    <a
-                      href={item.href}
-                      className="text-sm font-semibold text-body underline-offset-4 hover:text-ink hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            {siteConfig.supportEmail ? (
+              <p className="mt-3 text-sm text-body">
+                <a
+                  href={`mailto:${siteConfig.supportEmail}`}
+                  className="font-semibold text-ink underline-offset-4 hover:underline"
+                >
+                  {siteConfig.supportEmail}
+                </a>
+              </p>
             ) : null}
           </div>
 

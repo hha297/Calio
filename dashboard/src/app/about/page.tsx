@@ -26,13 +26,36 @@ export default function AboutPage() {
           measurements and not medical advice.
         </p>
         <p>
-          This website ({siteConfig.domain}) introduces the product, documents policies, and
-          points people to download and support channels as they become available.
+          We started Trackwise to keep diary, training, and progress in one calm place — without
+          turning everyday tracking into a clinic visit. The product focuses on what you can log
+          yourself: meals, workouts, goals, and measurements.
         </p>
-        <p className="rounded-[12px] border border-dashed border-hairline bg-bone px-4 py-3 text-base text-ink">
-          TODO: Confirm company identity, founding story, and public contact details for the About
-          page before launch.
+        <p>
+          This website ({siteConfig.domain}) introduces the product, publishes policies, and points
+          people to download and support channels as they become available.
         </p>
+        <div className="rounded-[16px] border border-hairline bg-bone px-5 py-4 text-base text-ink">
+          <p className="font-bold">Contact</p>
+          <p className="mt-2 text-body">
+            Operator: {siteConfig.legalName}
+            <br />
+            Email:{' '}
+            <a
+              className="font-semibold text-ink underline underline-offset-2"
+              href={`mailto:${siteConfig.supportEmail}`}
+            >
+              {siteConfig.supportEmail}
+            </a>
+            <br />
+            Phone:{' '}
+            <a
+              className="font-semibold text-ink underline underline-offset-2"
+              href={`tel:${siteConfig.supportPhone}`}
+            >
+              {siteConfig.supportPhone}
+            </a>
+          </p>
+        </div>
       </div>
       <div className="mt-10 flex flex-wrap gap-3">
         <Button href="/features">Explore features</Button>

@@ -10,18 +10,20 @@ type LegalDocumentProps = {
 export function LegalDocument({
   title,
   notice,
-  updatedLabel = 'Draft preview — not finalized',
+  updatedLabel,
   sections,
 }: LegalDocumentProps) {
   return (
     <div className="container-narrow py-14 sm:py-20">
-      <p className="draft-banner rounded-[12px] px-4 py-3 text-sm font-semibold">{notice}</p>
+      <p className="rounded-[12px] border border-hairline bg-bone px-4 py-3 text-sm leading-relaxed text-body">
+        {notice}
+      </p>
 
       <header className="mt-8 border-b border-hairline pb-8">
         <h1 className="font-display text-[clamp(2.25rem,5vw,3.5rem)] font-extrabold tracking-tight text-ink">
           {title}
         </h1>
-        <p className="mt-3 text-sm text-mute">{updatedLabel}</p>
+        {updatedLabel ? <p className="mt-3 text-sm text-mute">{updatedLabel}</p> : null}
       </header>
 
       <nav aria-label="Table of contents" className="mt-8 rounded-[16px] border border-hairline bg-bone p-5">
@@ -48,16 +50,7 @@ export function LegalDocument({
             </h2>
             <div className="mt-4 space-y-4 text-[16px] leading-relaxed text-body">
               {section.paragraphs.map((paragraph) => (
-                <p
-                  key={paragraph.slice(0, 48)}
-                  className={
-                    paragraph.startsWith('TODO:')
-                      ? 'rounded-[10px] border border-dashed border-warning/50 bg-bone px-3 py-2 text-[15px] text-ink'
-                      : undefined
-                  }
-                >
-                  {paragraph}
-                </p>
+                <p key={paragraph.slice(0, 48)}>{paragraph}</p>
               ))}
             </div>
           </section>

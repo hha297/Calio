@@ -1,14 +1,24 @@
+import {
+  SITE_LEGAL_NAME,
+  SITE_URL,
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+} from '@/config/site';
+
 export type LegalSection = {
   id: string;
   title: string;
   paragraphs: string[];
 };
 
-export const privacyDraftNotice =
-  'Draft — This policy requires review and confirmation before publication.';
+/** Effective date shown on Privacy and Terms. */
+export const LEGAL_EFFECTIVE_DATE = '3 November 2026';
 
-export const termsDraftNotice =
-  'Draft — These terms require owner review and confirmation before publication.';
+export const privacyNotice =
+  'This Privacy Policy explains how Trackwise handles personal data for the Trackwise mobile app and trackwise.one.';
+
+export const termsNotice =
+  'These Terms of Use govern access to trackwise.one and the Trackwise mobile application.';
 
 export const privacySections: LegalSection[] = [
   {
@@ -17,7 +27,7 @@ export const privacySections: LegalSection[] = [
     paragraphs: [
       'This Privacy Policy describes how Trackwise (“Trackwise,” “we,” “us,” or “our”) handles information when you use the Trackwise mobile application and the public website at trackwise.one.',
       'Trackwise provides everyday nutrition and fitness tracking. Calorie and activity values shown in the product are estimates and are not medical measurements.',
-      'TODO: Confirm the legal entity name that operates Trackwise and the effective date of this policy.',
+      `The operator of Trackwise is ${SITE_LEGAL_NAME}. This policy is effective as of ${LEGAL_EFFECTIVE_DATE}.`,
     ],
   },
   {
@@ -30,8 +40,8 @@ export const privacySections: LegalSection[] = [
       'Nutrition and fitness records you create (food entries, custom foods, workouts, workout sets, templates, favorites, goals, onboarding/setup progress, and body measurements).',
       'Optional images you upload (food photos, profile avatars, or custom exercise images) when image upload is configured.',
       'Product lookup requests when you scan barcodes (Trackwise may query Open Food Facts to retrieve product nutrition information).',
-      'Technical information needed to operate the service (such as device/app version information available to the app runtime). We do not currently operate a third-party analytics SDK in the reviewed application code.',
-      'TODO: Confirm whether additional diagnostics, crash reporting, or analytics will be enabled before launch and update this section.',
+      'Technical and diagnostic information needed to operate and improve the service, including device and app version details, performance metrics, crash and error reports, and limited usage events that help us understand feature reliability. This may include data processed by our infrastructure providers and, when enabled, crash-reporting or analytics tooling.',
+      'Information collected by app-store platforms (Google Play / Apple) under their own privacy policies when you download or update Trackwise.',
     ],
   },
   {
@@ -39,8 +49,10 @@ export const privacySections: LegalSection[] = [
     title: '3. How We Use Information',
     paragraphs: [
       'We use information to provide and maintain Trackwise features: authentication, syncing your diary and workouts, calculating estimates against your goals, showing progress, and supporting account controls such as export and deletion.',
-      'We may use contact details you voluntarily provide (for example on a future support or feedback channel) to respond to requests.',
+      'We use diagnostics, crash reports, and limited analytics to keep the app stable, investigate bugs, measure reliability, and improve product quality.',
+      'We may use contact details you provide (email or phone) to respond to support or privacy requests.',
       'We do not use your nutrition or workout data to provide medical diagnosis or treatment.',
+      'Where the EU GDPR / UK GDPR applies, we rely on one or more of the following legal bases: performance of a contract (providing the account and tracking features you request); legitimate interests (securing the service, preventing abuse, and improving reliability in ways that do not override your rights); and consent where required (for example certain optional processing or device permissions).',
     ],
   },
   {
@@ -64,9 +76,9 @@ export const privacySections: LegalSection[] = [
     id: 'uploaded-images',
     title: '6. Uploaded Images',
     paragraphs: [
-      'If image upload is configured, optional photos for foods, avatars, or custom exercises may be uploaded to Cloudinary using an unsigned upload preset. The app stores the resulting HTTPS URL with your record.',
+      'If image upload is configured, optional photos for foods, avatars, or custom exercises may be uploaded to Cloudinary using an unsigned upload preset operated for Trackwise. The app stores the resulting HTTPS URL with your record.',
       'Client-side size limits apply (currently 1 MB for user image uploads in the mobile app).',
-      'TODO: Confirm Cloudinary account ownership, regions, retention, and any subprocessors to list publicly.',
+      'Cloudinary processes image files as a service provider for Trackwise. Retention of image objects follows Cloudinary account settings and Trackwise deletion flows when you remove content or delete your account.',
     ],
   },
   {
@@ -75,7 +87,7 @@ export const privacySections: LegalSection[] = [
     paragraphs: [
       'Primary application data is stored using Supabase (authentication, Postgres database, and related backend services, including Edge Functions used for sensitive operations such as account deletion).',
       'System exercise images may be served from Supabase Storage. Optional user images may be stored with Cloudinary when configured.',
-      'TODO: Confirm hosting regions, backup practices, and the full list of subprocessors for production.',
+      'Hosting regions and backups follow the production configuration of these providers for the Trackwise project. Subprocessors currently used to operate the service include Supabase (auth, database, storage, functions), Cloudinary (optional user image hosting), and Open Food Facts (barcode product lookup you initiate). App-store platforms and device OS vendors may also process data under their policies.',
     ],
   },
   {
@@ -83,9 +95,9 @@ export const privacySections: LegalSection[] = [
     title: '8. Data Sharing',
     paragraphs: [
       'We do not sell your personal information.',
-      'We share data with service providers only as needed to operate Trackwise (for example auth/database hosting, optional image hosting, and Open Food Facts lookups you initiate by scanning).',
+      'We share data with service providers only as needed to operate Trackwise (for example auth/database hosting, optional image hosting, diagnostics/crash tooling when enabled, and Open Food Facts lookups you initiate by scanning).',
       'We may disclose information if required by law or to protect the rights, safety, and integrity of users and the service, where legally permitted.',
-      'TODO: Confirm any additional sharing scenarios (affiliates, acquisitions) before publication.',
+      'Trackwise does not operate an affiliate or partner-coach marketplace. We do not share your private diary or workout data with third-party coaches through the product.',
     ],
   },
   {
@@ -94,7 +106,7 @@ export const privacySections: LegalSection[] = [
     paragraphs: [
       'We retain account and tracking data while your account remains active so the product can sync and display your history.',
       'You may export a backup, delete account data while keeping a login, or delete your account through in-app controls. Account deletion is processed through a server-side delete-account function.',
-      'TODO: Confirm precise retention periods after deletion requests and for backups/logs.',
+      'After a verified deletion request, we remove or anonymize active account data from production systems without undue delay. Residual copies in encrypted backups or logs are purged according to provider backup cycles, typically within 30 to 90 days, except where a longer retention is required by law or for security investigations.',
     ],
   },
   {
@@ -102,41 +114,52 @@ export const privacySections: LegalSection[] = [
     title: '10. Security',
     paragraphs: [
       'We use industry-standard provider protections, including encrypted transport (HTTPS) and database access controls with Row Level Security for user-owned data.',
-      'No method of transmission or storage is 100% secure. Please use a strong password and protect access to your devices.',
-      'TODO: Confirm any additional security certifications or practices to disclose.',
+      'Access to operator tooling is limited to authorized personnel. No method of transmission or storage is 100% secure. Please use a strong password and protect access to your devices.',
     ],
   },
   {
     id: 'rights',
-    title: '11. User Rights',
+    title: '11. Your Rights (EEA/UK and United States)',
     paragraphs: [
-      'Depending on your location, you may have rights to access, correct, export, or delete personal data. Trackwise provides in-app export, data deletion, and account deletion tools to help you exercise these controls.',
-      'TODO: Confirm the contact channel and verification process for privacy requests, and any jurisdiction-specific rights notices (for example GDPR/CCPA) required for launch.',
+      'Depending on where you live, you may have rights to access, correct, export, restrict, object to, or delete personal data, and to withdraw consent where processing is consent-based.',
+      `Trackwise provides in-app export, data deletion, and account deletion tools to help you exercise these controls. You may also email ${SUPPORT_EMAIL} (or call ${SUPPORT_PHONE}) to submit a privacy request. We may need to verify your identity before fulfilling certain requests.`,
+      'European Economic Area and United Kingdom (GDPR / UK GDPR): you may have the rights listed above and the right to lodge a complaint with your local supervisory authority. Where we rely on legitimate interests, you may object to that processing. Where we rely on consent, you may withdraw consent at any time without affecting prior lawful processing.',
+      'California and other US state privacy laws (including CCPA/CPRA where applicable): you may have rights to know/access, delete, correct, and opt out of “sale” or “sharing” of personal information as those terms are defined by law. Trackwise does not sell personal information for money. If we use advertising or cross-context analytics that qualify as “sharing” under California law, you may opt out by contacting us. We will not discriminate against you for exercising privacy rights.',
+      'We respond to verifiable consumer requests within the timeframes required by applicable law (generally within 30 to 45 days, with permitted extensions when needed).',
     ],
   },
   {
     id: 'children',
     title: "12. Children's Privacy",
     paragraphs: [
-      'Trackwise is not directed to children under 13 (or the equivalent minimum age in your country). During setup, safety prompts may route some users (including minors) toward manual calorie targets rather than automated estimates.',
-      'TODO: Confirm the minimum age policy and parental consent approach for the published product.',
+      'Trackwise is not directed to children under 13 (or the higher age required in your country, such as 16 in some EU member states where applicable). During setup, safety prompts may route some users toward manual calorie targets rather than automated estimates.',
+      'We do not knowingly collect personal information from children below the applicable minimum age. If you believe a child has created an account, contact us and we will take appropriate steps to delete the information.',
+    ],
+  },
+  {
+    id: 'international',
+    title: '13. International Transfers',
+    paragraphs: [
+      'Your information may be processed in countries where our service providers operate. Where required, we rely on appropriate safeguards such as Standard Contractual Clauses or the provider’s approved transfer mechanisms.',
     ],
   },
   {
     id: 'changes',
-    title: '13. Policy Changes',
+    title: '14. Policy Changes',
     paragraphs: [
-      'We may update this Privacy Policy as the product or legal requirements change. The updated version will be posted on this page with a revised date once finalized.',
-      'TODO: Confirm how material changes will be communicated to users.',
+      'We may update this Privacy Policy as the product or legal requirements change. The updated version will be posted on this page with a revised effective date.',
+      'For material changes, we will provide additional notice where appropriate (for example an in-app notice or email to your account address).',
     ],
   },
   {
     id: 'contact',
-    title: '14. Contact Information',
+    title: '15. Contact Information',
     paragraphs: [
-      'For privacy questions, contact us using the support channel published for Trackwise.',
-      'TODO: Add the official privacy contact email and mailing address once confirmed.',
-      'Website: https://trackwise.one',
+      'Privacy and data-protection requests for Trackwise:',
+      `Operator: ${SITE_LEGAL_NAME}`,
+      `Email: ${SUPPORT_EMAIL}`,
+      `Phone: ${SUPPORT_PHONE}`,
+      `Website: ${SITE_URL}`,
     ],
   },
 ];
@@ -147,15 +170,17 @@ export const termsSections: LegalSection[] = [
     title: '1. Acceptance of Terms',
     paragraphs: [
       'By accessing trackwise.one or using the Trackwise mobile application, you agree to these Terms of Use. If you do not agree, do not use the service.',
-      'TODO: Confirm governing entity name and effective date.',
+      `These Terms are operated by ${SITE_LEGAL_NAME} and are effective as of ${LEGAL_EFFECTIVE_DATE}.`,
     ],
   },
+
   {
     id: 'description',
     title: '2. Description of the Service',
     paragraphs: [
       'Trackwise is a consumer nutrition and fitness tracking product. Features may include food diary logging, barcode product lookup, workout logging, goals, body measurements, and progress views.',
       'Important: Trackwise provides everyday nutrition and activity tracking estimates. These estimates are not medical measurements and should not be treated as medical advice, diagnosis, or treatment.',
+      'Trackwise does not currently include coaching marketplace, personal trainer matching, or affiliate partner programs.',
     ],
   },
   {
@@ -163,7 +188,7 @@ export const termsSections: LegalSection[] = [
     title: '3. Account Registration',
     paragraphs: [
       'Certain features require an account. You agree to provide accurate information and to keep your credentials confidential.',
-      'You are responsible for activity under your account. Notify us promptly of unauthorized access through the published support channel once available.',
+      `You are responsible for activity under your account. Notify us promptly of unauthorized access at ${SUPPORT_EMAIL} or ${SUPPORT_PHONE}.`,
     ],
   },
   {
@@ -194,8 +219,7 @@ export const termsSections: LegalSection[] = [
     id: 'payments',
     title: '7. Subscriptions and Payments',
     paragraphs: [
-      'Core tracking features are currently offered without a paid subscription checkout in the reviewed application. Any future paid plans will be described in-product and in updated terms before charges apply.',
-      'TODO: Confirm pricing, billing provider, refund policy, and trial terms before enabling paid features.',
+      'Core tracking features are currently offered without a paid subscription checkout. If paid plans are introduced later, pricing, billing provider, refunds, and trials will be described in-product and in updated terms before charges apply.',
     ],
   },
   {
@@ -210,7 +234,7 @@ export const termsSections: LegalSection[] = [
     id: 'ip',
     title: '9. Intellectual Property',
     paragraphs: [
-      'Trackwise branding, product design, and software are owned by the Trackwise operator or its licensors. These Terms do not transfer ownership of that intellectual property to you.',
+      'Trackwise branding, product design, and software are owned by Trackwise or its licensors. These Terms do not transfer ownership of that intellectual property to you.',
       'Third-party content (for example Open Food Facts product data or licensed fonts/assets) remains subject to its own terms.',
     ],
   },
@@ -220,7 +244,7 @@ export const termsSections: LegalSection[] = [
     paragraphs: [
       'THE SERVICE IS PROVIDED “AS IS” AND “AS AVAILABLE” WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, TO THE MAXIMUM EXTENT PERMITTED BY LAW.',
       'Trackwise does not warrant that estimates are accurate, complete, or suitable for any particular health purpose.',
-      'TODO: Have counsel review warranty disclaimer language for your jurisdictions.',
+      'Nothing in these Terms limits mandatory consumer warranties or rights that cannot be excluded under applicable law (including in the EEA/UK).',
     ],
   },
   {
@@ -228,7 +252,8 @@ export const termsSections: LegalSection[] = [
     title: '11. Limitation of Liability',
     paragraphs: [
       'TO THE MAXIMUM EXTENT PERMITTED BY LAW, TRACKWISE AND ITS OPERATORS WILL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR LOSS OF DATA, PROFITS, OR GOODWILL, ARISING FROM YOUR USE OF THE SERVICE.',
-      'TODO: Confirm liability caps and mandatory consumer protections that cannot be waived in your markets.',
+      'Where liability cannot be excluded, our aggregate liability for claims relating to the service is limited to the greater of (a) the amounts you paid to Trackwise for the service in the 12 months before the claim, or (b) fifty euros (€50), except that this cap does not limit liability for death or personal injury caused by negligence, fraud, or any liability that cannot be limited by law.',
+      'Mandatory consumer protections in your country of residence remain unaffected.',
     ],
   },
   {
@@ -243,24 +268,26 @@ export const termsSections: LegalSection[] = [
     id: 'changes-terms',
     title: '13. Changes to Terms',
     paragraphs: [
-      'We may update these Terms. The updated version will be posted on this page once finalized. Continued use after the effective date constitutes acceptance where permitted by law.',
+      'We may update these Terms. The updated version will be posted on this page with a revised effective date. Continued use after the effective date constitutes acceptance where permitted by law.',
     ],
   },
   {
     id: 'governing-law',
     title: '14. Governing Law',
     paragraphs: [
-      'TODO: Confirm governing law and venue. Do not assume a jurisdiction until the operator decides.',
-      'Until confirmed, these Terms should be read as a draft framework only.',
+      'These Terms are governed by the laws of Finland, without regard to conflict-of-law rules, except that consumers in the EEA/UK retain mandatory protections of their country of residence.',
+      'Courts of Finland have non-exclusive jurisdiction, without prejudice to your right to bring proceedings in your local consumer courts where required by law.',
     ],
   },
   {
     id: 'contact-terms',
     title: '15. Contact Information',
     paragraphs: [
-      'Questions about these Terms can be sent through the Trackwise support channel once published.',
-      'TODO: Add official contact email and mailing address.',
-      'Website: https://trackwise.one',
+      'Questions about these Terms:',
+      `Operator: ${SITE_LEGAL_NAME}`,
+      `Email: ${SUPPORT_EMAIL}`,
+      `Phone: ${SUPPORT_PHONE}`,
+      `Website: ${SITE_URL}`,
     ],
   },
 ];
