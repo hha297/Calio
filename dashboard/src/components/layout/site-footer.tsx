@@ -9,12 +9,6 @@ import { useMessages } from '@/i18n/locale-provider';
 export function SiteFooter() {
   const t = useMessages();
   const year = new Date().getFullYear();
-  // Social links hidden until public profiles exist.
-  // const social = [
-  //   { href: siteConfig.social.twitter, label: 'X / Twitter' },
-  //   { href: siteConfig.social.instagram, label: 'Instagram' },
-  //   { href: siteConfig.social.github, label: 'GitHub' },
-  // ].filter((item) => item.href);
 
   const columns = [
     {
@@ -31,7 +25,6 @@ export function SiteFooter() {
       links: [
         { href: '/about', label: t.nav.about },
         { href: '/support#contact', label: t.footer.contact },
-        { href: '/feedback', label: t.nav.feedback },
       ],
     },
     {
@@ -45,30 +38,18 @@ export function SiteFooter() {
       title: t.footer.support,
       links: [
         { href: '/support', label: t.nav.support },
-        { href: '/support#contact', label: t.footer.contactSupport },
-        { href: '/feedback', label: t.footer.sendFeedback },
+        { href: '/feedback', label: t.nav.feedback },
       ],
     },
   ] as const;
 
   return (
     <footer className="border-t border-hairline bg-bone">
-      <div className="container-site section-pad !py-14">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_2fr]">
+      <div className="container-site section-pad !py-8">
+        <div className="grid gap-10 lg:grid-cols-[1.15fr_2fr]">
           <div>
             <BrandMark size="md" />
             <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-body">{t.footer.blurb}</p>
-            <p className="mt-4 text-sm font-semibold text-ink">{siteConfig.domain}</p>
-            {siteConfig.supportEmail ? (
-              <p className="mt-3 text-sm text-body">
-                <a
-                  href={`mailto:${siteConfig.supportEmail}`}
-                  className="font-semibold text-ink underline-offset-4 hover:underline"
-                >
-                  {siteConfig.supportEmail}
-                </a>
-              </p>
-            ) : null}
           </div>
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">

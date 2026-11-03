@@ -40,7 +40,8 @@ export const en: Messages = {
     nutritionTitle: 'Nutrition tracking',
     nutritionBody: 'Log meals, see calories and macros, and keep a clear diary of what you eat.',
     workoutTitle: 'Workout logging',
-    workoutBody: 'Train from the exercise library or templates and save sessions with estimated burn.',
+    workoutBody:
+      'Train from the exercise library or templates and save sessions with estimated burn.',
     goalsTitle: 'Personal goals',
     goalsBody: 'Set lose, maintain, or gain targets and adjust calories and macros as you go.',
     progressTitle: 'Progress over time',
@@ -93,7 +94,8 @@ export const en: Messages = {
   faq: {
     eyebrow: 'FAQ',
     title: 'Answers before you download.',
-    description: 'Straight answers based on what Trackwise supports today. Need more detail? Visit the Support Center.',
+    description:
+      'Straight answers based on what Trackwise supports today. Need more detail? Visit the Support Center.',
   },
   download: {
     eyebrow: 'Download',
@@ -116,6 +118,7 @@ export const en: Messages = {
     contact: 'Contact',
     contactSupport: 'Contact Support',
     sendFeedback: 'Send Feedback',
+    accountDeletion: 'Account Deletion',
     estimates: 'Nutrition and activity values are estimates.',
     rights: 'All rights reserved.',
   },

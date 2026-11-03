@@ -1,10 +1,11 @@
 import { FeedbackForm } from '@/components/feedback/feedback-form';
+import { SUPPORT_EMAIL } from '@/config/site';
 import { createPageMetadata } from '@/lib/seo';
 
 export const metadata = createPageMetadata({
   title: 'Feedback',
   description:
-    'Share product feedback for Trackwise. Preview mode validates your message locally until a backend is connected.',
+    'Send product feedback, bug reports, and feature requests to the Trackwise team.',
   path: '/feedback',
 });
 
@@ -16,8 +17,14 @@ export default function FeedbackPage() {
         Tell us what to improve.
       </h1>
       <p className="mt-4 max-w-2xl text-lg leading-relaxed text-body">
-        This form is a polished frontend preview. Validation and success states work locally;
-        messages are not sent or stored until a backend endpoint is wired up.
+        Bugs, ideas, and account questions all help. Messages are sent to{' '}
+        <a
+          className="font-semibold text-ink underline underline-offset-2"
+          href={`mailto:${SUPPORT_EMAIL}`}
+        >
+          {SUPPORT_EMAIL}
+        </a>
+        .
       </p>
       <div className="mt-10">
         <FeedbackForm />

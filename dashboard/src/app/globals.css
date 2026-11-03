@@ -124,12 +124,12 @@ textarea {
 }
 
 .container-site {
-  width: min(1120px, calc(100% - 2rem));
+  width: min(1280px, calc(100% - 1.25rem));
   margin-inline: auto;
 }
 
 .container-narrow {
-  width: min(760px, calc(100% - 2rem));
+  width: min(760px, calc(100% - 1.25rem));
   margin-inline: auto;
 }
 

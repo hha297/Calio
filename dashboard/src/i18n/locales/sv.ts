@@ -42,7 +42,8 @@ export const sv: Messages = {
     workoutTitle: 'Träningslogg',
     workoutBody: 'Träna från biblioteket eller mallar och spara pass med uppskattad förbränning.',
     goalsTitle: 'Personliga mål',
-    goalsBody: 'Sätt mål för viktminskning, underhåll eller ökning och justera kalorier och makron.',
+    goalsBody:
+      'Sätt mål för viktminskning, underhåll eller ökning och justera kalorier och makron.',
     progressTitle: 'Progress över tid',
     progressBody: 'Se trender över 7, 30 och 90 dagar för nutrition, träning och mätningar.',
   },
@@ -93,7 +94,8 @@ export const sv: Messages = {
   faq: {
     eyebrow: 'Vanliga frågor',
     title: 'Svar innan du laddar ner.',
-    description: 'Raka svar utifrån vad Trackwise stöder idag. Behöver du mer? Öppna Support Center.',
+    description:
+      'Raka svar utifrån vad Trackwise stöder idag. Behöver du mer? Öppna Support Center.',
   },
   download: {
     eyebrow: 'Ladda ner',
@@ -116,6 +118,7 @@ export const sv: Messages = {
     contact: 'Kontakt',
     contactSupport: 'Kontakta support',
     sendFeedback: 'Skicka feedback',
+    accountDeletion: 'Radera konto',
     estimates: 'Närings- och aktivitetsvärden är uppskattningar.',
     rights: 'Alla rättigheter förbehållna.',
   },

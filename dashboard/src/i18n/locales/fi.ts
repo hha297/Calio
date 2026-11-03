@@ -42,7 +42,8 @@ export const fi: Messages = {
     workoutTitle: 'Treenien kirjaus',
     workoutBody: 'Treenaa kirjastosta tai malleista ja tallenna sessiot arvioidulla kulutuksella.',
     goalsTitle: 'Henkilökohtaiset tavoitteet',
-    goalsBody: 'Aseta laihtumis-, ylläpito- tai lihasmassatavoitteet ja säädä kaloreita sekä makroja.',
+    goalsBody:
+      'Aseta laihtumis-, ylläpito- tai lihasmassatavoitteet ja säädä kaloreita sekä makroja.',
     progressTitle: 'Kehitys ajan myötä',
     progressBody: 'Tarkastele 7, 30 ja 90 päivän trendejä ravinnosta, treenistä ja mittauksista.',
   },
@@ -116,6 +117,7 @@ export const fi: Messages = {
     contact: 'Yhteystiedot',
     contactSupport: 'Ota yhteyttä tukeen',
     sendFeedback: 'Lähetä palaute',
+    accountDeletion: 'Tilin poistaminen',
     estimates: 'Ravinto- ja aktiivisuusarvot ovat arvioita.',
     rights: 'Kaikki oikeudet pidätetään.',
   },

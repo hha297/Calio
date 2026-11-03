@@ -119,6 +119,7 @@ export type Messages = {
     contact: string;
     contactSupport: string;
     sendFeedback: string;
+    accountDeletion: string;
     estimates: string;
     rights: string;
   };

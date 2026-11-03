@@ -96,8 +96,8 @@ export default function FeaturesPage() {
         <div className="mt-20 rounded-[24px] bg-ink px-8 py-10 text-card sm:px-12">
           <h2 className="font-display text-3xl font-bold tracking-tight">Ready to try Trackwise?</h2>
           <p className="mt-3 max-w-xl text-white/70">
-            Store listings are coming soon. Explore FAQ and support while you wait, or leave
-            preview feedback for the team.
+            Store listings are coming soon. Explore FAQ and support while you wait, or send
+            feedback to the team.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button href="/#download">Download</Button>
