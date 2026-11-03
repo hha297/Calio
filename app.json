@@ -2,6 +2,7 @@
   "expo": {
     "name": "Trackwise",
     "slug": "trackwise",
+    "owner": "hha2907",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/branding/logo.png",
@@ -17,6 +18,7 @@
     },
     "android": {
       "package": "com.trackwise.app",
+      "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#00D95F",
@@ -66,6 +68,21 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "supabaseUrl": "",
+      "supabasePublishableKey": "",
+      "cloudinaryCloudName": "",
+      "cloudinaryUploadPreset": "",
+      "adminUrl": "",
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "584cc895-be5e-4622-a1b3-f0bd351a6834"
+      }
     }
   }
 }
