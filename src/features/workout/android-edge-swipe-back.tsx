@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability -- Reanimated shared values are mutated inside gesture worklets */
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Platform, StyleSheet } from 'react-native';

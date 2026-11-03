@@ -1,5 +1,5 @@
 import { Beef, Droplets, Info, Wheat, X } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -52,14 +52,17 @@ export function DietSelectorModal({
   const [infoId, setInfoId] = useState<DietPresetId | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sliderDragging, setSliderDragging] = useState(false);
+  const [sessionOpen, setSessionOpen] = useState(false);
 
-  useEffect(() => {
-    if (!visible) return;
+  if (visible && !sessionOpen) {
+    setSessionOpen(true);
     setPercents(initialPercents);
     setPreset(initialPreset);
     setError(null);
     setInfoId(null);
-  }, [visible, initialPercents, initialPreset]);
+  } else if (!visible && sessionOpen) {
+    setSessionOpen(false);
+  }
 
   const editable = preset === 'custom';
   const total = percents.carbs + percents.protein + percents.fat;

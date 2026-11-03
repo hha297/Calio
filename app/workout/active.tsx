@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Check, Pause, Play, Plus, TimerReset, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -12,11 +13,15 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useLatestWeight } from '@/features/measurements/hooks';
 import { totalVolumeKg } from '@/features/workout/calculations';
+import {
+  EXERCISE_IMAGE_PLACEHOLDER,
+  resolveExerciseImage,
+} from '@/features/workout/catalog/exercise-images';
 import { estimateWorkoutCalories } from '@/features/workout/exercise-calorie-engine';
 import { formatElapsed, useFinishWorkout } from '@/features/workout/hooks';
 import { radii } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
-import { useActiveWorkoutStore } from '@/stores/active-workout-store';
+import { useActiveWorkoutStore, type DraftExercise } from '@/stores/active-workout-store';
 
 export default function ActiveWorkoutScreen() {
   const { t } = useTranslation();
@@ -24,13 +29,19 @@ export default function ActiveWorkoutScreen() {
   const store = useActiveWorkoutStore();
   const finish = useFinishWorkout();
   const weight = useLatestWeight();
-  const [tick, setTick] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const [discardOpen, setDiscardOpen] = useState(false);
 
   useEffect(() => {
-    const id = setInterval(() => setTick((value) => value + 1), 1000);
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!store.restEndsAt) return;
+    const left = Math.ceil((new Date(store.restEndsAt).getTime() - nowMs) / 1000);
+    if (left <= 0) store.clearRest();
+  }, [nowMs, store]);
 
   if (!store.startedAt) {
     return (
@@ -41,14 +52,10 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
-  void tick;
   const elapsed = store.getActiveDurationSec();
   const restLeft = store.restEndsAt
-    ? Math.max(0, Math.ceil((new Date(store.restEndsAt).getTime() - Date.now()) / 1000))
+    ? Math.max(0, Math.ceil((new Date(store.restEndsAt).getTime() - nowMs) / 1000))
     : 0;
-  if (store.restEndsAt && restLeft <= 0) {
-    store.clearRest();
-  }
 
   const liveEstimate =
     weight.weightKg && weight.weightKg > 0
@@ -220,6 +227,7 @@ export default function ActiveWorkoutScreen() {
         {store.exercises.map((exercise, index) => (
           <Card key={exercise.localId} className="gap-2">
             <View className="flex-row items-center justify-between gap-2">
+              <ActiveExerciseThumb exercise={exercise} />
               <View className="min-w-0 flex-1">
                 <Text variant="headingSmall" numberOfLines={1}>
                   {exercise.name}
@@ -346,5 +354,42 @@ export default function ActiveWorkoutScreen() {
         />
       </View>
     </Screen>
+  );
+}
+
+function ActiveExerciseThumb({ exercise }: { exercise: DraftExercise }) {
+  const colors = useThemeColors();
+  const [failed, setFailed] = useState(false);
+  const resolved = resolveExerciseImage({
+    imageUrl: exercise.imageUrl,
+    imageStoragePath: exercise.imageStoragePath,
+    imageKey: exercise.imageKey,
+    slug: exercise.slug,
+    name: exercise.name,
+  });
+  const source = failed ? EXERCISE_IMAGE_PLACEHOLDER : resolved;
+
+  return (
+    <View
+      style={{
+        width: 56,
+        height: 56,
+        borderRadius: radii.md,
+        overflow: 'hidden',
+        backgroundColor: colors.surfaceMuted,
+        borderWidth: 1,
+        borderColor: colors.border,
+      }}
+    >
+      <Image
+        source={source}
+        style={{ width: '100%', height: '100%' }}
+        contentFit="cover"
+        recyclingKey={exercise.localId}
+        transition={0}
+        cachePolicy="memory-disk"
+        onError={() => setFailed(true)}
+      />
+    </View>
   );
 }

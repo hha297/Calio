@@ -262,6 +262,10 @@ export default function ExerciseDetailScreen() {
               exerciseType: exercise.exercise_type,
               metValue: exercise.met_value,
               primaryMuscles: exercise.primary_muscles,
+              imageUrl: exercise.image_url,
+              imageStoragePath: exercise.image_storage_path,
+              imageKey: exercise.image_key,
+              slug: exercise.slug,
             });
             router.push('/workout/active');
           }}

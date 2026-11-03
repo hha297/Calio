@@ -11,7 +11,7 @@ import {
 
 import { useAuth } from '@/features/auth/auth-provider';
 import { isEmailConfirmed } from '@/features/auth/email-confirmed';
-import type { Profile } from '@/features/goals/types';
+import { fetchProfile } from '@/features/goals/api';
 import { getOnboardingCompleted, setOnboardingCompleted } from '@/features/onboarding/storage';
 import { reportError } from '@/lib/errors/report-error';
 import { queryClient } from '@/lib/query/query-client';
@@ -132,10 +132,14 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
   const awaitingSessionClear =
     Boolean(userId) && bootstrapQuery.isSuccess && bootstrapQuery.data === null;
 
-  const profile = userId
-    ? queryClient.getQueryData<Profile | null>(['profile', userId])
-    : null;
-  const setupComplete = Boolean(profile?.onboarding_completed_at);
+  // Subscribe to profile — getQueryData is not reactive, so finishing setup
+  // would leave destination stuck on 'setup' even after onboarding_completed_at is set.
+  const profileQuery = useQuery({
+    queryKey: ['profile', userId],
+    enabled: Boolean(userId),
+    queryFn: () => fetchProfile(userId!),
+  });
+  const setupComplete = Boolean(profileQuery.data?.onboarding_completed_at);
 
   const destination = useMemo((): AppDestination | null => {
     if (!isReady || welcomeDone === null) {

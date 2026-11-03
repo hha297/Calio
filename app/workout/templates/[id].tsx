@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -38,28 +38,25 @@ export default function WorkoutTemplateDetailScreen() {
 
   const [selectedLevel, setSelectedLevel] = useState<ExerciseDifficulty | null>(null);
 
-  useEffect(() => {
-    if (!variations.length) {
-      setSelectedLevel(null);
-      return;
-    }
-    setSelectedLevel((current) => {
-      if (current && variations.some((item) => item.training_level === current)) {
-        return current;
-      }
-      const preferred =
-        (template?.difficulty as ExerciseDifficulty | undefined) ??
-        TEMPLATE_TRAINING_LEVELS.find((level) =>
-          variations.some((item) => item.training_level === level),
-        ) ??
-        variations[0]?.training_level ??
-        null;
-      return preferred;
-    });
+  const preferredLevel = useMemo(() => {
+    if (!variations.length) return null;
+    return (
+      (template?.difficulty as ExerciseDifficulty | undefined) ??
+      TEMPLATE_TRAINING_LEVELS.find((level) =>
+        variations.some((item) => item.training_level === level),
+      ) ??
+      variations[0]?.training_level ??
+      null
+    );
   }, [template?.difficulty, variations]);
 
+  const effectiveLevel =
+    selectedLevel && variations.some((item) => item.training_level === selectedLevel)
+      ? selectedLevel
+      : preferredLevel;
+
   const selectedVariation: WorkoutTemplateVariation | null =
-    variations.find((item) => item.training_level === selectedLevel) ?? variations[0] ?? null;
+    variations.find((item) => item.training_level === effectiveLevel) ?? variations[0] ?? null;
   const list = selectedVariation?.exercises ?? [];
   const totalSets = list.reduce((sum, row) => sum + (row.planned_sets ?? 0), 0);
   const minutes = selectedVariation?.estimated_minutes ?? null;
@@ -321,6 +318,11 @@ export default function WorkoutTemplateDetailScreen() {
                 metValue: null,
                 plannedSets: row.planned_sets,
                 plannedReps: row.planned_reps,
+                imageUrl: row.image_url,
+                imageStoragePath: row.image_storage_path,
+                imageKey: row.image_key,
+                slug: row.slug,
+                primaryMuscles: row.primary_muscles ?? undefined,
               })),
             });
             router.push('/workout/active');

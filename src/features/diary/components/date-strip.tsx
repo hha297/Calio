@@ -50,15 +50,12 @@ export function DateStrip({
   const days = useMemo(() => buildWindow(anchorKey, locale), [anchorKey, locale]);
   const selectedIndex = days.findIndex((d) => d.key === selectedKey);
 
-  useEffect(() => {
-    if (selectedIndex < 0) {
-      setAnchorKey(selectedKey);
-      return;
-    }
-    if (selectedIndex <= 2 || selectedIndex >= days.length - 3) {
-      setAnchorKey(selectedKey);
-    }
-  }, [selectedKey, selectedIndex, days.length]);
+  if (
+    anchorKey !== selectedKey &&
+    (selectedIndex < 0 || selectedIndex <= 2 || selectedIndex >= days.length - 3)
+  ) {
+    setAnchorKey(selectedKey);
+  }
 
   useEffect(() => {
     if (selectedIndex < 0) return;

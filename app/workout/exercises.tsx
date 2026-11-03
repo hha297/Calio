@@ -33,7 +33,7 @@ import { useThemeColors } from '@/theme/theme-provider';
 import type { Exercise, ExerciseDifficulty, ExerciseType } from '@/features/workout/types';
 
 const IMAGE_CATEGORY_IDS = new Set<string>(WORKOUT_IMAGE_CATEGORIES);
-const FILTERS: Array<'all' | ImageWorkoutCategory> = ['all', ...WORKOUT_IMAGE_CATEGORIES];
+const FILTERS: ('all' | ImageWorkoutCategory)[] = ['all', ...WORKOUT_IMAGE_CATEGORIES];
 type CategoryFilter = 'all' | ImageWorkoutCategory;
 
 function ItemSeparator() {
@@ -182,6 +182,10 @@ export default function ExercisePickerScreen() {
         exerciseType: exercise.exercise_type,
         metValue: exercise.met_value,
         primaryMuscles: exercise.primary_muscles,
+        imageUrl: exercise.image_url,
+        imageStoragePath: exercise.image_storage_path,
+        imageKey: exercise.image_key,
+        slug: exercise.slug,
       });
       router.replace('/workout/active');
     },
@@ -377,10 +381,7 @@ export default function ExercisePickerScreen() {
       tag,
       difficulty,
       selectCategory,
-      exercises.isPending,
-      exercises.data,
-      exercises.error,
-      exercises.refetch,
+      exercises,
     ],
   );
 

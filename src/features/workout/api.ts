@@ -624,13 +624,52 @@ export async function fetchWorkoutDetail(id: string, userId: string): Promise<Wo
   if (error) throw error;
   if (!workout) return null;
 
-  const { data: exercises, error: exercisesError } = await supabase
-    .from('workout_exercises')
-    .select(
-      'id, exercise_id, position, exercise_name, exercise_type, notes, estimated_calories, estimate_method, estimate_calc_version, estimate_duration_sec, estimate_activity_key, estimate_body_weight_kg',
-    )
-    .eq('workout_id', id)
-    .order('position');
+  type DetailExerciseRow = {
+    id: string;
+    exercise_id: string | null;
+    position: number;
+    exercise_name: string;
+    exercise_type: ExerciseType;
+    notes: string | null;
+    estimated_calories?: number | null;
+    estimate_method?: string | null;
+    estimate_calc_version?: number | null;
+    estimate_duration_sec?: number | null;
+    estimate_activity_key?: string | null;
+    estimate_body_weight_kg?: number | null;
+    exercise?: {
+      image_storage_path?: string | null;
+      image_url?: string | null;
+      image_key?: string | null;
+      slug?: string | null;
+    } | null;
+  };
+
+  const detailSelectWithImages =
+    'id, exercise_id, position, exercise_name, exercise_type, notes, estimated_calories, estimate_method, estimate_calc_version, estimate_duration_sec, estimate_activity_key, estimate_body_weight_kg, exercise:exercises ( image_storage_path, image_url, image_key, slug )';
+  const detailSelectBasic =
+    'id, exercise_id, position, exercise_name, exercise_type, notes, estimated_calories, estimate_method, estimate_calc_version, estimate_duration_sec, estimate_activity_key, estimate_body_weight_kg';
+
+  let exercises: DetailExerciseRow[] | null = null;
+  let exercisesError: { message: string } | null = null;
+  {
+    const rich = await supabase
+      .from('workout_exercises')
+      .select(detailSelectWithImages)
+      .eq('workout_id', id)
+      .order('position');
+    if (!rich.error) {
+      exercises = (rich.data ?? []) as unknown as DetailExerciseRow[];
+    } else {
+      const basic = await supabase
+        .from('workout_exercises')
+        .select(detailSelectBasic)
+        .eq('workout_id', id)
+        .order('position');
+      exercises = (basic.data ?? []) as unknown as DetailExerciseRow[];
+      exercisesError = basic.error;
+    }
+  }
   if (exercisesError) throw exercisesError;
 
   const exerciseIds = (exercises ?? []).map((row) => row.id);
@@ -663,21 +702,28 @@ export async function fetchWorkoutDetail(id: string, userId: string): Promise<Wo
 
   return {
     ...(workout as WorkoutDetail),
-    exercises: (exercises ?? []).map((exercise) => ({
-      id: exercise.id,
-      exercise_id: exercise.exercise_id,
-      position: exercise.position,
-      exercise_name: exercise.exercise_name,
-      exercise_type: exercise.exercise_type,
-      notes: exercise.notes,
-      estimated_calories: Number(exercise.estimated_calories ?? 0),
-      estimate_method: exercise.estimate_method ?? null,
-      estimate_calc_version: exercise.estimate_calc_version ?? null,
-      estimate_duration_sec: exercise.estimate_duration_sec ?? null,
-      estimate_activity_key: exercise.estimate_activity_key ?? null,
-      estimate_body_weight_kg: exercise.estimate_body_weight_kg ?? null,
-      sets: setsByExercise.get(exercise.id) ?? [],
-    })),
+    exercises: (exercises ?? []).map((exercise) => {
+      const joined = exercise.exercise;
+      return {
+        id: exercise.id,
+        exercise_id: exercise.exercise_id,
+        position: exercise.position,
+        exercise_name: exercise.exercise_name,
+        exercise_type: exercise.exercise_type,
+        notes: exercise.notes,
+        estimated_calories: Number(exercise.estimated_calories ?? 0),
+        estimate_method: (exercise.estimate_method as WorkoutDetail['exercises'][number]['estimate_method']) ?? null,
+        estimate_calc_version: exercise.estimate_calc_version ?? null,
+        estimate_duration_sec: exercise.estimate_duration_sec ?? null,
+        estimate_activity_key: exercise.estimate_activity_key ?? null,
+        estimate_body_weight_kg: exercise.estimate_body_weight_kg ?? null,
+        image_url: joined?.image_url ?? null,
+        image_storage_path: joined?.image_storage_path ?? null,
+        image_key: joined?.image_key ?? null,
+        slug: joined?.slug ?? null,
+        sets: setsByExercise.get(exercise.id) ?? [],
+      };
+    }),
   };
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,12 +50,15 @@ export function FoodEntryEditModal({
   const colors = useThemeColors();
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [boundEntryId, setBoundEntryId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!entry) return;
+  if (entry && entry.id !== boundEntryId) {
+    setBoundEntryId(entry.id);
     setAmount(entry.amount != null ? String(entry.amount) : String(entry.quantity));
     setError(null);
-  }, [entry]);
+  } else if (!entry && boundEntryId != null) {
+    setBoundEntryId(null);
+  }
 
   const amountUnit = entry?.amount_unit ?? 'serving';
   const previousAmount = entry?.amount ?? entry?.quantity ?? 1;

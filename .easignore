@@ -1,0 +1,23 @@
+# Keep EAS upload lean — not needed for the mobile app bundle
+admin/
+dashboard/
+android/
+ios/
+**/.next/
+**/node_modules/
+.git/
+.expo/
+.env
+.env.*
+!.env.example
+**/*.md
+!README.md
+agent-transcripts/
+.cursor/
+.claude/
+supabase/.temp/
+supabase/snippets/
+*.log
+coverage/
+dist/
+web-build/

@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -40,8 +40,7 @@ export default function DiaryScreen() {
   const params = useLocalSearchParams<{ date?: string }>();
   const todayKey = toDiaryDateKey();
   const [dateKey, setDateKey] = useSelectedDiaryDate();
-  const hasShownDiary = useRef(false);
-  const [snapshot, setSnapshot] = useState<DaySnapshot | null>(null);
+  const [cachedSnapshot, setCachedSnapshot] = useState<DaySnapshot | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,15 +64,15 @@ export default function DiaryScreen() {
   const workoutsReady = workoutsQuery.isSuccess || workoutsQuery.isError;
   const burnReady = burnQuery.isSuccess || burnQuery.isError;
 
-  useEffect(() => {
-    if (!foodReady || !workoutsReady || !burnReady) return;
-    setSnapshot({
+  const liveSnapshot = useMemo(() => {
+    if (!foodReady || !workoutsReady || !burnReady) return null;
+    return {
       dateKey,
       entries: foodQuery.data ?? [],
       totals: totalsQuery.totals,
       burned: burnQuery.data ?? 0,
       workouts: workoutsQuery.data ?? [],
-    });
+    } satisfies DaySnapshot;
   }, [
     dateKey,
     foodReady,
@@ -85,6 +84,20 @@ export default function DiaryScreen() {
     workoutsQuery.data,
   ]);
 
+  if (
+    liveSnapshot != null &&
+    (cachedSnapshot == null ||
+      cachedSnapshot.dateKey !== liveSnapshot.dateKey ||
+      cachedSnapshot.entries !== liveSnapshot.entries ||
+      cachedSnapshot.totals !== liveSnapshot.totals ||
+      cachedSnapshot.burned !== liveSnapshot.burned ||
+      cachedSnapshot.workouts !== liveSnapshot.workouts)
+  ) {
+    setCachedSnapshot(liveSnapshot);
+  }
+
+  const snapshot = liveSnapshot ?? cachedSnapshot;
+
   const subtitle = new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     day: 'numeric',
@@ -92,8 +105,7 @@ export default function DiaryScreen() {
   }).format(parseDiaryDateKey(dateKey));
 
   const bootLoading = snapshot == null && (foodQuery.isPending || goalQuery.isPending);
-  if (snapshot != null) hasShownDiary.current = true;
-  const showBlockingLoader = bootLoading && !hasShownDiary.current;
+  const showBlockingLoader = bootLoading;
 
   const dayError =
     foodQuery.error ?? goalQuery.error ?? burnQuery.error ?? workoutsQuery.error;

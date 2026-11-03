@@ -1,4 +1,3 @@
-/* eslint-disable */
 /** AUTO-GENERATED — local exercise artwork keyed by image stem. Do not edit by hand. */
 import type { ImageSourcePropType } from 'react-native';
 

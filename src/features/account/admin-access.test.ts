@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import Constants from 'expo-constants';
+
+import { getAdminDashboardUrl } from './admin-access';
 
 vi.mock('expo-constants', () => ({
   default: {
@@ -11,10 +14,6 @@ vi.mock('expo-constants', () => ({
 vi.mock('@/lib/supabase/client', () => ({
   getSupabase: () => null,
 }));
-
-import Constants from 'expo-constants';
-
-import { getAdminDashboardUrl } from './admin-access';
 
 afterEach(() => {
   vi.unstubAllEnvs();

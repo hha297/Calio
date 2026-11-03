@@ -23,6 +23,11 @@ export type DraftExercise = {
   exerciseType: ExerciseType;
   metValue: number | null;
   primaryMuscles?: string[];
+  /** Image fields mirrored from the exercise catalog for active-session thumbnails. */
+  imageUrl?: string | null;
+  imageStoragePath?: string | null;
+  imageKey?: string | null;
+  slug?: string | null;
   notes: string;
   sets: DraftSet[];
 };
@@ -43,12 +48,10 @@ type ActiveWorkoutState = {
   start: (input?: {
     name?: string;
     sourceTemplateId?: string | null;
-    exercises?: Array<
-      Omit<DraftExercise, 'localId' | 'sets' | 'notes'> & {
-        plannedSets?: number | null;
-        plannedReps?: number | null;
-      }
-    >;
+    exercises?: (Omit<DraftExercise, 'localId' | 'sets' | 'notes'> & {
+      plannedSets?: number | null;
+      plannedReps?: number | null;
+    })[];
   }) => void;
   reset: () => void;
   setName: (name: string) => void;

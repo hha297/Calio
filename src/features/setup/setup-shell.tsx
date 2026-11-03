@@ -11,9 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandMark } from '@/components/brand-mark';
+import { FloatingBackgroundDecor } from '@/components/floating-background-decor';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { FloatingBackgroundDecor } from '@/components/floating-background-decor';
 import { setupCardShadow } from '@/features/setup/setup-shadows';
 import { radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
@@ -107,7 +107,7 @@ export function SetupShell({
             automaticallyAdjustKeyboardInsets
           >
             <View style={styles.hero}>
-              <BrandMark size="hero" />
+              <BrandMark size="lg" />
               <Text
                 variant="headingLarge"
                 style={[styles.title, { color: colors.textPrimary }]}
