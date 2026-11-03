@@ -93,7 +93,7 @@ export function NutritionDashboard({
   const weekFood = useFoodEntriesInRange(weekStart, weekEnd);
 
   const dayMacros = entriesToMacros(dayEntries);
-  const weekEntries = weekFood.data ?? [];
+  const weekEntries = useMemo(() => weekFood.data ?? [], [weekFood.data]);
   const weekMacros = entriesToMacros(weekEntries);
   const entriesByDate = useMemo(() => groupEntriesByDate(weekEntries), [weekEntries]);
 

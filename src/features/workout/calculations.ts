@@ -6,7 +6,6 @@ import {
 import {
   estimateGrossCalories,
   estimateNetActiveCalories,
-  WORKOUT_CALORIE_CALC_VERSION,
 } from '@/features/workout/calorie-math';
 import { estimateWorkoutCalories } from '@/features/workout/exercise-calorie-engine';
 

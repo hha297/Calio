@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability -- Reanimated shared values are mutated in gesture worklets */
 import { type ReactNode, useCallback, useEffect } from 'react';
 import { type LayoutChangeEvent, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';

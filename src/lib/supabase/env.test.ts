@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import Constants from 'expo-constants';
+
+import { getSupabaseEnv } from './env';
 
 vi.mock('expo-constants', () => ({
   default: {
@@ -7,10 +10,6 @@ vi.mock('expo-constants', () => ({
     },
   },
 }));
-
-import Constants from 'expo-constants';
-
-import { getSupabaseEnv } from './env';
 
 afterEach(() => {
   vi.unstubAllEnvs();

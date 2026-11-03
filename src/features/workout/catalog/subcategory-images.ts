@@ -1,4 +1,3 @@
-/* eslint-disable */
 /** Subcategory cover tiles only — keep separate from per-exercise requires. */
 import type { ImageSourcePropType } from 'react-native';
 

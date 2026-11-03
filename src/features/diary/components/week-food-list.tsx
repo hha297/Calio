@@ -52,8 +52,8 @@ export function WeekFoodList({
   const weekEnd = weekKeys[weekKeys.length - 1]!;
   const weekFood = useFoodEntriesInRange(weekStart, weekEnd);
   const weekWorkouts = useWorkoutsInRange(weekStart, weekEnd);
-  const entries = weekFood.data ?? [];
-  const workouts = weekWorkouts.data ?? [];
+  const entries = useMemo(() => weekFood.data ?? [], [weekFood.data]);
+  const workouts = useMemo(() => weekWorkouts.data ?? [], [weekWorkouts.data]);
   const byDate = useMemo(() => groupEntriesByDate(entries), [entries]);
   const workoutsByDate = useMemo(() => groupWorkoutsByDate(workouts), [workouts]);
   const lastWeekStart = useRef(weekStart);

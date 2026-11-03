@@ -29,13 +29,19 @@ export default function ActiveWorkoutScreen() {
   const store = useActiveWorkoutStore();
   const finish = useFinishWorkout();
   const weight = useLatestWeight();
-  const [tick, setTick] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const [discardOpen, setDiscardOpen] = useState(false);
 
   useEffect(() => {
-    const id = setInterval(() => setTick((value) => value + 1), 1000);
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!store.restEndsAt) return;
+    const left = Math.ceil((new Date(store.restEndsAt).getTime() - nowMs) / 1000);
+    if (left <= 0) store.clearRest();
+  }, [nowMs, store]);
 
   if (!store.startedAt) {
     return (
@@ -46,14 +52,10 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
-  void tick;
   const elapsed = store.getActiveDurationSec();
   const restLeft = store.restEndsAt
-    ? Math.max(0, Math.ceil((new Date(store.restEndsAt).getTime() - Date.now()) / 1000))
+    ? Math.max(0, Math.ceil((new Date(store.restEndsAt).getTime() - nowMs) / 1000))
     : 0;
-  if (store.restEndsAt && restLeft <= 0) {
-    store.clearRest();
-  }
 
   const liveEstimate =
     weight.weightKg && weight.weightKg > 0

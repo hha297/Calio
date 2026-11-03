@@ -83,9 +83,9 @@ export function useRecentFoods() {
           .limit(20);
         if (error) continue;
         return (
-          (data ?? []) as unknown as Array<
-            FoodEntry & { food?: { image_url?: string | null } | null }
-          >
+          (data ?? []) as unknown as (FoodEntry & {
+            food?: { image_url?: string | null } | null;
+          })[]
         ).map((row) => {
           const { food, ...entry } = row;
           return {

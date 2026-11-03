@@ -33,7 +33,7 @@ import { useThemeColors } from '@/theme/theme-provider';
 import type { Exercise, ExerciseDifficulty, ExerciseType } from '@/features/workout/types';
 
 const IMAGE_CATEGORY_IDS = new Set<string>(WORKOUT_IMAGE_CATEGORIES);
-const FILTERS: Array<'all' | ImageWorkoutCategory> = ['all', ...WORKOUT_IMAGE_CATEGORIES];
+const FILTERS: ('all' | ImageWorkoutCategory)[] = ['all', ...WORKOUT_IMAGE_CATEGORIES];
 type CategoryFilter = 'all' | ImageWorkoutCategory;
 
 function ItemSeparator() {
@@ -381,10 +381,7 @@ export default function ExercisePickerScreen() {
       tag,
       difficulty,
       selectCategory,
-      exercises.isPending,
-      exercises.data,
-      exercises.error,
-      exercises.refetch,
+      exercises,
     ],
   );
 

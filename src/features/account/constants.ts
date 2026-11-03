@@ -23,5 +23,3 @@ export function getSupportEmail(): string | null {
   const value = (process.env.EXPO_PUBLIC_SUPPORT_EMAIL ?? '').trim();
   return value || null;
 }
-
-export { getAdminDashboardUrl } from './admin-access';

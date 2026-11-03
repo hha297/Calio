@@ -48,12 +48,10 @@ type ActiveWorkoutState = {
   start: (input?: {
     name?: string;
     sourceTemplateId?: string | null;
-    exercises?: Array<
-      Omit<DraftExercise, 'localId' | 'sets' | 'notes'> & {
-        plannedSets?: number | null;
-        plannedReps?: number | null;
-      }
-    >;
+    exercises?: (Omit<DraftExercise, 'localId' | 'sets' | 'notes'> & {
+      plannedSets?: number | null;
+      plannedReps?: number | null;
+    })[];
   }) => void;
   reset: () => void;
   setName: (name: string) => void;

@@ -14,7 +14,7 @@ import type { ExerciseDifficulty } from '@/features/workout/types';
 import { radii } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
-const DIFFICULTIES: Array<ExerciseDifficulty | 'all'> = [
+const DIFFICULTIES: (ExerciseDifficulty | 'all')[] = [
   'all',
   'beginner',
   'intermediate',

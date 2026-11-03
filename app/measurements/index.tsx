@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
@@ -127,16 +127,11 @@ export default function MeasurementsScreen() {
   const [deleteTarget, setDeleteTarget] = useState<BodyMeasurement | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (prefilled || editing || history.isLoading) return;
+  if (!prefilled && !editing && !history.isLoading) {
     const latest = history.data?.[0];
-    if (!latest) {
-      setPrefilled(true);
-      return;
-    }
-    setForm(prefillFromLatest(latest, units));
     setPrefilled(true);
-  }, [editing, history.data, history.isLoading, prefilled, units]);
+    if (latest) setForm(prefillFromLatest(latest, units));
+  }
 
   const weightKg = toMetricWeight(form.weight, units) ?? null;
   const neckCm = toMetricLength(form.neck, units) ?? null;

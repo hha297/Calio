@@ -49,20 +49,22 @@ export function MacroDonut({
   const empty = total <= 0;
 
   const usableDegrees = Math.max(0, 360 - gapDegrees * segments.length);
-  let cursor = 0;
-  const arcs = segments.map((segment) => {
+  const arcs = segments.reduce<
+    { key: string; label: string; value: number; color: string; start: number; end: number; dashed: boolean }[]
+  >((acc, segment) => {
+    const cursor = acc.length === 0 ? 0 : acc[acc.length - 1]!.end + gapDegrees;
     const portion = empty ? 1 / Math.max(segments.length, 1) : Math.max(0, segment.value) / total;
     const sweep = usableDegrees * portion;
     const start = cursor;
     const end = cursor + sweep;
-    cursor = end + gapDegrees;
-    return {
+    acc.push({
       ...segment,
       start,
       end,
       dashed: empty || segment.value <= 0,
-    };
-  });
+    });
+    return acc;
+  }, []);
 
   return (
     <View className="items-center gap-3">

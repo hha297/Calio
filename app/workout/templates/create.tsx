@@ -200,54 +200,51 @@ export default function CreateTemplateScreen() {
   const draft = activeDraft.exercises;
 
   useEffect(() => {
-    if (!isEditing || !editId) return;
+    if (!isEditing || !editId || !templates.isFetched) return;
     const template = (templates.data ?? []).find((item) => item.id === editId);
     if (!template || template.is_system) {
-      if (templates.isFetched) {
-        Alert.alert(t('workout.templatesError'), t('workout.templateEditForbidden'));
-        router.back();
+      Alert.alert(t('workout.templatesError'), t('workout.templateEditForbidden'));
+      router.back();
+    }
+  }, [editId, isEditing, t, templates.data, templates.isFetched]);
+
+  if (
+    isEditing &&
+    editId &&
+    !hydrated &&
+    templates.isFetched &&
+    existingVariations.isFetched
+  ) {
+    const template = (templates.data ?? []).find((item) => item.id === editId);
+    if (template && !template.is_system) {
+      const next = emptyLevels();
+      for (const variation of existingVariations.data ?? []) {
+        const level = variation.training_level;
+        next[level] = {
+          enabled: true,
+          description: variation.description ?? '',
+          estimatedMinutes: variation.estimated_minutes,
+          exercises: (variation.exercises ?? []).map(mapRowToDraft),
+        };
       }
-      return;
+      const firstConfigured =
+        TEMPLATE_TRAINING_LEVELS.find(
+          (level) => next[level].enabled && next[level].exercises.length,
+        ) ?? 'intermediate';
+      if (!TEMPLATE_TRAINING_LEVELS.some((level) => next[level].enabled)) {
+        next.intermediate.enabled = true;
+      }
+      setName(template.name);
+      setDescription(template.description ?? '');
+      setCategory(template.category || 'Strength');
+      setGoal((template.goal as WorkoutTemplateGoal) || 'general');
+      setEquipment(template.equipment_summary || 'Full Gym');
+      setTargetMuscles(template.target_muscles ?? []);
+      setLevels(next);
+      setActiveLevel(firstConfigured);
+      setHydrated(true);
     }
-    if (!existingVariations.isFetched) return;
-    if (hydrated) return;
-
-    setName(template.name);
-    setDescription(template.description ?? '');
-    setCategory(template.category || 'Strength');
-    setGoal((template.goal as WorkoutTemplateGoal) || 'general');
-    setEquipment(template.equipment_summary || 'Full Gym');
-    setTargetMuscles(template.target_muscles ?? []);
-
-    const next = emptyLevels();
-    for (const variation of existingVariations.data ?? []) {
-      const level = variation.training_level;
-      next[level] = {
-        enabled: true,
-        description: variation.description ?? '',
-        estimatedMinutes: variation.estimated_minutes,
-        exercises: (variation.exercises ?? []).map(mapRowToDraft),
-      };
-    }
-    const firstConfigured =
-      TEMPLATE_TRAINING_LEVELS.find((level) => next[level].enabled && next[level].exercises.length) ??
-      'intermediate';
-    if (!TEMPLATE_TRAINING_LEVELS.some((level) => next[level].enabled)) {
-      next.intermediate.enabled = true;
-    }
-    setLevels(next);
-    setActiveLevel(firstConfigured);
-    setHydrated(true);
-  }, [
-    editId,
-    existingVariations.data,
-    existingVariations.isFetched,
-    hydrated,
-    isEditing,
-    t,
-    templates.data,
-    templates.isFetched,
-  ]);
+  }
 
   const selectedIds = useMemo(
     () => new Set(draft.map((item) => item.exerciseId).filter(Boolean) as string[]),
