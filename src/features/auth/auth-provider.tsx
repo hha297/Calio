@@ -20,7 +20,12 @@ import { useActiveWorkoutStore } from '@/stores/active-workout-store';
 
 import { collectOAuthCallbackUrl } from './await-oauth-callback';
 import { isEmailConfirmed } from './email-confirmed';
-import { getAuthRedirectUri, isExpoGoRuntime } from './redirect';
+import {
+  assertUsableAuthRedirectUri,
+  getAuthRedirectUri,
+  getRedirectToFromAuthorizeUrl,
+  isExpoGoRuntime,
+} from './redirect';
 import { getRememberMe, setRememberMe } from './remember-me';
 import {
   createSessionFromUrl,
@@ -210,8 +215,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!supabase) throw new Error('Supabase is not configured.');
 
       const redirectTo = getAuthRedirectUri();
+      assertUsableAuthRedirectUri(redirectTo);
 
-      if (isExpoGoRuntime() && redirectTo.startsWith('trackwise://')) {
+      if (isExpoGoRuntime() && redirectTo.startsWith('trackwise:')) {
         reportError(new Error('Expo Go OAuth missing Metro exp:// redirect'), {
           area: 'auth',
           action: 'google-oauth-redirect',
@@ -237,6 +243,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
       if (!data.url) {
+        throw new Error('Google sign-in could not be started.');
+      }
+
+      const authorizeRedirectTo = getRedirectToFromAuthorizeUrl(data.url);
+      if (authorizeRedirectTo !== redirectTo) {
+        reportError(new Error('Supabase authorize redirect_to mismatch'), {
+          area: 'auth',
+          action: 'google-oauth-redirect-mismatch',
+          redirectTo,
+          authorizeRedirectTo: authorizeRedirectTo ?? 'missing',
+        });
         throw new Error('Google sign-in could not be started.');
       }
 

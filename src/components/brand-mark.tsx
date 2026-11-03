@@ -7,11 +7,12 @@ import { cx } from '@/utils/cx';
 
 type BrandMarkProps = {
   /** Visual size of the logo + wordmark lockup. */
-  size?: 'md' | 'lg' | 'xl' | 'hero';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'hero';
   className?: string;
 };
 
 const sizes = {
+  sm: { logo: 28, fontSize: 20, gap: 6, letterSpacing: -0.4 },
   md: { logo: 40, fontSize: 28, gap: 8, letterSpacing: -0.8 },
   lg: { logo: 52, fontSize: 36, gap: 10, letterSpacing: -1 },
   xl: { logo: 60, fontSize: 42, gap: 12, letterSpacing: -1.2 },
