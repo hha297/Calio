@@ -111,11 +111,16 @@ function RootNavigator() {
     });
   }, [colors.background, scheme]);
 
+  // Keep the native splash up through session restore / prefetch so we don't flash a
+  // second oversized branded loading screen. Reveal once we have a destination or error.
+  const revealApp = Boolean(error) || Boolean(destination && !isBootstrapping);
+
   useEffect(() => {
+    if (!revealApp) return;
     SplashScreen.hideAsync().catch((err: unknown) => {
       reportError(err, { area: 'splash' });
     });
-  }, []);
+  }, [revealApp]);
 
   const bootstrapStatus = scheme === 'dark' ? 'light' : 'dark';
 
@@ -135,6 +140,8 @@ function RootNavigator() {
   }
 
   if (isBootstrapping || !destination) {
+    // Native splash remains visible (preventAutoHideAsync). Fallback UI only if
+    // splash was already dismissed (e.g. hot reload).
     return (
       <>
         <StatusBar style={bootstrapStatus} />

@@ -29,9 +29,9 @@ export function LoadingState({ label = 'Loading…' }: { label?: string }) {
   const colors = useThemeColors();
 
   return (
-    <View className="items-center justify-center gap-3 py-10">
-      <ActivityIndicator color={colors.primary} />
-      <Text variant="bodySmall" tone="secondary">
+    <View className="items-center justify-center gap-2.5 py-6">
+      <ActivityIndicator color={colors.primary} size="small" />
+      <Text variant="caption" tone="secondary">
         {label}
       </Text>
     </View>

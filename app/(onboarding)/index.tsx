@@ -77,7 +77,7 @@ export default function OnboardingScreen() {
           </View>
 
           <View className="items-center gap-7">
-            <BrandMark size="hero" />
+            <BrandMark size="lg" />
 
             <View
               className="w-full px-5 py-6"
