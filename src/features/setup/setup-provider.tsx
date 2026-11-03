@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
+import { fetchProfile } from '@/features/goals/api';
 import { reportError } from '@/lib/errors/report-error';
 import { queryClient } from '@/lib/query/query-client';
 
@@ -153,10 +154,14 @@ export function SetupProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       await completeSetup(userId, answers);
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
-      await queryClient.invalidateQueries({ queryKey: ['goal'] });
-      await queryClient.invalidateQueries({ queryKey: ['bootstrap'] });
-      await queryClient.invalidateQueries({ queryKey: ['body-measurements'] });
+      // Write fresh profile into cache immediately so bootstrap can leave 'setup'.
+      const profile = await fetchProfile(userId);
+      queryClient.setQueryData(['profile', userId], profile);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['goal'] }),
+        queryClient.invalidateQueries({ queryKey: ['bootstrap', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['body-measurements'] }),
+      ]);
     } catch (err) {
       reportError(err, { area: 'setup', action: 'complete' });
       setError(err instanceof Error ? err.message : 'Could not finish setup. Try again.');

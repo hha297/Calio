@@ -181,6 +181,8 @@ npm test
 - `src/stores/` — Zustand for active workout UI only
 - TanStack Query for server state
 - Supabase Auth + Postgres + RLS
+- `admin/` — Admin web console (own package; see `admin/README.md`)
+- `dashboard/` — Public marketing site for trackwise.one (own package; see `dashboard/README.md`)
 
 ## Brand assets
 

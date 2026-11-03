@@ -167,6 +167,10 @@ export type WorkoutDetail = WorkoutListItem & {
     estimate_duration_sec?: number | null;
     estimate_activity_key?: string | null;
     estimate_body_weight_kg?: number | null;
+    image_url?: string | null;
+    image_storage_path?: string | null;
+    image_key?: string | null;
+    slug?: string | null;
     sets: {
       id: string;
       set_number: number;

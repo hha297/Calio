@@ -23,6 +23,11 @@ export type DraftExercise = {
   exerciseType: ExerciseType;
   metValue: number | null;
   primaryMuscles?: string[];
+  /** Image fields mirrored from the exercise catalog for active-session thumbnails. */
+  imageUrl?: string | null;
+  imageStoragePath?: string | null;
+  imageKey?: string | null;
+  slug?: string | null;
   notes: string;
   sets: DraftSet[];
 };

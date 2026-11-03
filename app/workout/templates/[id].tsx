@@ -321,6 +321,11 @@ export default function WorkoutTemplateDetailScreen() {
                 metValue: null,
                 plannedSets: row.planned_sets,
                 plannedReps: row.planned_reps,
+                imageUrl: row.image_url,
+                imageStoragePath: row.image_storage_path,
+                imageKey: row.image_key,
+                slug: row.slug,
+                primaryMuscles: row.primary_muscles ?? undefined,
               })),
             });
             router.push('/workout/active');

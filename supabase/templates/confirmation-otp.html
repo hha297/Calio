@@ -13,6 +13,10 @@
   Important: use {{ .Token }} only — do NOT include {{ .ConfirmationURL }}.
   A confirmation link would consume the OTP when mail scanners open it.
   The user verifies inside the Trackwise app on the Verify Email screen.
+
+  Brand logo (HTTPS, email-sized):
+  https://res.cloudinary.com/dhj4wjkls/image/upload/w_128,h_128,c_fit,f_png,q_auto/logo_ho9hvh.png
+  Note: logo art is green on dark — keep header dark, not #00D95F.
 -->
 <!doctype html>
 <html lang="en">
@@ -25,9 +29,9 @@
     style="
       margin: 0;
       padding: 0;
-      background: #f5f5f5;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      color: #121212;
+      background: #f9f7f3;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #202020;
     "
   >
     <table
@@ -35,7 +39,7 @@
       width="100%"
       cellspacing="0"
       cellpadding="0"
-      style="background: #f5f5f5; padding: 32px 16px"
+      style="background: #f9f7f3; padding: 32px 16px"
     >
       <tr>
         <td align="center">
@@ -47,65 +51,146 @@
             style="
               max-width: 480px;
               background: #ffffff;
-              border-radius: 8px;
+              border-radius: 12px;
               overflow: hidden;
+              border: 1px solid #e4e0d8;
             "
           >
             <tr>
-              <td style="background: #00d95f; padding: 28px 24px; text-align: center">
+              <td style="background: #202020; padding: 28px 24px; text-align: center">
+                <!--[if mso]>
+                <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:64px;height:64px;">
+                  <v:fill type="frame" src="https://res.cloudinary.com/dhj4wjkls/image/upload/w_128,h_128,c_fit,f_png,q_auto/logo_ho9hvh.png" />
+                  <v:textbox inset="0,0,0,0"></v:textbox>
+                </v:rect>
+                <![endif]-->
+                <!--[if !mso]><!-- -->
+                <img
+                  src="https://res.cloudinary.com/dhj4wjkls/image/upload/w_128,h_128,c_fit,f_png,q_auto/logo_ho9hvh.png"
+                  width="64"
+                  height="64"
+                  alt="Trackwise"
+                  border="0"
+                  style="
+                    display: block;
+                    margin: 0 auto 14px auto;
+                    width: 64px;
+                    height: 64px;
+                    border: 0;
+                    outline: none;
+                    text-decoration: none;
+                    -ms-interpolation-mode: bicubic;
+                  "
+                />
+                <!--<![endif]-->
                 <p
                   style="
                     margin: 0;
                     font-size: 28px;
                     font-weight: 700;
-                    letter-spacing: 0.04em;
-                    color: #000000;
+                    letter-spacing: -0.02em;
+                    color: #fcfcfc;
+                    font-family: Arial, Helvetica, sans-serif;
                   "
                 >
-                  Trackwise
+                  Track<span style="color: #00d95f">wise</span>
                 </p>
-                <p style="margin: 8px 0 0; font-size: 14px; color: rgba(0, 0, 0, 0.85)">
+                <p
+                  style="
+                    margin: 8px 0 0;
+                    font-size: 14px;
+                    color: #b0b0b0;
+                    font-family: Arial, Helvetica, sans-serif;
+                  "
+                >
                   Email verification
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding: 28px 24px 8px">
-                <p style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #121212">
+                <p
+                  style="
+                    margin: 0 0 12px;
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #202020;
+                    font-family: Arial, Helvetica, sans-serif;
+                  "
+                >
                   Your Trackwise verification code is
-                </p>
-                <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: #6a6a6a">
-                  Enter this code in the Trackwise app to verify
-                  <strong style="color: #121212">{{ .Email }}</strong>. This code will expire
-                  shortly and can only be used once.
                 </p>
                 <p
                   style="
-                    margin: 0 auto 20px;
-                    max-width: 280px;
-                    padding: 16px 12px;
-                    text-align: center;
-                    font-size: 32px;
-                    font-weight: 700;
-                    letter-spacing: 0.28em;
-                    color: #121212;
-                    background: #eeeeee;
-                    border-radius: 8px;
+                    margin: 0 0 20px;
+                    font-size: 15px;
+                    line-height: 1.5;
+                    color: #646464;
+                    font-family: Arial, Helvetica, sans-serif;
                   "
                 >
-                  {{ .Token }}
+                  Enter this code in the Trackwise app to verify
+                  <strong style="color: #202020">{{ .Email }}</strong>. This code will expire
+                  shortly and can only be used once.
                 </p>
-                <p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #6a6a6a">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td align="center" style="padding: 0 0 20px">
+                      <p
+                        style="
+                          margin: 0;
+                          max-width: 280px;
+                          padding: 16px 12px;
+                          text-align: center;
+                          font-size: 32px;
+                          font-weight: 700;
+                          letter-spacing: 0.28em;
+                          color: #202020;
+                          background: #f3f0e8;
+                          border-radius: 10px;
+                          font-family: 'Courier New', Courier, monospace;
+                        "
+                      >
+                        {{ .Token }}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+                <p
+                  style="
+                    margin: 0 0 8px;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    color: #646464;
+                    font-family: Arial, Helvetica, sans-serif;
+                  "
+                >
                   Open Trackwise → Verify your email → enter the code.
                 </p>
-                <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #6a6a6a">
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 13px;
+                    line-height: 1.5;
+                    color: #646464;
+                    font-family: Arial, Helvetica, sans-serif;
+                  "
+                >
                   If you didn’t create a Trackwise account, you can ignore this email.
                 </p>
               </td>
             </tr>
             <tr>
-              <td style="padding: 20px 24px 28px">
-                <p style="margin: 0; font-size: 12px; color: #b3b3b3; text-align: center">
+              <td style="padding: 20px 24px 28px; border-top: 3px solid #00d95f">
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 12px;
+                    color: #8d8d8d;
+                    text-align: center;
+                    font-family: Arial, Helvetica, sans-serif;
+                  "
+                >
                   Sent by Trackwise · Meals, workouts, and progress in one place
                 </p>
               </td>
