@@ -116,6 +116,7 @@ export const vi: Messages = {
     contact: 'Liên hệ',
     contactSupport: 'Liên hệ hỗ trợ',
     sendFeedback: 'Gửi phản hồi',
+    accountDeletion: 'Xóa tài khoản',
     estimates: 'Giá trị dinh dưỡng và hoạt động là ước tính.',
     rights: 'Đã đăng ký bản quyền.',
   },

@@ -22,4 +22,4 @@ Standalone Next.js App Router marketing site under `dashboard/`. This is the mai
 - Do not deploy, change DNS, or wire production backends without explicit approval.
 - Do not put secrets in client-side site config.
 - Legal pages use confirmed operator contact details; do not reintroduce visible TODO placeholders.
-- Feedback stays mock-first until a real endpoint exists — never claim delivery falsely.
+- Feedback posts to `/api/feedback` (FormSubmit → `SUPPORT_EMAIL`). Do not reintroduce mock-only success states.

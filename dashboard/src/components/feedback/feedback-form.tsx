@@ -1,8 +1,10 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { SUPPORT_EMAIL } from '@/config/site';
 import { cn } from '@/lib/utils';
 
 const categories = [
@@ -15,13 +17,14 @@ const categories = [
 
 type FormState = 'idle' | 'submitting' | 'success' | 'error';
 
-type FieldErrors = Partial<Record<'category' | 'subject' | 'message' | 'email', string>>;
+type FieldErrors = Partial<Record<'category' | 'subject' | 'message' | 'email' | 'form', string>>;
 
 export function FeedbackForm() {
   const [category, setCategory] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
+  const [website, setWebsite] = useState(''); // honeypot
   const [state, setState] = useState<FormState>('idle');
   const [errors, setErrors] = useState<FieldErrors>({});
 
@@ -38,6 +41,16 @@ export function FeedbackForm() {
     return next;
   }
 
+  function resetForm() {
+    setCategory('');
+    setSubject('');
+    setMessage('');
+    setEmail('');
+    setWebsite('');
+    setErrors({});
+    setState('idle');
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors = validate();
@@ -48,9 +61,35 @@ export function FeedbackForm() {
     }
 
     setState('submitting');
-    // Mock submission — no backend is connected yet.
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    setState('success');
+    setErrors({});
+
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          category,
+          subject: subject.trim(),
+          message: message.trim(),
+          email: email.trim(),
+          website,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        setErrors({ form: data.error || 'Could not send feedback. Please try again.' });
+        setState('error');
+        return;
+      }
+
+      setState('success');
+    } catch {
+      setErrors({
+        form: `Network error. Email us directly at ${SUPPORT_EMAIL}.`,
+      });
+      setState('error');
+    }
   }
 
   if (state === 'success') {
@@ -61,26 +100,20 @@ export function FeedbackForm() {
         aria-live="polite"
       >
         <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary-deep">
-          Preview success
+          Sent
         </p>
-        <h2 className="mt-2 font-display text-2xl font-bold text-ink">Form validated locally</h2>
+        <h2 className="mt-2 font-display text-2xl font-bold text-ink">Thanks for the feedback</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-body">
-          Your feedback was <strong>not transmitted or stored</strong>. No backend is connected yet.
-          This success state is a preview so the UI can be reviewed before integration.
+          Your message was delivered to the Trackwise support inbox
+          {email.trim() ? (
+            <>
+              . If you left a reply email, we may follow up at <strong>{email.trim()}</strong>
+            </>
+          ) : null}
+          .
         </p>
-        <Button
-          className="mt-6"
-          variant="secondary"
-          onClick={() => {
-            setCategory('');
-            setSubject('');
-            setMessage('');
-            setEmail('');
-            setErrors({});
-            setState('idle');
-          }}
-        >
-          Send another (preview)
+        <Button className="mt-6" variant="secondary" onClick={resetForm}>
+          Send another message
         </Button>
       </div>
     );
@@ -90,36 +123,73 @@ export function FeedbackForm() {
     <form
       onSubmit={onSubmit}
       noValidate
-      className="rounded-[20px] border border-hairline bg-card p-6 shadow-soft sm:p-8"
+      className="relative rounded-[20px] border border-hairline bg-card p-6 shadow-soft sm:p-8"
     >
-      <div className="rounded-[12px] border border-dashed border-hairline bg-bone px-4 py-3 text-sm text-body">
-        Mock mode: submissions are validated in the browser only and are not delivered until a
-        backend is connected.
+      {/* Honeypot — visually hidden from people */}
+      <div className="pointer-events-none absolute -left-[9999px] h-px w-px overflow-hidden opacity-0" aria-hidden>
+        <label htmlFor="website">Website</label>
+        <input
+          id="website"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+        />
       </div>
 
-      <div className="mt-6 space-y-5">
-        <Field
-          label="Category"
-          htmlFor="category"
-          error={errors.category}
-          required
-        >
-          <select
-            id="category"
-            name="category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className={inputClass(Boolean(errors.category))}
+      <div className="space-y-5">
+        <fieldset>
+          <legend className="text-sm font-semibold text-ink">
+            Category <span className="text-fat">*</span>
+          </legend>
+          <div
+            className="mt-2.5 grid gap-2 sm:grid-cols-2"
+            role="radiogroup"
             aria-invalid={Boolean(errors.category)}
+            aria-describedby={errors.category ? 'category-error' : undefined}
           >
-            <option value="">Select a category</option>
-            {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </Field>
+            {categories.map((item) => {
+              const selected = category === item;
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    setCategory(item);
+                    setErrors((current) => ({ ...current, category: undefined, form: undefined }));
+                  }}
+                  className={cn(
+                    'flex items-center gap-3 rounded-[12px] border px-3.5 py-3 text-left text-[15px] font-medium transition',
+                    selected
+                      ? 'border-primary bg-primary/10 text-ink'
+                      : 'border-hairline bg-canvas text-body hover:border-ink/25 hover:text-ink',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex size-5 shrink-0 items-center justify-center rounded-full border',
+                      selected
+                        ? 'border-primary bg-primary text-on-primary'
+                        : 'border-hairline bg-card',
+                    )}
+                    aria-hidden
+                  >
+                    {selected ? <Check className="size-3.5 stroke-[3]" /> : null}
+                  </span>
+                  {item}
+                </button>
+              );
+            })}
+          </div>
+          {errors.category ? (
+            <p id="category-error" className="mt-1.5 text-xs font-medium text-fat" role="alert">
+              {errors.category}
+            </p>
+          ) : null}
+        </fieldset>
 
         <Field label="Subject" htmlFor="subject" error={errors.subject} required>
           <input
@@ -130,6 +200,7 @@ export function FeedbackForm() {
             className={inputClass(Boolean(errors.subject))}
             aria-invalid={Boolean(errors.subject)}
             maxLength={120}
+            placeholder="Short summary"
           />
         </Field>
 
@@ -142,6 +213,7 @@ export function FeedbackForm() {
             className={cn(inputClass(Boolean(errors.message)), 'min-h-36 resize-y')}
             aria-invalid={Boolean(errors.message)}
             maxLength={4000}
+            placeholder="What happened, what you expected, and any steps to reproduce"
           />
         </Field>
 
@@ -149,7 +221,7 @@ export function FeedbackForm() {
           label="Email (optional)"
           htmlFor="email"
           error={errors.email}
-          hint="Only if you want a reply once support email is configured."
+          hint={`Leave this if you want a reply. Messages go to ${SUPPORT_EMAIL}.`}
         >
           <input
             id="email"
@@ -160,18 +232,25 @@ export function FeedbackForm() {
             onChange={(e) => setEmail(e.target.value)}
             className={inputClass(Boolean(errors.email))}
             aria-invalid={Boolean(errors.email)}
+            placeholder="you@example.com"
           />
         </Field>
       </div>
 
-      {state === 'error' && Object.keys(errors).length > 0 ? (
+      {errors.form ? (
+        <p className="mt-4 text-sm font-medium text-fat" role="alert">
+          {errors.form}
+        </p>
+      ) : null}
+
+      {state === 'error' && !errors.form && Object.keys(errors).length > 0 ? (
         <p className="mt-4 text-sm font-medium text-fat" role="alert">
           Please fix the highlighted fields.
         </p>
       ) : null}
 
       <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={state === 'submitting'}>
-        {state === 'submitting' ? 'Validating…' : 'Submit feedback (preview)'}
+        {state === 'submitting' ? 'Sending…' : 'Submit feedback'}
       </Button>
     </form>
   );
@@ -179,7 +258,7 @@ export function FeedbackForm() {
 
 function inputClass(hasError: boolean) {
   return cn(
-    'mt-1.5 w-full rounded-[10px] border bg-canvas px-3.5 py-3 text-[15px] text-ink outline-none transition',
+    'mt-1.5 w-full rounded-[12px] border bg-canvas px-3.5 py-3 text-[15px] text-ink outline-none transition placeholder:text-mute',
     hasError ? 'border-fat' : 'border-hairline focus:border-primary',
   );
 }

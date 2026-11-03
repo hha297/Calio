@@ -61,7 +61,7 @@ It does **not** need the mobile app or Admin console running.
 | `/features` | Deeper feature overview |
 | `/about` | Short about page |
 | `/support` | Support Center |
-| `/feedback` | Feedback form (**mock** submission until a backend exists) |
+| `/feedback` | Feedback form (delivered to support email via `/api/feedback`) |
 | `/privacy` | Privacy Policy |
 | `/terms` | Terms of Use |
 
@@ -151,7 +151,6 @@ Brand assets are mirrored from `../assets/images/branding/` into `public/images/
 
 - Advertise only features that exist in the **shipping mobile app**
 - Prefer **Coming soon** over invented AI or unpaid store claims; do not leave visible TODO copy on pages
-- Feedback validates in-browser only — do not claim delivery until a real endpoint exists
 - Empty store URLs in `site.ts` must not create broken links
 
 ---

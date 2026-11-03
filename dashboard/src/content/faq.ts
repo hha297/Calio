@@ -57,7 +57,7 @@ export const homeFaq: FaqItem[] = [
     id: 'delete-account',
     question: 'How can I delete my account?',
     answer:
-      'In the Trackwise app, open Account and use Delete account. This permanently removes your account and associated data via the app’s account-deletion flow. You can also delete account data while keeping your login, or export a backup first.',
+      'In the Trackwise app, open Account → Privacy & data → Delete account, then confirm. This permanently removes your account and associated data via the app’s deletion flow. You can also delete account data while keeping your login, or export a backup first. Full steps and email requests: trackwise.one/delete-account.',
   },
   {
     id: 'medical',
