@@ -61,7 +61,7 @@ It does **not** need the mobile app or Admin console running.
 | `/features` | Deeper feature overview |
 | `/about` | Short about page |
 | `/support` | Support Center |
-| `/feedback` | Feedback form (delivered to support email via `/api/feedback`) |
+| `/feedback` | Feedback form (Resend → support email via `/api/feedback`) |
 | `/privacy` | Privacy Policy |
 | `/terms` | Terms of Use |
 
@@ -142,6 +142,15 @@ Edit **`src/config/site.ts`** — no Vercel env required for contact/store/SEO:
 | `SUPPORT_EMAIL` / `SUPPORT_PHONE` | Public support contact |
 | `GOOGLE_PLAY_URL` | Android store (empty → Coming soon) |
 | `APP_STORE_URL` | iOS store when live |
+
+**Feedback email (server env in `.env.local`, see `.env.example`)**
+
+| Variable | Purpose |
+| -------- | ------- |
+| `RESEND_API_KEY` | Resend API key for `/api/feedback` |
+| `RESEND_FROM` | Optional From address (default `Trackwise <onboarding@resend.dev>`) |
+
+With the default From, Resend only delivers to the email on your Resend account. For production, verify `trackwise.one` in Resend and set `RESEND_FROM` to an address on that domain.
 
 Brand assets are mirrored from `../assets/images/branding/` into `public/images/branding/`.
 

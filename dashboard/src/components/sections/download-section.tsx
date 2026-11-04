@@ -29,9 +29,6 @@ export function DownloadSection() {
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/70">
             {t.download.description}
           </p>
-          <div className="mt-6 inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-primary">
-            {t.download.status}: {t.download.androidFree}
-          </div>
           <StoreBadges className="mt-8" size="lg" variant="onDark" />
         </div>
 

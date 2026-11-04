@@ -7,7 +7,7 @@ import { elevation, iconSizes, radii, withAlpha } from '@/theme';
 import { fonts } from '@/theme/fonts';
 import { useTheme, useThemeColors } from '@/theme/theme-provider';
 
-import { scanImageSource, useScanImages } from './scan-image';
+import { scanImageSource } from './scan-image';
 
 const DOCK_HEIGHT = 64;
 const DOCK_HEIGHT_COMPACT = 58;
@@ -33,7 +33,6 @@ export function FloatingTabBar({
   const colors = useThemeColors();
   const { scheme } = useTheme();
   const isDark = scheme === 'dark';
-  const scanImages = useScanImages();
   const { width, height } = useWindowDimensions();
   const compact = width <= 360 || height <= 500;
   const landscape = width > height;
@@ -55,10 +54,15 @@ export function FloatingTabBar({
     : elevation.tabBar('#202020');
   const dockBorder = isDark ? withAlpha(colors.primary, 0.16) : colors.border;
 
-  if (scanFocused) return null;
-
+  // Keep the dock mounted while Scan is open so the GIF never reloads (1–2s flash).
+  // Hide visually + ignore touches instead of returning null.
   return (
-    <View pointerEvents="box-none" style={styles.overlay}>
+    <View
+      pointerEvents={scanFocused ? 'none' : 'box-none'}
+      accessibilityElementsHidden={scanFocused}
+      importantForAccessibility={scanFocused ? 'no-hide-descendants' : 'auto'}
+      style={[styles.overlay, scanFocused ? styles.overlayHidden : null]}
+    >
       {insets.bottom > 0 ? (
         <View
           pointerEvents="none"
@@ -136,16 +140,12 @@ export function FloatingTabBar({
                   ]}
                 >
                   <Image
-                    source={(focused ? scanImages.active : scanImages.inactive) ?? scanImageSource}
+                    source={scanImageSource}
                     style={{ width: scanIconSize, height: scanIconSize }}
                     contentFit="contain"
-                    cachePolicy="memory"
+                    cachePolicy="memory-disk"
                     autoplay
-                    tintColor={
-                      scanImages.active || scanImages.inactive
-                        ? undefined
-                        : colors.textOnPrimary
-                    }
+                    tintColor={colors.textOnPrimary}
                     accessible={false}
                   />
                 </View>
@@ -203,6 +203,9 @@ const styles = StyleSheet.create({
     top: 0,
     backgroundColor: 'transparent',
     overflow: 'visible',
+  },
+  overlayHidden: {
+    opacity: 0,
   },
   homeIndicatorFill: {
     position: 'absolute',

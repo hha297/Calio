@@ -102,9 +102,7 @@ export const sv: Messages = {
     title: 'Hämta Trackwise till telefonen.',
     description:
       'Trackwise är gratis på Android. Google Play-listan kommer snart hit. iOS kommer senare — inte tillgängligt ännu.',
-    status: 'Status',
     comingSoon: 'Kommer snart',
-    androidFree: 'Gratis på Android · iOS senare',
     qrPlaceholder: 'QR-platshållare',
     qrHint: 'Skanna-för-att-ladda-ner visas här när Android-butikssidan publiceras.',
   },

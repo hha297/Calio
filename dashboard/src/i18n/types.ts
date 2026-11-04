@@ -104,9 +104,7 @@ export type Messages = {
     eyebrow: string;
     title: string;
     description: string;
-    status: string;
     comingSoon: string;
-    androidFree: string;
     qrPlaceholder: string;
     qrHint: string;
   };

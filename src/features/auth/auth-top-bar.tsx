@@ -10,7 +10,7 @@ export function AuthTopBar() {
     <View style={styles.row}>
       <BrandMark size="md" />
       <View style={styles.actions}>
-        <ThemeToggle />
+        <ThemeToggle variant="icon" />
         <LanguageDropdown />
       </View>
     </View>

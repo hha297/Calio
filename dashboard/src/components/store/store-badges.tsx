@@ -1,5 +1,4 @@
-import { Apple, Smartphone } from 'lucide-react';
-
+import { AppleMark, GooglePlayMark } from '@/components/store/store-marks';
 import { getStoreStatus, siteConfig } from '@/config/site';
 import { cn } from '@/lib/utils';
 
@@ -64,7 +63,7 @@ export function StoreBadges({ className, size = 'md', variant = 'default' }: Sto
         label={status.googlePlay ? 'Get it on Google Play' : 'Google Play — Android, free, listing soon'}
         className={androidClass}
       >
-        <Smartphone className="size-7 shrink-0" aria-hidden />
+        <GooglePlayMark className="size-7 shrink-0" />
         <span>
           <span
             className={cn(
@@ -83,7 +82,7 @@ export function StoreBadges({ className, size = 'md', variant = 'default' }: Sto
         label={status.appStore ? 'Download on the App Store' : 'App Store — iOS coming later'}
         className={iosClass}
       >
-        <Apple className="size-7 shrink-0 opacity-80" aria-hidden />
+        <AppleMark className="size-7 shrink-0 opacity-90" />
         <span>
           <span
             className={cn(

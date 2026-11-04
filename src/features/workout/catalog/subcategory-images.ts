@@ -4,9 +4,9 @@ import type { ImageSourcePropType } from 'react-native';
 export const LOCAL_SUBCATEGORY_IMAGES: Record<string, ImageSourcePropType> = {
   "bodyweight/arms": require('../../../../assets/images/workout/exercises/bodyweight/arms/bench-dip.webp'),
   "bodyweight/back": require('../../../../assets/images/workout/exercises/bodyweight/back/australia-pull-up.jpg'),
-  "bodyweight/calisthenics": require('../../../../assets/images/workout/exercises/bodyweight/calisthenics/archer-pushup.webp'),
+  "bodyweight/calisthenics": require('../../../../assets/images/workout/exercises/bodyweight/calisthenics/muscle-up.webp'),
   "bodyweight/calves": require('../../../../assets/images/workout/exercises/bodyweight/calves/single-leg-calf-raise.jpg'),
-  "bodyweight/chest": require('../../../../assets/images/workout/exercises/bodyweight/chest/archer-pushup.webp'),
+  "bodyweight/chest": require('../../../../assets/images/workout/exercises/bodyweight/chest/pushup.jpg'),
   "bodyweight/core": require('../../../../assets/images/workout/exercises/bodyweight/core/bicycles-crunches.jpg'),
   "bodyweight/full-body": require('../../../../assets/images/workout/exercises/bodyweight/full-body/bear-crawl.webp'),
   "bodyweight/hamstrings-glutes": require('../../../../assets/images/workout/exercises/bodyweight/hamstrings-glutes/frog-pump.jpg'),

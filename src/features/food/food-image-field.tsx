@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera, ImagePlus, Trash2, RefreshCw } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import Svg, { Rect } from 'react-native-svg';
 
 import { Text } from '@/components/ui/text';
 import {
@@ -14,6 +15,11 @@ import {
 import { iconSizes, radii, spacing } from '@/theme';
 import { useThemeColors } from '@/theme/theme-provider';
 
+const EMPTY_DASH_STROKE = 1.75;
+const EMPTY_DASH_PATTERN = '7 6';
+/** Inset between dashed frame and inner content — kept equal on all sides. */
+const FRAME_INSET = spacing[5];
+
 type FoodImageFieldProps = {
   value: SelectedFoodImage | null;
   onChange: (next: SelectedFoodImage | null) => void;
@@ -21,6 +27,37 @@ type FoodImageFieldProps = {
   /** Optional remote URL already saved (edit flows). */
   existingUrl?: string | null;
 };
+
+type FrameSize = { width: number; height: number };
+
+function DashedFrameBorder({
+  size,
+  color,
+}: {
+  size: FrameSize;
+  color: string;
+}) {
+  if (size.width <= 0 || size.height <= 0) return null;
+
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Svg width={size.width} height={size.height}>
+        <Rect
+          x={EMPTY_DASH_STROKE / 2}
+          y={EMPTY_DASH_STROKE / 2}
+          width={size.width - EMPTY_DASH_STROKE}
+          height={size.height - EMPTY_DASH_STROKE}
+          rx={radii.md}
+          ry={radii.md}
+          fill="none"
+          stroke={color}
+          strokeWidth={EMPTY_DASH_STROKE}
+          strokeDasharray={EMPTY_DASH_PATTERN}
+        />
+      </Svg>
+    </View>
+  );
+}
 
 /**
  * Single food image picker for Create Food.
@@ -35,8 +72,15 @@ export function FoodImageField({
   const colors = useThemeColors();
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [frameSize, setFrameSize] = useState<FrameSize>({ width: 0, height: 0 });
 
   const previewUri = value?.uri ?? existingUrl ?? null;
+
+  function handleFrameLayout(width: number, height: number) {
+    setFrameSize((prev) =>
+      prev.width === width && prev.height === height ? prev : { width, height },
+    );
+  }
 
   async function pickImage() {
     if (disabled || busy) return;
@@ -94,54 +138,61 @@ export function FoodImageField({
       </View>
 
       {previewUri ? (
-        <View style={[styles.previewCard, { backgroundColor: colors.surfaceMuted }]}>
-          <View style={styles.previewImageWrap}>
+        <View
+          onLayout={(event) => {
+            const { width, height } = event.nativeEvent.layout;
+            handleFrameLayout(width, height);
+          }}
+          style={[styles.frame, { backgroundColor: colors.surfaceMuted }]}
+        >
+          <DashedFrameBorder size={frameSize} color={colors.primary} />
+          <View style={styles.frameInner}>
             <Image
               source={{ uri: previewUri }}
               style={[styles.previewImage, { backgroundColor: colors.surface }]}
               contentFit="cover"
               accessibilityLabel="Selected food image"
             />
-          </View>
-          <View style={styles.previewActions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Replace food image"
-              disabled={disabled || busy}
-              onPress={() => void pickImage()}
-              style={({ pressed }) => [
-                styles.actionChip,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}
-            >
-              <RefreshCw size={iconSizes.sm} color={colors.textPrimary} strokeWidth={2.25} />
-              <Text variant="label" tone="primary">
-                Replace
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Remove food image"
-              disabled={disabled || busy}
-              onPress={clearImage}
-              style={({ pressed }) => [
-                styles.actionChip,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}
-            >
-              <Trash2 size={iconSizes.sm} color={colors.error} strokeWidth={2.25} />
-              <Text variant="label" tone="error">
-                Remove
-              </Text>
-            </Pressable>
+            <View style={styles.previewActions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Replace food image"
+                disabled={disabled || busy}
+                onPress={() => void pickImage()}
+                style={({ pressed }) => [
+                  styles.actionChip,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <RefreshCw size={iconSizes.sm} color={colors.textPrimary} strokeWidth={2.25} />
+                <Text variant="label" tone="primary">
+                  Replace
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Remove food image"
+                disabled={disabled || busy}
+                onPress={clearImage}
+                style={({ pressed }) => [
+                  styles.actionChip,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <Trash2 size={iconSizes.sm} color={colors.error} strokeWidth={2.25} />
+                <Text variant="label" tone="error">
+                  Remove
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       ) : (
@@ -150,36 +201,45 @@ export function FoodImageField({
           accessibilityLabel="Add food image"
           disabled={disabled || busy}
           onPress={() => void pickImage()}
+          onLayout={(event) => {
+            const { width, height } = event.nativeEvent.layout;
+            handleFrameLayout(width, height);
+          }}
           style={({ pressed }) => [
-            styles.empty,
+            styles.frame,
+            styles.frameEmpty,
             {
               backgroundColor: colors.surfaceMuted,
-              borderColor: colors.border,
               opacity: pressed || busy ? 0.85 : 1,
             },
           ]}
         >
-          {busy ? (
-            <ActivityIndicator color={colors.primary} />
-          ) : (
-            <View style={styles.emptyContent}>
-              <View style={[styles.emptyIcon, { backgroundColor: colors.primary }]}>
-                <ImagePlus size={20} color={colors.textOnPrimary} strokeWidth={2.4} />
+          <DashedFrameBorder size={frameSize} color={colors.primary} />
+          <View style={styles.frameInner}>
+            {busy ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <View style={styles.emptyContent}>
+                <View style={[styles.emptyIcon, { backgroundColor: colors.primary }]}>
+                  <ImagePlus size={22} color={colors.textOnPrimary} strokeWidth={2.4} />
+                </View>
+                <View style={styles.emptyCopy}>
+                  <Text variant="bodyStrong" style={styles.emptyTitle}>
+                    Add food image
+                  </Text>
+                  <Text variant="caption" tone="muted" style={styles.emptyHint}>
+                    Choose one JPEG, PNG, or WebP from your library
+                  </Text>
+                </View>
+                <View style={styles.emptyMeta}>
+                  <Camera size={14} color={colors.textMuted} />
+                  <Text variant="caption" tone="muted" style={styles.emptyMetaText}>
+                    Tap to pick a photo for this food
+                  </Text>
+                </View>
               </View>
-              <Text variant="bodyStrong" style={styles.emptyTitle}>
-                Add food image
-              </Text>
-              <Text variant="caption" tone="muted" style={styles.emptyHint}>
-                Choose one JPEG, PNG, or WebP from your library
-              </Text>
-              <View style={styles.emptyMeta}>
-                <Camera size={14} color={colors.textMuted} />
-                <Text variant="caption" tone="muted">
-                  Single image · {formatFoodImageSizeLimit()} max
-                </Text>
-              </View>
-            </View>
-          )}
+            )}
+          </View>
         </Pressable>
       )}
 
@@ -207,68 +267,78 @@ const styles = StyleSheet.create({
   headerHint: {
     flexShrink: 1,
   },
-  empty: {
-    minHeight: 148,
+  /**
+   * Outer frame owns the dashed border.
+   * No padding here — absolute SVG is relative to this box's padding edge,
+   * so padding on this node would inset the border and erase the visual gap.
+   */
+  frame: {
     width: '100%',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
-    borderStyle: 'dashed',
+    overflow: 'hidden',
+  },
+  frameEmpty: {
+    minHeight: 236,
+    // Centers the padded inner block when the frame is taller than its content,
+    // keeping top/bottom breathing room even relative to the dashed border.
+    justifyContent: 'center',
+  },
+  /** Equal inset from dashed border on all sides. */
+  frameInner: {
+    width: '100%',
+    padding: FRAME_INSET,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[5],
+    gap: spacing[4],
   },
   emptyContent: {
     width: '100%',
     alignItems: 'center',
-    gap: spacing[2],
+    justifyContent: 'center',
+    gap: spacing[4],
   },
   emptyIcon: {
-    width: 44,
-    height: 44,
+    width: 52,
+    height: 52,
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing[1],
+  },
+  emptyCopy: {
+    width: '100%',
+    alignItems: 'center',
+    gap: spacing[2],
+    paddingHorizontal: spacing[2],
   },
   emptyTitle: {
     textAlign: 'center',
   },
   emptyHint: {
     textAlign: 'center',
-    paddingHorizontal: spacing[2],
+    lineHeight: 20,
   },
   emptyMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: spacing[1],
+    gap: spacing[2],
+    paddingHorizontal: spacing[2],
   },
-  previewCard: {
-    width: '100%',
-    borderRadius: radii.md,
-    overflow: 'hidden',
-  },
-  previewImageWrap: {
-    width: '100%',
-    paddingHorizontal: spacing[3],
-    paddingTop: spacing[3],
+  emptyMetaText: {
+    textAlign: 'center',
+    flexShrink: 1,
   },
   previewImage: {
     width: '100%',
     aspectRatio: 16 / 10,
-    borderRadius: radii.md,
+    borderRadius: radii.sm,
   },
   previewActions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spacing[4],
-    paddingHorizontal: spacing[3],
-    paddingTop: spacing[4],
-    paddingBottom: spacing[4],
+    gap: spacing[3],
+    width: '100%',
   },
   actionChip: {
     flexDirection: 'row',

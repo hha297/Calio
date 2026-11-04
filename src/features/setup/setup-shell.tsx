@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 4,
-    paddingBottom: 8,
+    paddingBottom: spacing[3],
   },
   topSpacer: { width: 72 },
   backRow: {
@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     marginHorizontal: spacing[5],
+    marginBottom: spacing[2],
     height: 6,
     borderRadius: radii.pill,
     overflow: 'hidden',
@@ -190,13 +191,13 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[4],
+    paddingTop: spacing[6],
     paddingBottom: spacing[10],
   },
   hero: {
     alignItems: 'center',
-    gap: spacing[2],
-    marginBottom: spacing[4],
+    gap: spacing[4],
+    marginBottom: spacing[6],
   },
   title: { textAlign: 'center' },
   subtitle: {

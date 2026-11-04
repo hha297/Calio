@@ -15,7 +15,7 @@ import {
   groupWorkoutsByDate,
   mealCalorieBreakdown,
   MEAL_ORDER,
-  sumFoodQuantities,
+  // sumFoodQuantities, // Pro preview temporarily hidden
   weekDateKeys,
 } from '@/features/diary/aggregations';
 import { BarChart } from '@/features/diary/components/charts/bar-chart';
@@ -116,7 +116,8 @@ export function StatisticsView({
     target,
   });
   const mealBreakdown = mealCalorieBreakdown(dayEntries);
-  const quantities = sumFoodQuantities(foodQuery.data ?? []);
+  // Temporarily unused while Pro food quantity preview is hidden.
+  // const quantities = sumFoodQuantities(foodQuery.data ?? []);
 
   const weekly = buildWeeklyAverages({
     weekKeys,
@@ -348,7 +349,9 @@ export function StatisticsView({
             />
           </Card>
 
+          {/* Temporarily hidden — Pro food quantity preview
           <ProFoodPreview quantities={quantities} />
+          */}
         </>
       ) : null}
 
@@ -422,7 +425,9 @@ export function StatisticsView({
             />
           </Card>
 
+          {/* Temporarily hidden — Pro food quantity preview
           <ProFoodPreview quantities={quantities} />
+          */}
         </>
       ) : null}
     </View>
@@ -451,6 +456,7 @@ function StatRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+/* Temporarily hidden — Pro food quantity preview
 function ProFoodPreview({
   quantities,
 }: {
@@ -485,3 +491,4 @@ function ProFoodPreview({
     </Card>
   );
 }
+*/
