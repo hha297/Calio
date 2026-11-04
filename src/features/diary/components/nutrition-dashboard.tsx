@@ -179,7 +179,6 @@ export function NutritionDashboard({
               label={over ? t('diary.nutrition.exceeded') : t('diary.nutrition.remaining')}
               value={formatNumber(Math.abs(balance.remaining), locale)}
               unit={t('diary.nutrition.kcal')}
-              emphasize
               danger={over}
             />
             <MetricStackItem
@@ -346,14 +345,12 @@ function MetricStackItem({
   label,
   value,
   unit,
-  emphasize,
   danger,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
   unit: string;
-  emphasize?: boolean;
   danger?: boolean;
 }) {
   return (
@@ -369,7 +366,7 @@ function MetricStackItem({
         </Text>
         <View className="flex-row items-baseline justify-end gap-1">
           <Text
-            variant={emphasize ? 'bodyStrong' : 'metric'}
+            variant="metric"
             tone={danger ? 'error' : 'primary'}
             numberOfLines={1}
           >

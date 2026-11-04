@@ -1,15 +1,23 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { CircleHelp, FileText, Mail, Shield } from 'lucide-react-native';
+import {
+  CircleHelp,
+  ExternalLink,
+  FileText,
+  Mail,
+  Shield,
+} from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Alert, Linking, View } from 'react-native';
 
+import { BrandMark } from '@/components/brand-mark';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import {
   getPrivacyPolicyUrl,
   getSupportEmail,
   getTermsOfServiceUrl,
+  getWebsiteUrl,
 } from '@/features/account/constants';
 import { HeaderDoneButton } from '@/features/account/header-done-button';
 import { SettingsRow, SettingsSection } from '@/features/account/settings-row';
@@ -30,12 +38,20 @@ async function openOptionalUrl(url: string | null, unavailableLabel: string) {
   }
 }
 
+const WHAT_KEYS = [
+  'aboutWhatLogging',
+  'aboutWhatWorkouts',
+  'aboutWhatGoals',
+  'aboutWhatProgress',
+] as const;
+
 export default function AboutScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const version =
     Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '1.0.0';
   const supportEmail = getSupportEmail();
+  const failed = t('account.openUrlFailed');
 
   return (
     <Screen scroll edges={['top', 'bottom', 'left', 'right']}>
@@ -47,26 +63,67 @@ export default function AboutScreen() {
 
         <View
           style={{
-            padding: spacing[4],
+            padding: spacing[5],
             borderRadius: radii.md,
             backgroundColor: colors.surface,
-            gap: spacing[2],
+            gap: spacing[3],
+            alignItems: 'center',
           }}
         >
-          <Text variant="headingSmall">Trackwise</Text>
+          <BrandMark size="md" />
+          <Text variant="bodyStrong" style={{ textAlign: 'center' }}>
+            {t('account.aboutTagline')}
+          </Text>
           <Text variant="caption" tone="muted">
             {t('account.version', { version })}
           </Text>
-          <Text variant="body" tone="secondary">
+          <Text variant="body" tone="secondary" style={{ textAlign: 'center' }}>
             {t('account.aboutBody')}
           </Text>
+        </View>
+
+        <View
+          style={{
+            padding: spacing[4],
+            borderRadius: radii.md,
+            backgroundColor: colors.surface,
+            gap: spacing[3],
+          }}
+        >
+          <Text variant="label" tone="secondary">
+            {t('account.aboutWhatTitle')}
+          </Text>
+          {WHAT_KEYS.map((key) => (
+            <View key={key} className="flex-row gap-3">
+              <View
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  marginTop: 7,
+                  backgroundColor: colors.primary,
+                }}
+              />
+              <Text variant="body" className="flex-1">
+                {t(`account.${key}`)}
+              </Text>
+            </View>
+          ))}
         </View>
 
         <SettingsSection>
           <SettingsRow
             icon={CircleHelp}
             title={t('account.help')}
-            onPress={() => router.push('/(tabs)/help')}
+            onPress={() => router.push('/account/help')}
+          />
+          <SettingsRow
+            icon={ExternalLink}
+            title={t('account.aboutWebsite')}
+            subtitle={t('account.aboutWebsiteSubtitle')}
+            onPress={() => {
+              void openOptionalUrl(getWebsiteUrl(), failed);
+            }}
           />
           <SettingsRow
             icon={Mail}
@@ -76,10 +133,7 @@ export default function AboutScreen() {
             onPress={
               supportEmail
                 ? () => {
-                    void openOptionalUrl(
-                      `mailto:${supportEmail}`,
-                      t('account.legalUnavailable'),
-                    );
+                    void openOptionalUrl(`mailto:${supportEmail}`, failed);
                   }
                 : undefined
             }
@@ -87,17 +141,15 @@ export default function AboutScreen() {
           <SettingsRow
             icon={Shield}
             title={t('account.privacyPolicy')}
-            subtitle={getPrivacyPolicyUrl() ? undefined : t('account.legalUnavailable')}
             onPress={() =>
-              void openOptionalUrl(getPrivacyPolicyUrl(), t('account.legalUnavailable'))
+              void openOptionalUrl(getPrivacyPolicyUrl(), failed)
             }
           />
           <SettingsRow
             icon={FileText}
             title={t('account.terms')}
-            subtitle={getTermsOfServiceUrl() ? undefined : t('account.legalUnavailable')}
             onPress={() =>
-              void openOptionalUrl(getTermsOfServiceUrl(), t('account.legalUnavailable'))
+              void openOptionalUrl(getTermsOfServiceUrl(), failed)
             }
           />
         </SettingsSection>

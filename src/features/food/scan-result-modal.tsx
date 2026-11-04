@@ -772,11 +772,11 @@ export function FoodLogContextPicker({
           }}
           style={[
             styles.datePickerButton,
-            { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+            { backgroundColor: colors.primary, borderColor: colors.primary },
           ]}
         >
-          <CalendarDays size={19} color={colors.primary} />
-          <Text variant="bodyStrong" tone="primary">
+          <CalendarDays size={19} color={colors.textOnPrimary} />
+          <Text variant="bodyStrong" tone="onPrimary">
             {formatDiaryHeading(dateKey, locale)}
           </Text>
         </Pressable>
@@ -868,13 +868,16 @@ export function FoodLogContextPicker({
             style={[
               styles.mealButton,
               {
-                borderColor: mealType === meal ? colors.primary : 'transparent',
-                borderWidth: mealType === meal ? 1 : 0,
-                backgroundColor: mealType === meal ? colors.primaryMuted : colors.surfaceMuted,
+                borderColor: 'transparent',
+                borderWidth: 0,
+                backgroundColor: mealType === meal ? colors.primary : colors.surfaceMuted,
               },
             ]}
           >
-            <Text variant="bodySmall" tone={mealType === meal ? 'primary' : 'secondary'}>
+            <Text
+              variant="bodySmall"
+              tone={mealType === meal ? 'onPrimary' : 'secondary'}
+            >
               {t(`meals.${meal}`)}
             </Text>
           </Pressable>

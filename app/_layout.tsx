@@ -11,7 +11,6 @@ import '../global.css';
 
 import '@/i18n';
 
-import { ScanImageProvider } from '@/components/navigation/scan-image';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import {
   BootstrapProvider,
@@ -86,15 +85,13 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <RootShell>
-          <ScanImageProvider>
-            <QueryClientProvider client={queryClient}>
-              <AuthProvider>
-                <BootstrapProvider>
-                  <RootNavigator />
-                </BootstrapProvider>
-              </AuthProvider>
-            </QueryClientProvider>
-          </ScanImageProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <BootstrapProvider>
+                <RootNavigator />
+              </BootstrapProvider>
+            </AuthProvider>
+          </QueryClientProvider>
         </RootShell>
       </ThemeProvider>
     </GestureHandlerRootView>

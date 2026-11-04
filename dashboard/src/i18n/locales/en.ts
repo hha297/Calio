@@ -102,9 +102,7 @@ export const en: Messages = {
     title: 'Get Trackwise on your phone.',
     description:
       'Trackwise is free on Android. The Google Play listing is coming soon on this page. iOS will follow later — not available yet.',
-    status: 'Status',
     comingSoon: 'Coming soon',
-    androidFree: 'Free on Android · iOS later',
     qrPlaceholder: 'QR placeholder',
     qrHint: 'Scan-to-download will appear here once the Android store page is published.',
   },

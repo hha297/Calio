@@ -108,6 +108,31 @@ textarea {
   outline-offset: 3px;
 }
 
+/* Anything clickable uses pointer — browsers default buttons to the arrow. */
+a[href],
+button:not(:disabled):not([aria-disabled='true']),
+[role='button']:not([aria-disabled='true']),
+summary,
+label[for],
+select:not(:disabled),
+input[type='button']:not(:disabled),
+input[type='submit']:not(:disabled),
+input[type='reset']:not(:disabled),
+input[type='checkbox']:not(:disabled),
+input[type='radio']:not(:disabled),
+input[type='file']:not(:disabled),
+input[type='image']:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+button[aria-disabled='true'],
+[role='button'][aria-disabled='true'],
+select:disabled,
+input:disabled {
+  cursor: not-allowed;
+}
+
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 3px;

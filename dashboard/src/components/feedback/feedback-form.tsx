@@ -1,10 +1,16 @@
 'use client';
 
-import { Check } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { Check, ImagePlus, X } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { SUPPORT_EMAIL } from '@/config/site';
+import {
+  FEEDBACK_IMAGE_MAX_BYTES,
+  FEEDBACK_IMAGE_MAX_COUNT,
+  formatFeedbackImageSizeLimit,
+  isAllowedFeedbackImageMimeType,
+} from '@/lib/feedback-images';
 import { cn } from '@/lib/utils';
 
 const categories = [
@@ -17,16 +23,38 @@ const categories = [
 
 type FormState = 'idle' | 'submitting' | 'success' | 'error';
 
-type FieldErrors = Partial<Record<'category' | 'subject' | 'message' | 'email' | 'form', string>>;
+type FieldErrors = Partial<
+  Record<'category' | 'subject' | 'message' | 'email' | 'images' | 'form', string>
+>;
+
+type PreviewImage = {
+  id: string;
+  file: File;
+  url: string;
+};
 
 export function FeedbackForm() {
+  const fileInputId = useId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imagesRef = useRef<PreviewImage[]>([]);
   const [category, setCategory] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
   const [website, setWebsite] = useState(''); // honeypot
+  const [images, setImages] = useState<PreviewImage[]>([]);
   const [state, setState] = useState<FormState>('idle');
   const [errors, setErrors] = useState<FieldErrors>({});
+
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+
+  useEffect(() => {
+    return () => {
+      imagesRef.current.forEach((image) => URL.revokeObjectURL(image.url));
+    };
+  }, []);
 
   function validate(): FieldErrors {
     const next: FieldErrors = {};
@@ -38,7 +66,18 @@ export function FeedbackForm() {
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       next.email = 'Enter a valid email or leave this blank.';
     }
+    if (images.length > FEEDBACK_IMAGE_MAX_COUNT) {
+      next.images = `You can attach up to ${FEEDBACK_IMAGE_MAX_COUNT} images.`;
+    }
     return next;
+  }
+
+  function clearImages() {
+    setImages((current) => {
+      current.forEach((image) => URL.revokeObjectURL(image.url));
+      return [];
+    });
+    if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   function resetForm() {
@@ -47,8 +86,67 @@ export function FeedbackForm() {
     setMessage('');
     setEmail('');
     setWebsite('');
+    clearImages();
     setErrors({});
     setState('idle');
+  }
+
+  function addImages(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+
+    const remaining = FEEDBACK_IMAGE_MAX_COUNT - images.length;
+    if (remaining <= 0) {
+      setErrors((current) => ({
+        ...current,
+        images: `You can attach up to ${FEEDBACK_IMAGE_MAX_COUNT} images.`,
+        form: undefined,
+      }));
+      return;
+    }
+
+    const incoming = Array.from(fileList).slice(0, remaining);
+    const nextBatch: PreviewImage[] = [];
+    let rejection: string | undefined;
+
+    for (const file of incoming) {
+      const mimeType = (file.type || '').toLowerCase();
+      if (!isAllowedFeedbackImageMimeType(mimeType)) {
+        rejection = 'Images must be JPEG, PNG, or WebP.';
+        continue;
+      }
+      if (file.size > FEEDBACK_IMAGE_MAX_BYTES) {
+        rejection = `Each image must be ${formatFeedbackImageSizeLimit()} or smaller.`;
+        continue;
+      }
+      nextBatch.push({
+        id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+        file,
+        url: URL.createObjectURL(file),
+      });
+    }
+
+    if (fileList.length > remaining && !rejection) {
+      rejection = `You can attach up to ${FEEDBACK_IMAGE_MAX_COUNT} images.`;
+    }
+
+    if (nextBatch.length > 0) {
+      setImages((current) => [...current, ...nextBatch]);
+    }
+    setErrors((current) => ({
+      ...current,
+      images: rejection,
+      form: undefined,
+    }));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function removeImage(id: string) {
+    setImages((current) => {
+      const target = current.find((image) => image.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return current.filter((image) => image.id !== id);
+    });
+    setErrors((current) => ({ ...current, images: undefined, form: undefined }));
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -64,16 +162,20 @@ export function FeedbackForm() {
     setErrors({});
 
     try {
+      const body = new FormData();
+      body.set('category', category);
+      body.set('subject', subject.trim());
+      body.set('message', message.trim());
+      body.set('email', email.trim());
+      body.set('website', website);
+      images.forEach((image) => {
+        body.append('images', image.file, image.file.name);
+      });
+
       const response = await fetch('/api/feedback', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          category,
-          subject: subject.trim(),
-          message: message.trim(),
-          email: email.trim(),
-          website,
-        }),
+        headers: { Accept: 'application/json' },
+        body,
       });
 
       const data = (await response.json().catch(() => ({}))) as { error?: string };
@@ -118,6 +220,8 @@ export function FeedbackForm() {
       </div>
     );
   }
+
+  const canAddMore = images.length < FEEDBACK_IMAGE_MAX_COUNT;
 
   return (
     <form
@@ -216,6 +320,70 @@ export function FeedbackForm() {
             placeholder="What happened, what you expected, and any steps to reproduce"
           />
         </Field>
+
+        <div>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <label htmlFor={fileInputId} className="text-sm font-semibold text-ink">
+              Screenshots <span className="font-medium text-mute">(optional)</span>
+            </label>
+            <p className="text-xs text-mute">
+              Up to {FEEDBACK_IMAGE_MAX_COUNT} · {formatFeedbackImageSizeLimit()} each · JPEG, PNG,
+              WebP
+            </p>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            id={fileInputId}
+            name="images"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+            multiple
+            className="sr-only"
+            onChange={(event) => addImages(event.target.files)}
+          />
+
+          <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            {images.map((image) => (
+              <div
+                key={image.id}
+                className="relative aspect-[4/3] overflow-hidden rounded-[12px] border border-hairline bg-canvas"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview */}
+                <img
+                  src={image.url}
+                  alt={image.file.name}
+                  className="size-full object-cover"
+                />
+                <button
+                  type="button"
+                  aria-label={`Remove ${image.file.name}`}
+                  onClick={() => removeImage(image.id)}
+                  className="absolute right-1.5 top-1.5 flex size-8 items-center justify-center rounded-full border border-hairline bg-card/95 text-ink shadow-soft"
+                >
+                  <X className="size-4" strokeWidth={2.5} />
+                </button>
+              </div>
+            ))}
+
+            {canAddMore ? (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-hairline bg-canvas px-3 text-center text-sm font-medium text-body transition hover:border-ink/30 hover:text-ink"
+              >
+                <ImagePlus className="size-6 text-mute" aria-hidden />
+                Add images
+              </button>
+            ) : null}
+          </div>
+
+          {errors.images ? (
+            <p className="mt-1.5 text-xs font-medium text-fat" role="alert">
+              {errors.images}
+            </p>
+          ) : null}
+        </div>
 
         <Field
           label="Email (optional)"

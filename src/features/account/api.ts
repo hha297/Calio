@@ -218,6 +218,29 @@ export async function wipeOwnUserData(): Promise<void> {
   }
 }
 
+/** Prefer the Edge Function JSON `{ error }` body over the generic FunctionsHttpError text. */
+async function edgeFunctionErrorMessage(
+  error: { message?: string; context?: Response } | null,
+  data: unknown,
+  fallback: string,
+): Promise<string> {
+  if (data && typeof data === 'object' && 'error' in data && data.error) {
+    return String(data.error);
+  }
+
+  const response = error?.context;
+  if (response && typeof response.json === 'function') {
+    try {
+      const body = (await response.clone().json()) as { error?: unknown };
+      if (body?.error) return String(body.error);
+    } catch {
+      // ignore non-JSON bodies
+    }
+  }
+
+  return error?.message || fallback;
+}
+
 /** Calls the delete-account Edge Function with the user JWT. */
 export async function deleteOwnAccount(): Promise<void> {
   const supabase = getSupabase();
@@ -228,7 +251,9 @@ export async function deleteOwnAccount(): Promise<void> {
   });
 
   if (error) {
-    throw new Error(error.message || 'Could not delete account.');
+    throw new Error(
+      await edgeFunctionErrorMessage(error, data, 'Could not delete account.'),
+    );
   }
 
   if (data && typeof data === 'object' && 'error' in data && data.error) {

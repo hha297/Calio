@@ -100,9 +100,7 @@ export const vi: Messages = {
     title: 'Cài Trackwise trên điện thoại.',
     description:
       'Trackwise miễn phí trên Android. Link Google Play sẽ hiện trên trang này sớm. iOS sẽ có sau — hiện chưa có.',
-    status: 'Trạng thái',
     comingSoon: 'Sắp ra mắt',
-    androidFree: 'Miễn phí Android · iOS sau',
     qrPlaceholder: 'Chỗ QR',
     qrHint: 'Quét để tải sẽ hiện ở đây khi trang Google Play được đăng.',
   },

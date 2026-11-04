@@ -101,9 +101,7 @@ export const fi: Messages = {
     title: 'Hanki Trackwise puhelimeesi.',
     description:
       'Trackwise on ilmainen Androidilla. Google Play -listaus tulee tälle sivulle pian. iOS tulee myöhemmin — ei vielä saatavilla.',
-    status: 'Tila',
     comingSoon: 'Tulossa pian',
-    androidFree: 'Ilmainen Androidilla · iOS myöhemmin',
     qrPlaceholder: 'QR-paikkamerkki',
     qrHint: 'Skannaa ladataksesi -toiminto tulee tänne, kun Android-kauppasivu julkaistaan.',
   },

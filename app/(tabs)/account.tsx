@@ -354,7 +354,7 @@ export default function AccountScreen() {
           <SettingsRow
             icon={CircleHelp}
             title={t('account.help')}
-            onPress={() => router.push('/(tabs)/help')}
+            onPress={() => router.push('/account/help')}
           />
           <SettingsRow
             icon={Info}
